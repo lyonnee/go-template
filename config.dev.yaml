@@ -1,0 +1,22 @@
+http:
+  port: :8080
+
+log:
+  level: debug #debug / info / warn / error / dpanic / panic / fatal
+  filename: ./_logs/dev.log
+  maxSize: 10 #MB
+  maxAge: 3 #days
+  maxBackups: 7
+
+persistence:
+  mysql:
+    dsn: root:admin123@tcp(localhost:3306)/go-gin-template?charset=utf8mb4&parseTime=true
+  postgres:
+    dsn: root:admin123@tcp(localhost:3306)/go-gin-template?charset=utf8mb4&parseTime=true
+
+auth:
+  jwt:
+    secret_key: go-template
+    access_token_expiry: 15m
+    refresh_token_expiry: 7d
+    issuer: lyon.nee

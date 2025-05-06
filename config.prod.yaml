@@ -1,0 +1,12 @@
+http:
+  port: :80
+
+log:
+  level: info #debug / info / warn / error / dpanic / panic / fatal
+  filename: ./_logs/prod.log
+  maxSize: 32 #MB
+  maxAge: 8 #days
+  maxBackups: 64
+
+mysql:
+  dsn: root:admin123@tcp(localhost:3306)/app-layout?charset=utf8mb4&parseTime=true

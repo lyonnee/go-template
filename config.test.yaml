@@ -1,0 +1,12 @@
+http:
+  port: :80
+
+log:
+  level: debug #debug / info / warn / error / dpanic / panic / fatal
+  filename: ./_logs/test.log
+  maxSize: 10 #MB
+  maxAge: 8 #days
+  maxBackups: 128
+
+mysql:
+  dsn: root:admin123@tcp(localhost:3306)/go-gin-template?charset=utf8mb4&parseTime=true

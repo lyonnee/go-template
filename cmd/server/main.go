@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	stdLog "log"
 	"os"
 	"os/signal"
 	"time"
@@ -15,11 +16,13 @@ func main() {
 	args := parseArgs()
 
 	if err := config.Load(args.env); err != nil {
-		// log.Fatalf("load config failed, err:%s", err)
+		stdLog.Printf("load config failed, err:%s", err)
+		os.Exit(1)
 	}
 
 	if err := log.Initialize(config.Log()); err != nil {
-		// log.Fatalf("init modules failed, err:%s", err)
+		stdLog.Printf("init modules failed, err:%s", err)
+		os.Exit(1)
 	}
 
 	go server.StartHTTPServer(config.Http())

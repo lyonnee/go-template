@@ -1,11 +1,17 @@
 package application
 
+import "context"
+
 type LoginCmd struct {
 	PhoneNumber string
 	Email       string
 	Password    string
 }
 
+type LoginResult struct {
+	Token string
+}
+
 type AuthService interface {
-	Login(cmd *LoginCmd) error
+	Login(ctx context.Context, cmd *LoginCmd) (*LoginResult, error)
 }

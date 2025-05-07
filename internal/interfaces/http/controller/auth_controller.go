@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"log"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/lyonnee/go-template/internal/application"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
@@ -8,6 +10,7 @@ import (
 
 type AuthController struct {
 	authService application.AuthService
+	log.Logger
 }
 
 func NewAuthController(
@@ -36,7 +39,7 @@ func (c *AuthController) Login(ctx *fiber.Ctx) error {
 	}
 
 	// execute cmd
-	err := c.authService.Login(&cmd)
+	_, err := c.authService.Login(ctx.UserContext(), &cmd)
 	if err != nil {
 		return err
 	}

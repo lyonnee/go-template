@@ -1,17 +1,11 @@
-package repositories
-
-import (
-	"github.com/lyonnee/go-template/internal/domain"
-	"github.com/lyonnee/go-template/internal/domain/repository"
-)
+package repository
 
 type UserRepository struct {
+	// ...existing code...
 }
 
-func NewUserRepository() repository.UserRepository {
+func NewUserRepository() *UserRepository {
 	return &UserRepository{}
 }
 
-func (r *UserRepository) FindById(userId int64) (*domain.User, error) {
-	return nil, nil
-}
+// ...existing code...

@@ -1,8 +1,8 @@
 package http
 
 import (
-	fiber "github.com/gofiber/fiber/v2"
-	"github.com/lyonnee/go-template/internal/application/services"
+	"github.com/gofiber/fiber/v2"
+	"github.com/lyonnee/go-template/internal/application/service"
 	"github.com/lyonnee/go-template/internal/interfaces/http/controller"
 )
 
@@ -21,7 +21,7 @@ func addV1(r fiber.Router) {
 	// auth
 	{
 		authController := controller.NewAuthController(
-			services.NewAuthService(),
+			service.NewAuthService(),
 		)
 
 		authRouter := r.Group("/auth")

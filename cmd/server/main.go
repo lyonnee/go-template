@@ -8,7 +8,7 @@ import (
 
 	"github.com/lyonnee/go-template/config"
 	"github.com/lyonnee/go-template/pkg/log"
-	"github.com/lyonnee/go-template/servers"
+	"github.com/lyonnee/go-template/server"
 )
 
 func main() {
@@ -22,8 +22,8 @@ func main() {
 		// log.Fatalf("init modules failed, err:%s", err)
 	}
 
-	go servers.StartHTTPServer(config.Http())
-	go servers.StartRPCServer()
+	go server.StartHTTPServer(config.Http())
+	go server.StartRPCServer()
 
 	log.Info("Server Running ...")
 

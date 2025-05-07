@@ -1,11 +1,14 @@
 package repositories
 
-import "github.com/lyonnee/go-template/internal/domain"
+import (
+	"github.com/lyonnee/go-template/internal/domain"
+	"github.com/lyonnee/go-template/internal/domain/repository"
+)
 
 type UserRepository struct {
 }
 
-func NewUserRepository() domain.UserRepository {
+func NewUserRepository() repository.UserRepository {
 	return &UserRepository{}
 }
 

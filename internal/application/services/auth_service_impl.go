@@ -1,4 +1,4 @@
-package impl
+package services
 
 import "github.com/lyonnee/go-template/internal/application"
 

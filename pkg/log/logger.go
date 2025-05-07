@@ -1,48 +1,57 @@
-package logger
+package log
 
 import (
 	"github.com/lyonnee/go-template/config"
 	"go.uber.org/zap"
 )
 
-func Initialize(logConfig config.LogConfig) {
-	zapLogger = newZap(
+var logger *zap.Logger
+
+func Initialize(logConfig config.LogConfig) error {
+	zapLogger, err := newZap(
 		logConfig.Filename,
 		logConfig.Level,
 		logConfig.MaxSize,
 		logConfig.MaxBackups,
 		logConfig.MaxAge,
 	)
+
+	if err != nil {
+		return err
+	}
+
+	logger = zapLogger
+	return nil
 }
 
 func Sync() {
-	syncZap()
+	logger.Sync()
 }
 
 func Debug(msg string, fields ...zap.Field) {
-	zapLogger.Debug(msg, fields...)
+	logger.Debug(msg, fields...)
 }
 
 func Info(msg string, fields ...zap.Field) {
-	zapLogger.Info(msg, fields...)
+	logger.Info(msg, fields...)
 }
 
 func Warn(msg string, fields ...zap.Field) {
-	zapLogger.Warn(msg, fields...)
+	logger.Warn(msg, fields...)
 }
 
 func Error(msg string, fields ...zap.Field) {
-	zapLogger.Error(msg, fields...)
+	logger.Error(msg, fields...)
 }
 
 func DPanic(msg string, fields ...zap.Field) {
-	zapLogger.DPanic(msg, fields...)
+	logger.DPanic(msg, fields...)
 }
 
 func Panic(msg string, fields ...zap.Field) {
-	zapLogger.Panic(msg, fields...)
+	logger.Panic(msg, fields...)
 }
 
 func Fatal(msg string, fields ...zap.Field) {
-	zapLogger.Fatal(msg, fields...)
+	logger.Fatal(msg, fields...)
 }

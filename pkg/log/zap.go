@@ -1,4 +1,4 @@
-package logger
+package log
 
 import (
 	"os"
@@ -8,15 +8,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var zapLogger *zap.Logger
-
-func newZap(filename, levelStr string, maxSize, maxBackups, maxAge int) *zap.Logger {
+func newZap(filename, levelStr string, maxSize, maxBackups, maxAge int) (*zap.Logger, error) {
 	encoder := getEncoder()
 	var level = new(zapcore.Level)
 	err := level.UnmarshalText([]byte(levelStr))
 
 	if err != nil {
-		return newDefaultZap()
+		return nil, err
 	}
 
 	writeSyncer := getLogWriter(
@@ -30,16 +28,7 @@ func newZap(filename, levelStr string, maxSize, maxBackups, maxAge int) *zap.Log
 		zapcore.NewCore(encoder, writeSyncer, level),
 	)
 
-	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
-}
-
-func newDefaultZap() *zap.Logger {
-	zapLogger, _ := zap.NewProduction()
-	return zapLogger
-}
-
-func syncZap() {
-	zapLogger.Sync()
+	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1)), nil
 }
 
 func getEncoder() zapcore.Encoder {

@@ -3,7 +3,7 @@ package middleware
 import (
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/lyonnee/go-template/pkg/modules/auth"
+	"github.com/lyonnee/go-template/pkg/auth"
 )
 
 type Token struct {

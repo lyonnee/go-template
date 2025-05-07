@@ -7,6 +7,10 @@ import (
 
 var logger *zap.Logger
 
+func Logger() *zap.Logger {
+	return logger
+}
+
 func Initialize(logConfig config.LogConfig) error {
 	zapLogger, err := newZap(
 		logConfig.EnableToConsole,

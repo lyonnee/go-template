@@ -4,27 +4,31 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/lyonnee/go-template/internal/application/service"
 	"github.com/lyonnee/go-template/internal/interfaces/http/controller"
+	"github.com/lyonnee/go-template/internal/interfaces/http/middleware"
 )
 
 func New() *fiber.App {
-	router := fiber.New()
+	app := fiber.New()
+
+	app.Use(middleware.Logger())
 
 	// register
-	api := router.Group("/api")
+	router := app.Group("/api")
 
-	addV1(api)
+	addV1(router)
 
-	return router
+	return app
 }
 
 func addV1(r fiber.Router) {
+	base := r.Group("v1")
 	// auth
 	{
 		authController := controller.NewAuthController(
 			service.NewAuthService(),
 		)
 
-		authRouter := r.Group("/auth")
+		authRouter := base.Group("/auth")
 		authRouter.Post("/login", authController.Login)
 		authRouter.Post("/refresh", authController.RefreshToken)
 	}

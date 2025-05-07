@@ -9,8 +9,11 @@ var logger *zap.Logger
 
 func Initialize(logConfig config.LogConfig) error {
 	zapLogger, err := newZap(
+		logConfig.EnableToConsole,
+		logConfig.ToConsoleLevel,
+
 		logConfig.Filename,
-		logConfig.Level,
+		logConfig.ToFileLevel,
 		logConfig.MaxSize,
 		logConfig.MaxBackups,
 		logConfig.MaxAge,

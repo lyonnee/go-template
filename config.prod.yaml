@@ -1,12 +1,24 @@
 http:
   port: :80
 
-log:
-  level: info #debug / info / warn / error / dpanic / panic / fatal
+log: 
+  enable_to_console: false
+  to_console_level: warn # debug / info / warn / error / dpanic / panic / fatal
+  to_file_level: info
   filename: ./_logs/prod.log
-  maxSize: 32 #MB
-  maxAge: 8 #days
-  maxBackups: 64
+  max_size: 32 #MB
+  max_age: 7 #days
+  max_backups: 64
 
-mysql:
-  dsn: root:admin123@tcp(localhost:3306)/app-layout?charset=utf8mb4&parseTime=true
+persistence:
+  mysql:
+    dsn: root:admin123@tcp(localhost:3306)/go-gin-template?charset=utf8mb4&parseTime=true
+  postgres:
+    dsn: root:admin123@tcp(localhost:3306)/go-gin-template?charset=utf8mb4&parseTime=true
+
+auth:
+  jwt:
+    secret_key: go-template
+    access_token_expiry: 15m
+    refresh_token_expiry: 7d
+    issuer: lyon.nee

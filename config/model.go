@@ -5,46 +5,51 @@ import "time"
 // ======================================== Base Config ============================================= //
 
 type Config struct {
-	Http        HttpConfig        `yaml:"http"`
-	Log         LogConfig         `yaml:"log"`
-	Persistence PersistenceConfig `yaml:"persistence"`
-	Auth        AuthConfig        `yaml:"auth"`
+	Http        HttpConfig        `mapstructure:"http"`
+	Log         LogConfig         `mapstructure:"log"`
+	Persistence PersistenceConfig `mapstructure:"persistence"`
+	Auth        AuthConfig        `mapstructure:"auth"`
 }
 
 // =================================================================================================== //
 
 type HttpConfig struct {
-	Port string
+	Port string `mapstructure:"port"`
 }
 
 type AuthConfig struct {
-	JWT JWTConfig `yaml:"jwt"`
+	JWT JWTConfig `mapstructure:"jwt"`
 }
 
 type JWTConfig struct {
-	SecretKey          string        `yaml:"secret_key"`           // 用于对 JWT 进行签名和验证的密钥
-	AccessTokenExpiry  time.Duration `yaml:"access_token_expiry"`  // 访问令牌的有效时长（以秒为单位）
-	RefreshTokenExpiry time.Duration `yaml:"refresh_token_expiry"` // 刷新令牌的有效时长（以秒为单位）
-	Issuer             string        `yaml:"issuer"`               // 颁布单位
+	SecretKey          string        `mapstructure:"secret_key"`           // 用于对 JWT 进行签名和验证的密钥
+	AccessTokenExpiry  time.Duration `mapstructure:"access_token_expiry"`  // 访问令牌的有效时长（以秒为单位）
+	RefreshTokenExpiry time.Duration `mapstructure:"refresh_token_expiry"` // 刷新令牌的有效时长（以秒为单位）
+	Issuer             string        `mapstructure:"issuer"`               // 颁布单位
 }
 
 type LogConfig struct {
-	Level      string
-	Filename   string
-	MaxSize    int
-	MaxAge     int
-	MaxBackups int
+	// console
+	EnableToConsole bool   `mapstructure:"enable_to_console"`
+	ToConsoleLevel  string `mapstructure:"to_console_level"`
+
+	// file
+	ToFileLevel string `mapstructure:"to_file_level"`
+	Filename    string `mapstructure:"filename"`
+	MaxSize     int    `mapstructure:"max_size"`
+	MaxAge      int    `mapstructure:"max_age"`
+	MaxBackups  int    `mapstructure:"max_backups"`
 }
 
 type PersistenceConfig struct {
-	Mysql    MysqlConfig    `yaml:"mysql"`
-	Postgres PostgresConfig `yaml:"postgres"`
+	Mysql    MysqlConfig    `mapstructure:"mysql"`
+	Postgres PostgresConfig `mapstructure:"postgres"`
 }
 
 type PostgresConfig struct {
-	DSN string
+	DSN string `mapstructure:"dsn"`
 }
 
 type MysqlConfig struct {
-	DSN string
+	DSN string `mapstructure:"dsn"`
 }

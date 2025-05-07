@@ -1,12 +1,14 @@
 http:
-  port: :8080
+  port: :8081
 
-log:
-  level: debug #debug / info / warn / error / dpanic / panic / fatal
+log: 
+  enable_to_console: true
+  to_console_level: debug # debug / info / warn / error / dpanic / panic / fatal
+  to_file_level: debug
   filename: ./_logs/dev.log
-  maxSize: 10 #MB
-  maxAge: 3 #days
-  maxBackups: 7
+  max_size: 10 #MB
+  max_age: 3 #days
+  max_backups: 7
 
 persistence:
   mysql:
@@ -18,5 +20,5 @@ auth:
   jwt:
     secret_key: go-template
     access_token_expiry: 15m
-    refresh_token_expiry: 7d
+    refresh_token_expiry: 168h
     issuer: lyon.nee

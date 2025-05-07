@@ -8,25 +8,29 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func newZap(filename, levelStr string, maxSize, maxBackups, maxAge int) (*zap.Logger, error) {
+func newZap(
+	enableToConsole bool, toConsoleLevel string,
+	filename, toFileLevel string, maxSize, maxBackups, maxAge int,
+) (*zap.Logger, error) {
 	encoder := getEncoder()
-	var level = new(zapcore.Level)
-	err := level.UnmarshalText([]byte(levelStr))
 
+	var cores = make([]zapcore.Core, 0)
+
+	fileCore, err := getFileWriterCore(encoder, filename, toFileLevel, maxSize, maxBackups, maxAge)
 	if err != nil {
 		return nil, err
 	}
+	cores = append(cores, fileCore)
 
-	writeSyncer := getLogWriter(
-		filename,
-		maxSize,
-		maxBackups,
-		maxAge,
-	)
-	core := zapcore.NewTee(
-		zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), level),
-		zapcore.NewCore(encoder, writeSyncer, level),
-	)
+	if enableToConsole {
+		consoleCore, err := getConsoleWriterCore(encoder, toConsoleLevel)
+		if err != nil {
+			return nil, err
+		}
+		cores = append(cores, consoleCore)
+	}
+
+	core := zapcore.NewTee(cores...)
 
 	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1)), nil
 }
@@ -42,13 +46,28 @@ func getEncoder() zapcore.Encoder {
 	return zapcore.NewJSONEncoder(encoderConfig)
 }
 
-func getLogWriter(filename string, maxSize, maxBackup, maxAge int) zapcore.WriteSyncer {
+func getConsoleWriterCore(encoder zapcore.Encoder, levelStr string) (zapcore.Core, error) {
+	level, err := zapcore.ParseLevel(levelStr)
+	if err != nil {
+		return nil, err
+	}
+
+	return zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), level), nil
+}
+
+func getFileWriterCore(encoder zapcore.Encoder, filename, levelStr string, maxSize, maxBackups, maxAge int) (zapcore.Core, error) {
+	level, err := zapcore.ParseLevel(levelStr)
+	if err != nil {
+		return nil, err
+	}
+
 	lumberJackLogger := &lumberjack.Logger{
 		Filename:   filename,
 		MaxSize:    maxSize,
-		MaxBackups: maxBackup,
+		MaxBackups: maxBackups,
 		MaxAge:     maxAge,
 	}
 
-	return zapcore.AddSync(lumberJackLogger)
+	syncer := zapcore.AddSync(lumberJackLogger)
+	return zapcore.NewCore(encoder, syncer, level), nil
 }

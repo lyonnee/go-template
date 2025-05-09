@@ -1,9 +1,10 @@
 package controller
 
 import (
+	"context"
 	"log"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/lyonnee/go-template/internal/application"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
 )
@@ -21,12 +22,15 @@ func NewAuthController(
 	}
 }
 
-func (c *AuthController) Login(ctx *fiber.Ctx) error {
+func (c *AuthController) SignUp(ctx context.Context, reqCtx *app.RequestContext) {}
+
+func (c *AuthController) Login(ctx context.Context, reqCtx *app.RequestContext) {
 	var req dto.LoginReq
 
-	// get params
-	if err := ctx.BodyParser(&req); err != nil {
-		return err
+	// get params from body
+	if err := reqCtx.Bind(&req); err != nil {
+		dto.Fail(reqCtx, dto.CODE_INVALID_BODY_ARGUMENT, "")
+		return
 	}
 
 	// validate params
@@ -39,14 +43,15 @@ func (c *AuthController) Login(ctx *fiber.Ctx) error {
 	}
 
 	// execute cmd
-	_, err := c.authService.Login(ctx.UserContext(), &cmd)
+	_, err := c.authService.Login(ctx, &cmd)
 	if err != nil {
-		return err
+		dto.Fail(reqCtx, dto.CODE_SERVER_ERROR, "")
+		return
 	}
 
-	return nil
+	dto.Ok[any](reqCtx, "", "")
 }
 
-func (c *AuthController) RefreshToken(ctx *fiber.Ctx) error {
-	return nil
+func (c *AuthController) RefreshToken(ctx context.Context, reqCtx *app.RequestContext) {
+
 }

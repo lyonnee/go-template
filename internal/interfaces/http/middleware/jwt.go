@@ -1,8 +1,11 @@
 package middleware
 
 import (
-	jwtware "github.com/gofiber/contrib/jwt"
-	"github.com/gofiber/fiber/v2"
+	"context"
+	"strings"
+
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
 	"github.com/lyonnee/go-template/pkg/auth"
 )
 
@@ -11,29 +14,34 @@ type Token struct {
 	RefreshToken string `json:"refresh_token"` // 用于刷新 Access Token，有效期较长（如 7 天），通常存储于安全位置（如 HttpOnly Cookie）
 }
 
-// Protected protect routes
-func Protected() fiber.Handler {
-	return jwtware.New(jwtware.Config{
-		Claims:             auth.Claims{},
-		KeyFunc:            auth.SecretKey(),
-		TokenProcessorFunc: tokenProcessorFunc,
-		SuccessHandler:     successHandler,
-		ErrorHandler:       errorHandler,
-		ContextKey:         "identity",
-	})
-}
+// JWTAuth 中间件，检查token
+func JWTAuth() app.HandlerFunc {
+	return func(ctx context.Context, reqCtx *app.RequestContext) {
+		authHeader := reqCtx.Request.Header.Get("Authorization")
+		if authHeader == "" {
+			dto.Fail(reqCtx, dto.CODE_NOT_TOKEN, "Access Denied. Token not included in the request.")
+			reqCtx.Abort() //结束后续操作
+			return
+		}
 
-func successHandler(*fiber.Ctx) error { return nil }
+		//按空格拆分
+		parts := strings.SplitN(authHeader, " ", 2)
+		if !(len(parts) == 2 && parts[0] == "Bearer") {
+			dto.Fail(reqCtx, dto.CODE_TOKEN_FORMAT_INCORRECT, "The format of the auth in the request header is incorrect.")
+			reqCtx.Abort()
+			return
+		}
 
-func tokenProcessorFunc(token string) (string, error) {
-	return "", nil
-}
+		//解析token包含的信息
+		claims, err := auth.ValidateToken(parts[1])
+		if err != nil {
+			dto.Fail(reqCtx, dto.CODE_TOKEN_INVALID, "Invalid JSON Web Token")
+			reqCtx.Abort()
+			return
+		}
 
-func errorHandler(c *fiber.Ctx, err error) error {
-	if err.Error() == "Missing or malformed JWT" {
-		return c.Status(fiber.StatusBadRequest).
-			JSON(fiber.Map{"status": "error", "message": "Missing or malformed JWT", "data": nil})
+		// 将当前请求的claims信息保存到请求的上下文c上
+		reqCtx.Set("claims", claims)
+		reqCtx.Next(ctx) // 后续的处理函数可以用过ctx.Get("claims")来获取当前请求的用户信息
 	}
-	return c.Status(fiber.StatusUnauthorized).
-		JSON(fiber.Map{"status": "error", "message": "Invalid or expired JWT", "data": nil})
 }

@@ -1,40 +1,32 @@
 package middleware
 
 import (
+	"context"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/lyonnee/go-template/pkg/log"
 	"go.uber.org/zap"
 )
 
-func Logger() fiber.Handler {
-	// return fiberzap.New(fiberzap.Config{
-	// 	Logger: log.Logger(),
-	// 	Fields: []string{
-	// 		"status", "method", "path", "query", "ip", "ua", "errors", "latency",
-	// 	},
-	// })
-	return func(c *fiber.Ctx) error {
+func Logger() app.HandlerFunc {
+	return func(ctx context.Context, reqCtx *app.RequestContext) {
 		start := time.Now() // 请求的时间
 
-		var errStr string
-		if chainErr := c.Next(); chainErr != nil { // 执行后续中间件
-			errStr = chainErr.Error()
-		}
+		reqCtx.Next(ctx) // 执行后续中间件
 
 		cost := time.Since(start)
-		log.Info("",
-			zap.Int("status", c.Response().StatusCode()),                // 状态码
-			zap.String("method", c.Method()),                            // 请求的方法
-			zap.String("path", c.Path()),                                // 请求的路径
-			zap.String("query", c.Request().URI().QueryArgs().String()), // 请求的参数
-			zap.String("ip", c.IP()),                                    // 请求的IP
-			zap.String("user-agent", c.Get(fiber.HeaderUserAgent)),      // 请求头
-			zap.String("errors", errStr),                                // 错误信息
-			zap.Duration("cost", cost),                                  // 请求时间
-		)
 
-		return nil
+		log.Info("",
+			zap.Int("status", reqCtx.Response.StatusCode()),                     // 状态码
+			zap.String("method", string(reqCtx.Request.Method())),               // 请求的方法
+			zap.String("path", string(reqCtx.Request.Path())),                   // 请求的路径
+			zap.String("query", string(reqCtx.Request.QueryString())),           // 请求的参数
+			zap.String("ip", reqCtx.ClientIP()),                                 // 请求的IP
+			zap.String("user-agent", string(reqCtx.Request.Header.UserAgent())), // 请求头
+			zap.String("errors", reqCtx.Errors.String()),                        // 错误信息
+			zap.Duration("cost", cost),                                          // 请求时间
+			zap.String("trace_id", reqCtx.GetString("trace_id")),                // 请求id
+		)
 	}
 }

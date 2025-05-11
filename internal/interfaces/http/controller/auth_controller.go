@@ -2,16 +2,15 @@ package controller
 
 import (
 	"context"
-	"log"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/lyonnee/go-template/internal/application"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
+	"github.com/lyonnee/go-template/pkg/log"
 )
 
 type AuthController struct {
 	authService application.AuthService
-	log.Logger
 }
 
 func NewAuthController(
@@ -52,6 +51,11 @@ func (c *AuthController) Login(ctx context.Context, reqCtx *app.RequestContext) 
 	dto.Ok[any](reqCtx, "", "")
 }
 
-func (c *AuthController) RefreshToken(ctx context.Context, reqCtx *app.RequestContext) {
+type S struct {
+	str string
+}
 
+func (c *AuthController) RefreshToken(ctx context.Context, reqCtx *app.RequestContext) {
+	var s *S
+	log.Error(s.str)
 }

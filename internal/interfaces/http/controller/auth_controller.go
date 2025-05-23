@@ -10,15 +10,10 @@ import (
 )
 
 type AuthController struct {
-	authService application.AuthService
 }
 
-func NewAuthController(
-	authService application.AuthService,
-) *AuthController {
-	return &AuthController{
-		authService: authService,
-	}
+func NewAuthController() *AuthController {
+	return &AuthController{}
 }
 
 func (c *AuthController) SignUp(ctx context.Context, reqCtx *app.RequestContext) {}
@@ -42,7 +37,7 @@ func (c *AuthController) Login(ctx context.Context, reqCtx *app.RequestContext) 
 	}
 
 	// execute cmd
-	_, err := c.authService.Login(ctx, &cmd)
+	_, err := application.Login(ctx, &cmd)
 	if err != nil {
 		dto.Fail(reqCtx, dto.CODE_SERVER_ERROR, "")
 		return

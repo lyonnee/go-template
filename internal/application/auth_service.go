@@ -1,6 +1,10 @@
 package application
 
-import "context"
+import (
+	"context"
+
+	"github.com/lyonnee/go-template/pkg/auth"
+)
 
 type LoginCmd struct {
 	PhoneNumber string
@@ -20,7 +24,29 @@ type RefreshTokenResult struct {
 	NewAccessToken string
 }
 
-type AuthService interface {
-	Login(ctx context.Context, cmd *LoginCmd) (*LoginResult, error)
-	RefreshToken(ctx context.Context, cmd *RefreshTokenCmd) (*RefreshTokenResult, error)
+func Login(ctx context.Context, cmd *LoginCmd) (*LoginResult, error) {
+	token, err := auth.GenerateAccessToken(1, cmd.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginResult{
+		Token: token,
+	}, nil
+}
+
+func RefreshToken(ctx context.Context, cmd *RefreshTokenCmd) (*RefreshTokenResult, error) {
+	claims, err := auth.ValidateToken(cmd.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	newToken, err := auth.GenerateAccessToken(claims.UserId, claims.AlternativeID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RefreshTokenResult{
+		NewAccessToken: newToken,
+	}, nil
 }

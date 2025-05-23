@@ -7,8 +7,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/route"
-
-	"github.com/lyonnee/go-template/internal/application/service"
 	"github.com/lyonnee/go-template/internal/interfaces/http/controller"
 	"github.com/lyonnee/go-template/internal/interfaces/http/middleware"
 )
@@ -37,9 +35,7 @@ func addV1(r *route.RouterGroup) {
 	base := r.Group("v1")
 	// auth
 	{
-		authController := controller.NewAuthController(
-			service.NewAuthService(),
-		)
+		authController := controller.NewAuthController()
 
 		authRouter := base.Group("/auth")
 		authRouter.POST("/user", authController.SignUp)

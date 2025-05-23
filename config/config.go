@@ -7,6 +7,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Config struct {
+	Http        HttpConfig        `mapstructure:"http"`
+	Log         LogConfig         `mapstructure:"log"`
+	Auth        AuthConfig        `mapstructure:"auth"`
+	Persistence PersistenceConfig `mapstructure:"persistence"`
+	Cache       CacheConfig       `mapstructure:"cache"`
+}
+
 var conf = new(Config)
 
 func Load(env string) error {
@@ -38,22 +46,4 @@ func Load(env string) error {
 	}
 
 	return nil
-}
-
-// ================================ config getter ====================================== //
-
-func Http() HttpConfig {
-	return conf.Http
-}
-
-func Log() LogConfig {
-	return conf.Log
-}
-
-func Persistence() PersistenceConfig {
-	return conf.Persistence
-}
-
-func Auth() AuthConfig {
-	return conf.Auth
 }

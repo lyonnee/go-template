@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/lyonnee/go-template/internal/domain/entity"
-	"github.com/lyonnee/go-template/pkg/persistence"
 )
 
 // UserRepository 用户存储库接口
@@ -15,8 +14,8 @@ import (
 // - errors.ErrPhoneTaken：手机号已被占用
 // - errors.ErrInvalidUserInput：无效的用户输入
 type UserRepository interface {
-	// WithExecuter 设置特定的执行器，返回一个新的存储库实例
-	WithExecuter(executer persistence.Executer) UserRepository
+	// WithExecutor 设置特定的执行器，返回一个新的存储库实例
+	WithExecutor(executor Executor) UserRepository
 
 	// 基本的CRUD操作
 	Create(ctx context.Context, user *entity.User) (*entity.User, error)
@@ -31,7 +30,7 @@ type UserRepository interface {
 
 	// 特定更新操作
 	UpdateUsername(ctx context.Context, user *entity.User) error
-	UpdatePassword(ctx context.Context, user *entity.User) error
+	UpdatePwdSecret(ctx context.Context, user *entity.User) error
 	UpdateEmail(ctx context.Context, user *entity.User) error
 	UpdatePhone(ctx context.Context, user *entity.User) error
 }

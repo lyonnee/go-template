@@ -3,27 +3,27 @@ package log
 import (
 	"os"
 
+	"github.com/lyonnee/go-template/config"
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-func newZap(
-	enableToConsole bool, toConsoleLevel string,
-	filename, toFileLevel string, maxSize, maxBackups, maxAge int,
+func NewZapLogger(
+	logConfig config.LogConfig,
 ) (*zap.Logger, error) {
 	encoder := getEncoder()
 
 	var cores = make([]zapcore.Core, 0)
 
-	fileCore, err := getFileWriterCore(encoder, filename, toFileLevel, maxSize, maxBackups, maxAge)
+	fileCore, err := getFileWriterCore(encoder, logConfig.Filename, logConfig.ToFileLevel, logConfig.MaxSize, logConfig.MaxBackups, logConfig.MaxAge)
 	if err != nil {
 		return nil, err
 	}
 	cores = append(cores, fileCore)
 
-	if enableToConsole {
-		consoleCore, err := getConsoleWriterCore(encoder, toConsoleLevel)
+	if logConfig.EnableToConsole {
+		consoleCore, err := getConsoleWriterCore(encoder, logConfig.ToConsoleLevel)
 		if err != nil {
 			return nil, err
 		}

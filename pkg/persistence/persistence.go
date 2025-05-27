@@ -7,9 +7,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lyonnee/go-template/config"
-	"github.com/lyonnee/go-template/pkg/log"
+	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/qustavo/sqlhooks/v2"
-	"go.uber.org/zap"
 )
 
 var db *sqlx.DB
@@ -26,14 +25,16 @@ func Initialize(config config.PersistenceConfig) error {
 	db.SetConnMaxLifetime(config.ConnMaxLifetime)
 	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
 
-	sql.Register("sql-logger", sqlhooks.Wrap(&sqlhooks.Driver{}, &LoggerHooks{Logger: log.Logger()}))
+	// Note: LoggerHooks will be initialized separately with proper logger injection
+	sql.Register("sql-logger", sqlhooks.Wrap(&sqlhooks.Driver{}, &LoggerHooks{}))
 
 	return nil
 }
 
-type Executer interface {
-	sqlx.ExecerContext
-	sqlx.QueryerContext
+// SetLogger sets the logger for SQL hooks
+func SetLogger(logger log.Logger) {
+	// Update the registered driver with the new logger
+	sql.Register("sql-logger", sqlhooks.Wrap(&sqlhooks.Driver{}, &LoggerHooks{Logger: logger}))
 }
 
 func NewConn(ctx context.Context) (*sqlx.Conn, error) {
@@ -49,7 +50,7 @@ func NewTxWith(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error) {
 }
 
 type LoggerHooks struct {
-	*zap.Logger
+	Logger log.Logger
 }
 
 // Before hook will print the query with it's args and return the context with the timestamp
@@ -68,10 +69,10 @@ func (hooks *LoggerHooks) After(ctx context.Context, query string, args ...inter
 	}
 	begin := ctx.Value("sql_begin").(time.Time)
 
-	hooks.Logger.Info("SQL executed",
-		zap.String("sql", query),
-		zap.Any("args", args),
-		zap.Duration("sql_const", time.Since(begin)),
+	hooks.Logger.InfoKV("SQL executed",
+		"sql", query,
+		"args", args,
+		"duration", time.Since(begin),
 	)
 	return ctx, nil
 }
@@ -81,10 +82,10 @@ func (hooks *LoggerHooks) OnError(_ context.Context, err error, query string, ar
 		return nil
 	}
 
-	hooks.Logger.Error("SQL error",
-		zap.String("sql", query),
-		zap.Any("args", args),
-		zap.Error(err),
+	hooks.Logger.ErrorKV("SQL error",
+		"sql", query,
+		"args", args,
+		"error", err,
 	)
 	return nil
 }

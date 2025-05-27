@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/lyonnee/go-template/internal/domain/entity"
+	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/infrastructure/repository"
 )
 
@@ -35,14 +36,14 @@ func TestUserRepositoryImpl_Create(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(userID))
 
 	// 创建存储库并设置执行器
-	userRepo := repository.NewUserRepository().WithExecuter(sqlxDB)
+	userRepo := repository.NewUserRepository(log.NewNoopLogger()).WithExecutor(sqlxDB)
 
 	// 创建测试用户实体
 	user := &entity.User{
-		Username: username,
-		Password: password,
-		Email:    email,
-		Phone:    phone,
+		Username:  username,
+		PwdSecret: password,
+		Email:     email,
+		Phone:     phone,
 	}
 
 	// 执行测试
@@ -54,7 +55,7 @@ func TestUserRepositoryImpl_Create(t *testing.T) {
 	assert.NotNil(t, createdUser)
 	assert.Equal(t, userID, createdUser.ID)
 	assert.Equal(t, username, createdUser.Username)
-	assert.Equal(t, password, createdUser.Password)
+	assert.Equal(t, password, createdUser.PwdSecret)
 	assert.Equal(t, email, createdUser.Email)
 	assert.Equal(t, phone, createdUser.Phone)
 	assert.False(t, createdUser.IsDeleted)
@@ -88,7 +89,7 @@ func TestUserRepositoryImpl_FindById(t *testing.T) {
 		WillReturnRows(rows)
 
 	// 创建存储库并设置执行器
-	userRepo := repository.NewUserRepository().WithExecuter(sqlxDB)
+	userRepo := repository.NewUserRepository(log.NewNoopLogger()).WithExecutor(sqlxDB)
 
 	// 执行测试
 	ctx := context.Background()
@@ -99,7 +100,7 @@ func TestUserRepositoryImpl_FindById(t *testing.T) {
 	assert.NotNil(t, foundUser)
 	assert.Equal(t, userID, foundUser.ID)
 	assert.Equal(t, username, foundUser.Username)
-	assert.Equal(t, password, foundUser.Password)
+	assert.Equal(t, password, foundUser.PwdSecret)
 	assert.Equal(t, email, foundUser.Email)
 	assert.Equal(t, phone, foundUser.Phone)
 	assert.False(t, foundUser.IsDeleted)
@@ -108,9 +109,9 @@ func TestUserRepositoryImpl_FindById(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestUserRepositoryImpl_NoExecuter(t *testing.T) {
+func TestUserRepositoryImpl_NoExecutor(t *testing.T) {
 	// 创建存储库但不设置执行器
-	userRepo := repository.NewUserRepository()
+	userRepo := repository.NewUserRepository(log.NewNoopLogger())
 
 	// 执行测试
 	ctx := context.Background()
@@ -118,7 +119,7 @@ func TestUserRepositoryImpl_NoExecuter(t *testing.T) {
 
 	// 断言结果 - 应该返回错误
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "executer not set")
+	assert.Contains(t, err.Error(), "executor not set")
 }
 
 func TestUserRepositoryImpl_WithTransaction(t *testing.T) {
@@ -153,15 +154,15 @@ func TestUserRepositoryImpl_WithTransaction(t *testing.T) {
 	mock.ExpectCommit()
 
 	// 创建存储库并设置事务执行器
-	userRepo := repository.NewUserRepository().WithExecuter(tx)
+	userRepo := repository.NewUserRepository(log.NewNoopLogger()).WithExecutor(tx)
 
 	// 执行测试 - 创建用户
 	ctx := context.Background()
 	user := &entity.User{
-		Username: "txuser",
-		Password: "password",
-		Email:    "tx@example.com",
-		Phone:    "13900001111",
+		Username:  "txuser",
+		PwdSecret: "password",
+		Email:     "tx@example.com",
+		Phone:     "13900001111",
 	}
 
 	createdUser, err := userRepo.Create(ctx, user)

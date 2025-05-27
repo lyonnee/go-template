@@ -11,10 +11,14 @@ log:
   max_backups: 7
 
 persistence:
+  max_open_conns: 25        # 最大打开连接数
+  max_idle_conns: 10        # 最大空闲连接数
+  conn_max_lifetime: 300s   # 连接最大生存时间
+  conn_max_idle_time: 60s   # 连接最大空闲时间
   mysql:
-    dsn: root:admin123@tcp(localhost:3306)/go-gin-template?charset=utf8mb4&parseTime=true
+    dsn: root:admin123@tcp(localhost:3306)/go-template?charset=utf8mb4&parseTime=true
   postgres:
-    dsn: root:admin123@tcp(localhost:3306)/go-gin-template?charset=utf8mb4&parseTime=true
+    dsn: postgres://postgres:admin123@localhost:5432/go_template?sslmode=disable
 
 auth:
   jwt:
@@ -22,3 +26,13 @@ auth:
     access_token_expiry: 15m
     refresh_token_expiry: 168h
     issuer: lyon.nee
+
+cache:
+  redis:
+    host: localhost
+    port: 6379
+    username: ""
+    password: ""
+    database: 0
+    framework: standalone  # standalone or cluster
+    prefix: "go-template:"

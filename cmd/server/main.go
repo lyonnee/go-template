@@ -2,78 +2,62 @@ package main
 
 import (
 	"context"
+	"flag"
 	stdLog "log"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/lyonnee/go-template/config"
-	"github.com/lyonnee/go-template/pkg/log"
+	pkgLog "github.com/lyonnee/go-template/pkg/log"
+	"github.com/lyonnee/go-template/pkg/persistence"
 	"github.com/lyonnee/go-template/server"
 )
 
 func main() {
-	args := parseArgs()
+	var (
+		env = flag.String("env", "dev", "Environment (dev, test, prod)")
+	)
+	flag.Parse()
 
-	if err := config.Load(args.env); err != nil {
+	if err := config.Load(*env); err != nil {
 		stdLog.Printf("load config failed, err:%s", err)
 		os.Exit(1)
 	}
 
-	if err := log.Initialize(config.Log()); err != nil {
-		stdLog.Printf("init modules failed, err:%s", err)
+	zapLogger, err := pkgLog.NewZapLogger(config.Log())
+	if err != nil {
+		stdLog.Printf("init zap logger failed, err:%s", err)
 		os.Exit(1)
 	}
+	logger := pkgLog.NewZapSugarLogger(zapLogger)
+
+	if err := persistence.Initialize(config.Persistence()); err != nil {
+		stdLog.Printf("init persistence failed, err:%s", err)
+		os.Exit(1)
+	}
+
+	// Set the logger for SQL hooks
+	persistence.SetLogger(logger)
 
 	go server.StartHTTPServer(config.Http())
 	go server.StartRPCServer()
 
-	log.Info("Server Running ...")
+	logger.Info("Server Running ...")
 
 	// 等待中断信号以优雅地关闭服务器（设置 5 秒的超时时间）
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 
-	log.Info("Server Shutdown ...")
+	logger.Info("Server Shutdown ...")
 
 	_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	log.Sync()
+	logger.Sync()
 }
 
 type args struct {
 	env string
-}
-
-func parseArgs() *args {
-	env := os.Getenv("APP_ENV")
-	if env == "" {
-		// Parse command line arguments
-		args := os.Args[1:]
-		for i := 0; i < len(args); i++ {
-			switch args[i] {
-			case "-e", "--env":
-				if i+1 < len(args) {
-					env = args[i+1]
-					i++ // Skip the next argument since we consumed it
-				}
-				// Add more parameter cases here as needed
-				// case "-p", "--password":
-				//     if i+1 < len(args) {
-				//         password = args[i+1]
-				//         i++
-				//     }
-			}
-		}
-		// If still not set, use default
-		if env == "" {
-			env = "prod"
-		}
-	}
-
-	return &args{
-		env: env,
-	}
 }

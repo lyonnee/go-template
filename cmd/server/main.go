@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/lyonnee/go-template/config"
+	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	pkgLog "github.com/lyonnee/go-template/pkg/log"
 	"github.com/lyonnee/go-template/pkg/persistence"
 	"github.com/lyonnee/go-template/server"
@@ -31,14 +32,12 @@ func main() {
 		os.Exit(1)
 	}
 	logger := pkgLog.NewZapSugarLogger(zapLogger)
+	log.SetGLogger(logger)
 
-	if err := persistence.Initialize(config.Persistence()); err != nil {
+	if err := persistence.Initialize(config.Persistence(), logger); err != nil {
 		stdLog.Printf("init persistence failed, err:%s", err)
 		os.Exit(1)
 	}
-
-	// Set the logger for SQL hooks
-	persistence.SetLogger(logger)
 
 	go server.StartHTTPServer(config.Http())
 	go server.StartRPCServer()

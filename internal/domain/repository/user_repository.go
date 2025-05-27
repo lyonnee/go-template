@@ -18,7 +18,7 @@ type UserRepository interface {
 	WithExecutor(executor Executor) UserRepository
 
 	// 基本的CRUD操作
-	Create(ctx context.Context, user *entity.User) (*entity.User, error)
+	Create(ctx context.Context, user *entity.User) error
 	Update(ctx context.Context, user *entity.User) error
 	Delete(ctx context.Context, userId int64) error
 

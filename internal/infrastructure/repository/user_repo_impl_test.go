@@ -48,17 +48,16 @@ func TestUserRepositoryImpl_Create(t *testing.T) {
 
 	// 执行测试
 	ctx := context.Background()
-	createdUser, err := userRepo.Create(ctx, user)
+	err = userRepo.Create(ctx, user)
 
 	// 断言结果
 	require.NoError(t, err)
-	assert.NotNil(t, createdUser)
-	assert.Equal(t, userID, createdUser.ID)
-	assert.Equal(t, username, createdUser.Username)
-	assert.Equal(t, password, createdUser.PwdSecret)
-	assert.Equal(t, email, createdUser.Email)
-	assert.Equal(t, phone, createdUser.Phone)
-	assert.False(t, createdUser.IsDeleted)
+	assert.NotNil(t, user)
+	assert.Equal(t, userID, user.ID)
+	assert.Equal(t, username, user.Username)
+	assert.Equal(t, password, user.PwdSecret)
+	assert.Equal(t, email, user.Email)
+	assert.Equal(t, phone, user.Phone)
 
 	// 验证所有期望都已满足
 	assert.NoError(t, mock.ExpectationsWereMet())
@@ -81,8 +80,8 @@ func TestUserRepositoryImpl_FindById(t *testing.T) {
 	phone := "13800138000"
 
 	// 设置SQL期望
-	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "username", "password", "email", "phone", "is_deleted", "deleted_at"}).
-		AddRow(userID, now, now, username, password, email, phone, false, 0)
+	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "username", "password", "email", "phone", "deleted_at"}).
+		AddRow(userID, now, now, username, password, email, phone, 0)
 
 	mock.ExpectQuery("SELECT (.+) FROM users").
 		WithArgs(userID).
@@ -103,7 +102,6 @@ func TestUserRepositoryImpl_FindById(t *testing.T) {
 	assert.Equal(t, password, foundUser.PwdSecret)
 	assert.Equal(t, email, foundUser.Email)
 	assert.Equal(t, phone, foundUser.Phone)
-	assert.False(t, foundUser.IsDeleted)
 
 	// 验证所有期望都已满足
 	assert.NoError(t, mock.ExpectationsWereMet())
@@ -143,8 +141,8 @@ func TestUserRepositoryImpl_WithTransaction(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(2))
 
 	// 设置查找用户的期望
-	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "username", "password", "email", "phone", "is_deleted", "deleted_at"}).
-		AddRow(2, time.Now().Unix(), time.Now().Unix(), "txuser", "password", "tx@example.com", "13900001111", false, 0)
+	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "username", "password", "email", "phone", "deleted_at"}).
+		AddRow(2, time.Now().Unix(), time.Now().Unix(), "txuser", "password", "tx@example.com", "13900001111", 0)
 
 	mock.ExpectQuery("SELECT (.+) FROM users").
 		WithArgs(int64(2)).
@@ -165,12 +163,12 @@ func TestUserRepositoryImpl_WithTransaction(t *testing.T) {
 		Phone:     "13900001111",
 	}
 
-	createdUser, err := userRepo.Create(ctx, user)
+	err = userRepo.Create(ctx, user)
 	require.NoError(t, err)
-	assert.Equal(t, int64(2), createdUser.ID)
+	assert.Equal(t, int64(2), user.ID)
 
 	// 查找用户
-	foundUser, err := userRepo.FindById(ctx, createdUser.ID)
+	foundUser, err := userRepo.FindById(ctx, user.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "txuser", foundUser.Username)
 

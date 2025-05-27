@@ -8,13 +8,14 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/route"
 	appContainer "github.com/lyonnee/go-template/internal/app"
+	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/interfaces/http/middleware"
 )
 
 func Register(hz *server.Hertz) {
 	// 初始化依赖注入容器
-	container := appContainer.NewContainer()
-	logger := container.Logger()
+	logger := log.GLogger()
+	container := appContainer.NewContainer(logger)
 
 	// process panic
 	hz.PanicHandler = panicHandler

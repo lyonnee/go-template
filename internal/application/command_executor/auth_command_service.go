@@ -77,65 +77,48 @@ func (s *AuthCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 		return nil, err
 	}
 	defer tx.Rollback()
-
 	userRepoWithTx := s.userRepo.WithExecutor(tx)
 
-	userDomainService := domain.NewUserDomainService(s.userRepo, s.logger)
+	userDomainService := domain.NewUserDomainService(userRepoWithTx, s.logger)
 	user, err := userDomainService.CreateUser(ctx, cmd.Username, cmd.Password, cmd.Email, cmd.Phone)
 	if err != nil {
 		s.logger.ErrorKV("Failed to create user", "error", err)
 		return nil, err
 	}
 
-	s.logger.DebugKV("All validation checks passed for user registration",
-		"username", cmd.Username)
-
-	// 保存用户
-	createdUser, err := userRepoWithTx.Create(ctx, user)
-	if err != nil {
-		s.logger.ErrorKV("Failed to create user", "error", err, "username", cmd.Username)
-		return nil, err
-	}
-
-	s.logger.DebugKV("User created successfully",
-		"username", cmd.Username,
-		"userId", createdUser.ID)
-
 	// 生成token
-	accessToken, err := auth.GenerateAccessToken(createdUser.ID, createdUser.Username)
+	accessToken, err := auth.GenerateAccessToken(user.ID, user.Username)
 	if err != nil {
 		s.logger.ErrorKV("Failed to generate access token for new user",
 			"error", err,
-			"userId", createdUser.ID)
+			"userId", user.ID)
 		return nil, err
 	}
 
-	refreshToken, err := auth.GenerateRefreshToken(createdUser.ID, createdUser.Username)
+	refreshToken, err := auth.GenerateRefreshToken(user.ID, user.Username)
 	if err != nil {
 		s.logger.ErrorKV("Failed to generate refresh token for new user",
 			"error", err,
-			"userId", createdUser.ID)
+			"userId", user.ID)
 		return nil, err
 	}
-
-	s.logger.DebugKV("Tokens generated successfully for new user", "userId", createdUser.ID)
 
 	// 提交事务
 	if err := tx.Commit(); err != nil {
 		s.logger.ErrorKV("Failed to commit user registration transaction",
 			"error", err,
-			"userId", createdUser.ID)
+			"userId", user.ID)
 		return nil, err
 	}
 
 	s.logger.InfoKV("User registration completed successfully",
 		"username", cmd.Username,
-		"userId", createdUser.ID)
+		"userId", user.ID)
 
 	return &SignUpResult{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		User:         createdUser,
+		User:         user,
 	}, nil
 }
 
@@ -149,7 +132,6 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 		return nil, err
 	}
 	defer conn.Close()
-
 	userRepoConn := s.userRepo.WithExecutor(conn)
 
 	// 查找用户
@@ -163,15 +145,11 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 		return nil, err
 	}
 
-	s.logger.DebugKV("User found for login", "username", cmd.Username, "userId", user.ID)
-
 	// 验证密码
 	if !auth.CheckPasswordHash(cmd.Password, user.PwdSecret) {
 		s.logger.WarnKV("Login failed - invalid password", "username", cmd.Username, "userId", user.ID)
 		return nil, errors.New("invalid username or password")
 	}
-
-	s.logger.DebugKV("Password validated successfully", "username", cmd.Username, "userId", user.ID)
 
 	// 生成token
 	accessToken, err := auth.GenerateAccessToken(user.ID, user.Username)
@@ -205,10 +183,6 @@ func (s *AuthCommandService) RefreshToken(ctx context.Context, cmd *RefreshToken
 		s.logger.WarnKV("Invalid refresh token provided", "error", err)
 		return nil, errors.New("invalid refresh token")
 	}
-
-	s.logger.DebugKV("Refresh token validated successfully",
-		"userId", claims.UserId,
-		"alternativeId", claims.AlternativeID)
 
 	// 生成新的访问token
 	newAccessToken, err := auth.GenerateAccessToken(claims.UserId, claims.AlternativeID)

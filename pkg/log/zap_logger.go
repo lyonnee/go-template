@@ -12,22 +12,30 @@ import (
 func NewZapLogger(
 	logConfig config.LogConfig,
 ) (*zap.Logger, error) {
-	encoder := getEncoder()
+	encoder := getEncoder(logConfig.Format, logConfig.Caller)
 
 	var cores = make([]zapcore.Core, 0)
 
-	fileCore, err := getFileWriterCore(encoder, logConfig.Filename, logConfig.ToFileLevel, logConfig.MaxSize, logConfig.MaxBackups, logConfig.MaxAge)
+	consoleCore, err := getConsoleWriterCore(encoder, logConfig.Level)
 	if err != nil {
 		return nil, err
 	}
-	cores = append(cores, fileCore)
+	cores = append(cores, consoleCore)
 
-	if logConfig.EnableToConsole {
-		consoleCore, err := getConsoleWriterCore(encoder, logConfig.ToConsoleLevel)
+	if logConfig.ToFile {
+		fileCore, err := getFileWriterCore(
+			encoder,
+			logConfig.LogFileConfig.Filename,
+			logConfig.LogFileConfig.LogLevel,
+			logConfig.LogFileConfig.MaxSize,
+			logConfig.LogFileConfig.MaxBackups,
+			logConfig.LogFileConfig.MaxAge,
+			logConfig.LogFileConfig.IsCompression,
+		)
 		if err != nil {
 			return nil, err
 		}
-		cores = append(cores, consoleCore)
+		cores = append(cores, fileCore)
 	}
 
 	core := zapcore.NewTee(cores...)
@@ -35,15 +43,27 @@ func NewZapLogger(
 	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1)), nil
 }
 
-func getEncoder() zapcore.Encoder {
+func getEncoder(format, encodeCaller string) zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderConfig.TimeKey = "time"
 	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	encoderConfig.EncodeDuration = zapcore.SecondsDurationEncoder
-	encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
 
-	return zapcore.NewJSONEncoder(encoderConfig)
+	if encodeCaller == "full" {
+		encoderConfig.EncodeCaller = zapcore.FullCallerEncoder
+	} else {
+		encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	}
+
+	var encoder func(cfg zapcore.EncoderConfig) zapcore.Encoder
+	if format == "console" {
+		encoder = zapcore.NewConsoleEncoder
+	} else {
+		encoder = zapcore.NewJSONEncoder
+	}
+
+	return encoder(encoderConfig)
 }
 
 func getConsoleWriterCore(encoder zapcore.Encoder, levelStr string) (zapcore.Core, error) {
@@ -55,7 +75,7 @@ func getConsoleWriterCore(encoder zapcore.Encoder, levelStr string) (zapcore.Cor
 	return zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), level), nil
 }
 
-func getFileWriterCore(encoder zapcore.Encoder, filename, levelStr string, maxSize, maxBackups, maxAge int) (zapcore.Core, error) {
+func getFileWriterCore(encoder zapcore.Encoder, filename, levelStr string, maxSize, maxBackups, maxAge int, isCompression bool) (zapcore.Core, error) {
 	level, err := zapcore.ParseLevel(levelStr)
 	if err != nil {
 		return nil, err
@@ -66,6 +86,7 @@ func getFileWriterCore(encoder zapcore.Encoder, filename, levelStr string, maxSi
 		MaxSize:    maxSize,
 		MaxBackups: maxBackups,
 		MaxAge:     maxAge,
+		Compress:   isCompression,
 	}
 
 	syncer := zapcore.AddSync(lumberJackLogger)

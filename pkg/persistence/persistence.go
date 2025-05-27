@@ -1,11 +1,13 @@
 package persistence
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/lyonnee/go-template/config"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/qustavo/sqlhooks/v2"
@@ -13,7 +15,9 @@ import (
 
 var db *sqlx.DB
 
-func Initialize(config config.PersistenceConfig) error {
+func Initialize(config config.PersistenceConfig, logger log.Logger) error {
+	sql.Register(SQL_LOGGER_DRIVER, sqlhooks.Wrap(pq.Driver{}, &LoggerHooks{Logger: logger}))
+
 	pgDb, err := initPostgres(config.Postgres)
 	if err != nil {
 		return err
@@ -25,16 +29,7 @@ func Initialize(config config.PersistenceConfig) error {
 	db.SetConnMaxLifetime(config.ConnMaxLifetime)
 	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
 
-	// Note: LoggerHooks will be initialized separately with proper logger injection
-	sql.Register("sql-logger", sqlhooks.Wrap(&sqlhooks.Driver{}, &LoggerHooks{}))
-
 	return nil
-}
-
-// SetLogger sets the logger for SQL hooks
-func SetLogger(logger log.Logger) {
-	// Update the registered driver with the new logger
-	sql.Register("sql-logger", sqlhooks.Wrap(&sqlhooks.Driver{}, &LoggerHooks{Logger: logger}))
 }
 
 func NewConn(ctx context.Context) (*sqlx.Conn, error) {
@@ -70,9 +65,9 @@ func (hooks *LoggerHooks) After(ctx context.Context, query string, args ...inter
 	begin := ctx.Value("sql_begin").(time.Time)
 
 	hooks.Logger.InfoKV("SQL executed",
-		"sql", query,
+		"sql", removeEscapes(query),
 		"args", args,
-		"duration", time.Since(begin),
+		"duration", time.Since(begin).String(),
 	)
 	return ctx, nil
 }
@@ -83,9 +78,22 @@ func (hooks *LoggerHooks) OnError(_ context.Context, err error, query string, ar
 	}
 
 	hooks.Logger.ErrorKV("SQL error",
-		"sql", query,
+		"sql", removeEscapes(query),
 		"args", args,
 		"error", err,
 	)
 	return nil
+}
+
+func removeEscapes(s string) string {
+	var buf bytes.Buffer
+	for _, r := range s {
+		switch r {
+		case '\n', '\t', '\\':
+			continue // 跳过转义字符
+		default:
+			buf.WriteRune(r)
+		}
+	}
+	return buf.String()
 }

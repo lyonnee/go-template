@@ -9,6 +9,5 @@ type BaseModel struct {
 type SoftDelete_BaseModel struct {
 	BaseModel
 
-	IsDeleted bool  `json:"is_deleted"` // Indicates whether the record is soft deleted. If true, the record is considered deleted, and the DeletedAt field stores the timestamp of deletion.
 	DeletedAt int64 `json:"deleted_at"`
 }

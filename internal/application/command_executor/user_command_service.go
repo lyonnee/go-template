@@ -46,24 +46,13 @@ func (s *UserCommandService) UpdateUsername(ctx context.Context, cmd *UpdateUser
 		return nil, err
 	}
 	defer tx.Rollback()
-
-	s.logger.DebugKV("Transaction started for username update", "userId", cmd.UserID)
-
+	// 使用事务执行器
 	userRepoWithTx := s.userRepo.WithExecutor(tx)
 
 	// 检查用户是否存在
 	user, err := userRepoWithTx.FindById(ctx, cmd.UserID)
 	if err != nil {
 		s.logger.ErrorKV("Failed to find user for username update", "error", err, "userId", cmd.UserID)
-		return nil, err
-	}
-
-	s.logger.DebugKV("User found for username update",
-		"userId", cmd.UserID,
-		"currentUsername", user.Username)
-
-	if err := userRepoWithTx.UpdateUsername(ctx, user); err != nil {
-		s.logger.ErrorKV("Failed to update username", "error", err, "userId", cmd.UserID)
 		return nil, err
 	}
 

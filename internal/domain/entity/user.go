@@ -19,7 +19,6 @@ type User struct {
 	Email     string
 	Phone     string
 
-	IsDeleted bool
 	DeletedAt int64
 }
 
@@ -48,7 +47,7 @@ func NewUser(username, pwd, email, phone string) (*User, error) {
 		CreatedAt: now,
 		UpdatedAt: now,
 
-		IsDeleted: false,
+		DeletedAt: 0,
 
 		Username:  username,
 		PwdSecret: pwdSecret,

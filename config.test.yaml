@@ -1,14 +1,18 @@
 http:
   port: :80
 
-log:
-  enable_to_console: true
-  to_console_level: info # debug / info / warn / error / dpanic / panic / fatal
-  to_file_level: info
-  filename: ./_logs/test.log
-  max_size: 10 #MB
-  max_age: 7 #days
-  max_backups: 64
+log: 
+  format: "json"        # 输出格式，console 或 json，默认是 console
+  caller: "short"          # 输出文件路径，full 或 short，默认是 full
+  level: info # debug / info / warn / error / dpanic / panic / fatal
+  to_file: true
+  log_file_config:
+    filename: ./_logs/test.log
+    log_level: info
+    max_size: 10 # 最大文件大小(MB)，默认值10MB
+    max_age: 7 # 保留旧文件的最大天数，默认值3天
+    max_backups: 64 # 保留旧文件的最大个数，默认值100个
+    isCompression: false # 是否压缩
 
 persistence:
   mysql:

@@ -55,9 +55,9 @@ func (r *UserRepositoryImpl) FindById(ctx context.Context, userId int64) (*entit
 	}
 
 	query := `
-		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, is_deleted, deleted_at 
+		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
 		FROM users 
-		WHERE id = $1 AND is_deleted = false
+		WHERE id = $1 AND deleted_at = 0
 	`
 
 	var userModel model.UserModel
@@ -69,7 +69,6 @@ func (r *UserRepositoryImpl) FindById(ctx context.Context, userId int64) (*entit
 		&userModel.PwdSecret,
 		&userModel.Email,
 		&userModel.Phone,
-		&userModel.IsDeleted,
 		&userModel.DeletedAt,
 	)
 
@@ -87,18 +86,18 @@ func (r *UserRepositoryImpl) FindById(ctx context.Context, userId int64) (*entit
 }
 
 // Create 创建新用户
-func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) (*entity.User, error) {
+func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) error {
 	r.logger.InfoKV("Creating new user", "username", user.Username, "email", user.Email)
 
 	executor, err := r.getExecutor()
 	if err != nil {
 		r.logger.ErrorKV("Failed to get executor", "error", err)
-		return nil, err
+		return err
 	}
 
 	if user == nil {
 		r.logger.Error("Invalid user input: user is nil")
-		return nil, domainErrors.ErrInvalidUserInput
+		return domainErrors.ErrInvalidUserInput
 	}
 
 	// 检查用户名、邮箱和手机号是否已存在
@@ -108,18 +107,18 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) (*en
 			"username", user.Username,
 			"email", user.Email,
 			"error", err)
-		return nil, err
+		return err
 	}
 	if exists {
 		r.logger.WarnKV("User with these details already exists",
 			"username", user.Username,
 			"email", user.Email)
-		return nil, errors.New("user with these details already exists")
+		return errors.New("user with these details already exists")
 	}
 
 	now := time.Now().Unix()
 	query := `
-		INSERT INTO users (created_at, updated_at, username, pwd_secret, email, phone, is_deleted, deleted_at) 
+		INSERT INTO users (created_at, updated_at, username, pwd_secret, email, phone, deleted_at) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
 	`
@@ -132,7 +131,6 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) (*en
 		user.PwdSecret,
 		user.Email,
 		user.Phone,
-		false,
 		0,
 	).Scan(&id)
 
@@ -141,20 +139,19 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) (*en
 			"username", user.Username,
 			"email", user.Email,
 			"error", err)
-		return nil, err
+		return err
 	}
 
 	user.ID = id
 	user.CreatedAt = now
 	user.UpdatedAt = now
-	user.IsDeleted = false
 	user.DeletedAt = 0
 
 	r.logger.InfoKV("User created successfully",
 		"userId", id,
 		"username", user.Username)
 
-	return user, nil
+	return nil
 }
 
 // Update 更新用户信息
@@ -208,7 +205,7 @@ func (r *UserRepositoryImpl) Delete(ctx context.Context, userId int64) error {
 	now := time.Now().Unix()
 	query := `
 		UPDATE users 
-		SET is_deleted = true, deleted_at = $1 
+		SET deleted_at = $1 
 		WHERE id = $2
 	`
 
@@ -237,23 +234,23 @@ func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string
 	}
 
 	query := `
-		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, is_deleted, deleted_at 
+		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
 		FROM users 
-		WHERE username = $1 AND is_deleted = false
+		WHERE username = $1 AND deleted_at = 0
 	`
 
 	var userModel model.UserModel
-	err = executor.QueryRowxContext(ctx, query, username).Scan(
-		&userModel.ID,
-		&userModel.CreatedAt,
-		&userModel.UpdatedAt,
-		&userModel.Username,
-		&userModel.PwdSecret,
-		&userModel.Email,
-		&userModel.Phone,
-		&userModel.IsDeleted,
-		&userModel.DeletedAt,
-	)
+	// err = executor.QueryRowxContext(ctx, query, username).Scan(
+	// 	&userModel.ID,
+	// 	&userModel.CreatedAt,
+	// 	&userModel.UpdatedAt,
+	// 	&userModel.Username,
+	// 	&userModel.PwdSecret,
+	// 	&userModel.Email,
+	// 	&userModel.Phone,
+	// 	&userModel.DeletedAt,
+	// )
+	err = executor.QueryRowxContext(ctx, query, username).StructScan(&userModel)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -273,9 +270,9 @@ func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*en
 	}
 
 	query := `
-		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, is_deleted, deleted_at 
+		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
 		FROM users 
-		WHERE email = $1 AND is_deleted = false
+		WHERE email = $1 AND deleted_at = 0
 	`
 
 	var userModel model.UserModel
@@ -287,7 +284,6 @@ func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*en
 		&userModel.PwdSecret,
 		&userModel.Email,
 		&userModel.Phone,
-		&userModel.IsDeleted,
 		&userModel.DeletedAt,
 	)
 
@@ -309,9 +305,9 @@ func (r *UserRepositoryImpl) FindByPhone(ctx context.Context, phone string) (*en
 	}
 
 	query := `
-		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, is_deleted, deleted_at 
+		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
 		FROM users 
-		WHERE phone = $1 AND is_deleted = false
+		WHERE phone = $1 AND deleted_at = 0
 	`
 
 	var userModel model.UserModel
@@ -323,7 +319,6 @@ func (r *UserRepositoryImpl) FindByPhone(ctx context.Context, phone string) (*en
 		&userModel.PwdSecret,
 		&userModel.Email,
 		&userModel.Phone,
-		&userModel.IsDeleted,
 		&userModel.DeletedAt,
 	)
 
@@ -575,7 +570,6 @@ func (r *UserRepositoryImpl) entityToModel(user *entity.User) *model.UserModel {
 				CreatedAt: user.CreatedAt,
 				UpdatedAt: user.UpdatedAt,
 			},
-			IsDeleted: user.IsDeleted,
 			DeletedAt: user.DeletedAt,
 		},
 		Username:  user.Username,
@@ -594,7 +588,6 @@ func (r *UserRepositoryImpl) modelToEntity(userModel *model.UserModel) *entity.U
 		PwdSecret: userModel.PwdSecret,
 		Email:     userModel.Email,
 		Phone:     userModel.Phone,
-		IsDeleted: userModel.IsDeleted,
 		DeletedAt: userModel.DeletedAt,
 	}
 }

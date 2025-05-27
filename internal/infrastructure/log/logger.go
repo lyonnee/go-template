@@ -1,5 +1,15 @@
 package log
 
+var logger Logger
+
+func SetGLogger(l Logger) {
+	logger = l
+}
+
+func GLogger() Logger {
+	return logger
+}
+
 // Logger 定义通用日志接口，不依赖任何外部日志库
 type Logger interface {
 	// 基本日志方法

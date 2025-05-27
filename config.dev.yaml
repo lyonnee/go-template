@@ -1,14 +1,20 @@
 http:
-  port: :8081
+  port: :8080
+  read_timeout: 5s
+  write_timeout: 10s
 
 log: 
-  enable_to_console: true
-  to_console_level: debug # debug / info / warn / error / dpanic / panic / fatal
-  to_file_level: debug
-  filename: ./_logs/dev.log
-  max_size: 10 #MB
-  max_age: 3 #days
-  max_backups: 7
+  format: "console"        # 输出格式，console 或 json，默认是 console
+  caller: "full"          # 输出文件路径，full 或 short，默认是 full
+  level: debug # debug / info / warn / error / dpanic / panic / fatal
+  to_file: true
+  log_file_config:
+    filename: ./_logs/dev.log
+    log_level: debug
+    max_size: 10 # 最大文件大小(MB)，默认值10MB
+    max_age: 3 # 保留旧文件的最大天数，默认值3天
+    max_backups: 100 # 保留旧文件的最大个数，默认值100个
+    isCompression: false # 是否压缩
 
 persistence:
   max_open_conns: 25        # 最大打开连接数
@@ -22,17 +28,17 @@ persistence:
 
 auth:
   jwt:
-    secret_key: go-template
-    access_token_expiry: 15m
-    refresh_token_expiry: 168h
-    issuer: lyon.nee
+    secret_key: go-template # 密钥
+    access_token_expiry: 15m # 有效期
+    refresh_token_expiry: 168h # 有效期
+    issuer: lyon.nee # 签发人
 
 cache:
   redis:
-    host: localhost
-    port: 6379
-    username: ""
+    host: localhost # 主机
+    port: 6379 # 端口
+    username: "" 
     password: ""
-    database: 0
+    database: 0 # 数据库
     framework: standalone  # standalone or cluster
     prefix: "go-template:"

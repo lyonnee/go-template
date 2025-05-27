@@ -31,10 +31,10 @@ type Container struct {
 }
 
 // NewContainer 创建新的容器实例
-func NewContainer() *Container {
+func NewContainer(logger log.Logger) *Container {
 	container := &Container{}
 
-	container.initializeCommonComponents()
+	container.initializeCommonComponents(logger)
 	container.initializeRepositories()
 	container.initializeApplicationServices()
 	container.initializeControllers()
@@ -42,9 +42,9 @@ func NewContainer() *Container {
 }
 
 // initializeCommonComponents 初始化通用组件
-func (c *Container) initializeCommonComponents() {
+func (c *Container) initializeCommonComponents(logger log.Logger) {
 	// 临时使用 noop logger，实际使用时应该注入真实的 logger
-	c.logger = log.NewNoopLogger()
+	c.logger = logger
 }
 
 // initializeRepositories 初始化仓储层

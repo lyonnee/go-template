@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/lyonnee/go-template/config"
+	pkgLog "github.com/lyonnee/go-template/pkg/log"
 	"github.com/lyonnee/go-template/pkg/persistence"
 )
 
@@ -23,8 +24,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	zapLogger, err := pkgLog.NewZapLogger(config.Log())
+	if err != nil {
+		log.Printf("init zap logger failed, err:%s", err)
+		os.Exit(1)
+	}
+	logger := pkgLog.NewZapSugarLogger(zapLogger)
+
 	// 初始化数据库连接
-	if err := persistence.Initialize(config.Persistence()); err != nil {
+	if err := persistence.Initialize(config.Persistence(), logger); err != nil {
 		log.Fatalf("Failed to initialize persistence: %v", err)
 		os.Exit(1)
 	}

@@ -62,6 +62,11 @@ func (s *UserCommandService) UpdateUsername(ctx context.Context, cmd *UpdateUser
 		return nil, err
 	}
 
+	if err := userRepoWithTx.UpdateUsername(ctx, user); err != nil {
+		s.logger.ErrorKV("Failed to update username in repository", "error", err, "userId", cmd.UserID)
+		return nil, err
+	}
+
 	// 提交事务
 	if err := tx.Commit(); err != nil {
 		s.logger.ErrorKV("Failed to commit username update transaction", "error", err, "userId", cmd.UserID)

@@ -86,6 +86,11 @@ func (s *AuthCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 		return nil, err
 	}
 
+	if err := userRepoWithTx.Create(ctx, user); err != nil {
+		s.logger.ErrorKV("Failed to create user in database", "error", err)
+		return nil, err
+	}
+
 	// 生成token
 	accessToken, err := auth.GenerateAccessToken(user.ID, user.Username)
 	if err != nil {

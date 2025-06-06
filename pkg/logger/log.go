@@ -1,4 +1,4 @@
-package log
+package logger
 
 import (
 	"github.com/lyonnee/go-template/config"

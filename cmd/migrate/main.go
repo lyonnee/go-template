@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/lyonnee/go-template/config"
-	pkgLog "github.com/lyonnee/go-template/pkg/log"
+	"github.com/lyonnee/go-template/pkg/logger"
 	"github.com/lyonnee/go-template/pkg/persistence"
 )
 
@@ -25,7 +25,7 @@ func main() {
 	}
 
 	// initialize logger
-	if err := pkgLog.Initialize(); err != nil {
+	if err := logger.Initialize(); err != nil {
 		stdLog.Printf("init logger failed, err:%s", err)
 		os.Exit(1)
 	}

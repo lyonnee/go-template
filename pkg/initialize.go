@@ -2,13 +2,13 @@ package pkg
 
 import (
 	"github.com/lyonnee/go-template/pkg/cache"
-	"github.com/lyonnee/go-template/pkg/log"
+	"github.com/lyonnee/go-template/pkg/logger"
 	"github.com/lyonnee/go-template/pkg/mq"
 	"github.com/lyonnee/go-template/pkg/persistence"
 )
 
 func Initialize() error {
-	if err := log.Initialize(); err != nil {
+	if err := logger.Initialize(); err != nil {
 		return err
 	}
 

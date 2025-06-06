@@ -1,9 +1,5 @@
 package config
 
-func Cache() CacheConfig {
-	return conf.Cache
-}
-
 type CacheConfig struct {
 	Redis RedisConfig `mapstructure:"redis"`
 }

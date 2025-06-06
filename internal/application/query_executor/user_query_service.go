@@ -7,6 +7,7 @@ import (
 
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	"github.com/lyonnee/go-template/internal/domain/repository"
+	"github.com/lyonnee/go-template/pkg/container"
 	"github.com/lyonnee/go-template/pkg/persistence"
 )
 
@@ -17,11 +18,11 @@ type UserQueryService struct {
 }
 
 // NewUserApplicationService 创建用户应用服务
-func NewUserQueryService(userRepo repository.UserRepository, logger log.Logger) *UserQueryService {
+func NewUserQueryService() (*UserQueryService, error) {
 	return &UserQueryService{
-		userRepo: userRepo,
-		logger:   logger,
-	}
+		userRepo: container.GetService[repository.UserRepository](),
+		logger:   container.GetService[log.Logger](),
+	}, nil
 }
 
 // GetUserById 根据ID获取用户

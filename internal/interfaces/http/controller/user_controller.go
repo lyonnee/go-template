@@ -12,6 +12,7 @@ import (
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
 	"github.com/lyonnee/go-template/pkg/auth"
+	"github.com/lyonnee/go-template/pkg/container"
 )
 
 type UserController struct {
@@ -20,15 +21,12 @@ type UserController struct {
 	logger           log.Logger
 }
 
-func NewUserController(
-	userCmdService *command_executor.UserCommandService,
-	userQueryService *query_executor.UserQueryService,
-	logger log.Logger) *UserController {
+func NewUserController() (*UserController, error) {
 	return &UserController{
-		userCmdService:   userCmdService,
-		userQueryService: userQueryService,
-		logger:           logger,
-	}
+		userCmdService:   container.GetService[*command_executor.UserCommandService](),
+		userQueryService: container.GetService[*query_executor.UserQueryService](),
+		logger:           container.GetService[log.Logger](),
+	}, nil
 }
 
 // GetUser 获取用户信息

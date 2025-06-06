@@ -10,6 +10,7 @@ import (
 	"github.com/lyonnee/go-template/internal/domain/repository"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/pkg/auth"
+	"github.com/lyonnee/go-template/pkg/container"
 	"github.com/lyonnee/go-template/pkg/persistence"
 )
 
@@ -19,11 +20,11 @@ type AuthCommandService struct {
 }
 
 // NewAuthService 创建认证服务
-func NewAuthCommandService(userRepo repository.UserRepository, logger log.Logger) *AuthCommandService {
+func NewAuthCommandService() (*AuthCommandService, error) {
 	return &AuthCommandService{
-		userRepo: userRepo,
-		logger:   logger,
-	}
+		userRepo: container.GetService[repository.UserRepository](),
+		logger:   container.GetService[log.Logger](),
+	}, nil
 }
 
 // SignUpCmd 注册命令
@@ -51,7 +52,6 @@ type LoginCmd struct {
 type LoginResult struct {
 	AccessToken  string
 	RefreshToken string
-	User         *entity.User
 }
 
 // RefreshTokenCmd 刷新token命令
@@ -150,23 +150,10 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 		return nil, err
 	}
 
-	// 验证密码
-	if !auth.CheckPasswordHash(cmd.Password, user.PwdSecret) {
+	accessToken, refreshToken, err := user.Login(cmd.Password)
+	if err != nil {
 		s.logger.WarnKV("Login failed - invalid password", "username", cmd.Username, "userId", user.ID)
 		return nil, errors.New("invalid username or password")
-	}
-
-	// 生成token
-	accessToken, err := auth.GenerateAccessToken(user.ID, user.Username)
-	if err != nil {
-		s.logger.ErrorKV("Failed to generate access token", "error", err, "username", cmd.Username, "userId", user.ID)
-		return nil, err
-	}
-
-	refreshToken, err := auth.GenerateRefreshToken(user.ID, user.Username)
-	if err != nil {
-		s.logger.ErrorKV("Failed to generate refresh token", "error", err, "username", cmd.Username, "userId", user.ID)
-		return nil, err
 	}
 
 	s.logger.InfoKV("User logged in successfully", "username", cmd.Username, "userId", user.ID)
@@ -174,7 +161,6 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 	return &LoginResult{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		User:         user,
 	}, nil
 }
 

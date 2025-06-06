@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	stdLog "log"
 	"os"
 
 	"github.com/lyonnee/go-template/config"
@@ -18,42 +18,41 @@ func main() {
 	)
 	flag.Parse()
 
-	// 加载配置
+	// initialize config
 	if err := config.Load(*env); err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		stdLog.Printf("load config failed, err:%s", err)
 		os.Exit(1)
 	}
 
-	zapLogger, err := pkgLog.NewZapLogger(config.Log())
-	if err != nil {
-		log.Printf("init zap logger failed, err:%s", err)
+	// initialize logger
+	if err := pkgLog.Initialize(); err != nil {
+		stdLog.Printf("init logger failed, err:%s", err)
 		os.Exit(1)
 	}
-	logger := pkgLog.NewZapSugarLogger(zapLogger)
 
-	// 初始化数据库连接
-	if err := persistence.Initialize(config.Persistence(), logger); err != nil {
-		log.Fatalf("Failed to initialize persistence: %v", err)
+	// initialize database connection
+	if err := persistence.Initialize(); err != nil {
+		stdLog.Printf("Failed to initialize persistence: %v", err)
 		os.Exit(1)
 	}
 
 	switch *action {
 	case "up":
 		if err := runMigrations(); err != nil {
-			log.Fatalf("Migration failed: %v", err)
+			stdLog.Fatalf("Migration failed: %v", err)
 		}
 		fmt.Println("Migrations completed successfully")
 	case "down":
 		if err := rollbackMigrations(); err != nil {
-			log.Fatalf("Rollback failed: %v", err)
+			stdLog.Fatalf("Rollback failed: %v", err)
 		}
 		fmt.Println("Rollback completed successfully")
 	case "status":
 		if err := showMigrationStatus(); err != nil {
-			log.Fatalf("Failed to show migration status: %v", err)
+			stdLog.Fatalf("Failed to show migration status: %v", err)
 		}
 	default:
-		log.Fatalf("Unknown action: %s", *action)
+		stdLog.Fatalf("Unknown action: %s", *action)
 	}
 }
 

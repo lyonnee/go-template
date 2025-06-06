@@ -11,7 +11,7 @@ type ZapSugarLogger struct {
 }
 
 // NewZapSugarLogger 创建新的zap sugar日志实例
-func NewZapSugarLogger(zapLogger *zap.Logger) log.Logger {
+func NewZapSugarLogger(zapLogger *zap.Logger) *ZapSugarLogger {
 	return &ZapSugarLogger{
 		sugar: zapLogger.Sugar(),
 	}

@@ -7,15 +7,14 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/route"
-	appContainer "github.com/lyonnee/go-template/internal/app"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/internal/interfaces/http/controller"
 	"github.com/lyonnee/go-template/internal/interfaces/http/middleware"
+	"github.com/lyonnee/go-template/pkg/container"
 )
 
 func Register(hz *server.Hertz) {
-	// 初始化依赖注入容器
-	logger := log.GLogger()
-	container := appContainer.NewContainer(logger)
+	logger := container.GetService[log.Logger]()
 
 	// process panic
 	hz.PanicHandler = panicHandler
@@ -29,19 +28,20 @@ func Register(hz *server.Hertz) {
 	// register handler
 	apiRouter := hz.Group("/api")
 
-	addV1(apiRouter, container)
+	addV1(apiRouter)
 }
 
 func panicHandler(c context.Context, ctx *app.RequestContext) {
 
 }
 
-func addV1(r *route.RouterGroup, container *appContainer.Container) {
+func addV1(r *route.RouterGroup) {
 	base := r.Group("v1")
 
 	// 健康检查
 	{
-		healthController := container.HealthController()
+		healthController := container.GetService[*controller.HealthController]()
+
 		base.GET("/health", healthController.HealthCheck)
 		base.GET("/ready", healthController.ReadinessCheck)
 		base.GET("/live", healthController.LivenessCheck)
@@ -49,7 +49,7 @@ func addV1(r *route.RouterGroup, container *appContainer.Container) {
 
 	// 认证相关
 	{
-		authController := container.AuthController()
+		authController := container.GetService[*controller.AuthController]()
 
 		authRouter := base.Group("/auth")
 		authRouter.POST("/signup", authController.SignUp)
@@ -59,7 +59,8 @@ func addV1(r *route.RouterGroup, container *appContainer.Container) {
 
 	// 用户相关 (需要认证)
 	{
-		userController := container.UserController()
+		userController := container.GetService[*controller.UserController]()
+
 		userRouter := base.Group("/users")
 		userRouter.Use(middleware.JWTAuth())
 		userRouter.GET("/:id", userController.GetUser)

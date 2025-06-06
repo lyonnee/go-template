@@ -7,6 +7,7 @@ import (
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	"github.com/lyonnee/go-template/internal/domain/repository"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/pkg/container"
 	"github.com/lyonnee/go-template/pkg/persistence"
 )
 
@@ -16,11 +17,11 @@ type UserCommandService struct {
 }
 
 // NewUserApplicationService 创建用户应用服务
-func NewUserCommandService(userRepo repository.UserRepository, logger log.Logger) *UserCommandService {
+func NewUserCommandService() (*UserCommandService, error) {
 	return &UserCommandService{
-		userRepo: userRepo,
-		logger:   logger,
-	}
+		userRepo: container.GetService[repository.UserRepository](),
+		logger:   container.GetService[log.Logger](),
+	}, nil
 }
 
 // UpdateUsernameCmd 更新用户名命令

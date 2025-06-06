@@ -9,6 +9,7 @@ import (
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
+	"github.com/lyonnee/go-template/pkg/container"
 )
 
 type AuthController struct {
@@ -16,11 +17,11 @@ type AuthController struct {
 	logger         log.Logger
 }
 
-func NewAuthController(authCmdService *command_executor.AuthCommandService, logger log.Logger) *AuthController {
+func NewAuthController() (*AuthController, error) {
 	return &AuthController{
-		authCmdService: authCmdService,
-		logger:         logger,
-	}
+		authCmdService: container.GetService[*command_executor.AuthCommandService](),
+		logger:         container.GetService[log.Logger](),
+	}, nil
 }
 
 // SignUp 用户注册
@@ -111,18 +112,12 @@ func (c *AuthController) Login(ctx context.Context, reqCtx *app.RequestContext) 
 		return
 	}
 
-	c.logger.InfoKV("User logged in successfully", "username", req.Username, "userId", result.User.ID)
+	c.logger.InfoKV("User logged in successfully", "username", req.Username)
 
 	// 构造响应
 	resp := dto.LoginResp{
 		AccessToken:  result.AccessToken,
 		RefreshToken: result.RefreshToken,
-		User: &dto.UserInfo{
-			ID:       result.User.ID,
-			Username: result.User.Username,
-			Email:    result.User.Email,
-			Phone:    result.User.Phone,
-		},
 	}
 
 	dto.Ok(reqCtx, "登录成功", resp)

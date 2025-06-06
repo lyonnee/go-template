@@ -2,10 +2,6 @@ package config
 
 import "time"
 
-func Auth() AuthConfig {
-	return conf.Auth
-}
-
 type AuthConfig struct {
 	JWT JWTConfig `mapstructure:"jwt"`
 }

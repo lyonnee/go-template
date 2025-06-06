@@ -2,10 +2,6 @@ package config
 
 import "time"
 
-func Persistence() PersistenceConfig {
-	return conf.Persistence
-}
-
 type PersistenceConfig struct {
 	MaxOpenConns    int           `mapstructure:"max_open_conns"`
 	MaxIdleConns    int           `mapstructure:"max_idle_conns"`

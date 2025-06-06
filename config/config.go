@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/lyonnee/go-template/pkg/container"
 	"github.com/spf13/viper"
 )
 
@@ -44,6 +45,10 @@ func Load(env string) error {
 	if err := viper.Unmarshal(conf); err != nil {
 		return fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+
+	container.AddSingletonService[*Config](func() (*Config, error) {
+		return conf, nil
+	})
 
 	return nil
 }

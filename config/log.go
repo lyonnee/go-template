@@ -1,9 +1,5 @@
 package config
 
-func Log() LogConfig {
-	return conf.Log
-}
-
 type LogConfig struct {
 	Format string `mapstructure:"format"`
 	Caller string `mapstructure:"caller"`

@@ -8,9 +8,8 @@ type LoginReq struct {
 
 // LoginResp 登录响应
 type LoginResp struct {
-	AccessToken  string    `json:"access_token"`
-	RefreshToken string    `json:"refresh_token"`
-	User         *UserInfo `json:"user"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 // RefreshTokenReq 刷新token请求

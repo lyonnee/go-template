@@ -10,12 +10,16 @@ import (
 	"github.com/lib/pq"
 	"github.com/lyonnee/go-template/config"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/pkg/container"
 	"github.com/qustavo/sqlhooks/v2"
 )
 
 var db *sqlx.DB
 
-func Initialize(config config.PersistenceConfig, logger log.Logger) error {
+func Initialize() error {
+	config := container.GetService[*config.Config]().Persistence
+	logger := container.GetService[log.Logger]()
+
 	sql.Register(SQL_LOGGER_DRIVER, sqlhooks.Wrap(pq.Driver{}, &LoggerHooks{Logger: logger}))
 
 	pgDb, err := initPostgres(config.Postgres)

@@ -1,4 +1,4 @@
-package repository
+package repository_impl
 
 import (
 	"context"
@@ -7,11 +7,12 @@ import (
 	"time"
 
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
+	"github.com/lyonnee/go-template/pkg/container"
 
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	"github.com/lyonnee/go-template/internal/domain/repository"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
-	"github.com/lyonnee/go-template/internal/infrastructure/repository/model"
+	"github.com/lyonnee/go-template/internal/infrastructure/repository_impl/model"
 )
 
 // UserRepositoryImpl 用户存储库实现
@@ -21,11 +22,11 @@ type UserRepositoryImpl struct {
 }
 
 // NewUserRepository 创建一个新的用户存储库实例
-func NewUserRepository(logger log.Logger) repository.UserRepository {
+func NewUserRepository() (repository.UserRepository, error) {
 	return &UserRepositoryImpl{
 		executor: nil, // 初始化时没有执行器，需要通过 WithExecutor 设置
-		logger:   logger,
-	}
+		logger:   container.GetService[log.Logger](),
+	}, nil
 }
 
 // WithExecutor 设置特定的执行器，返回一个新的存储库实例

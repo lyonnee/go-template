@@ -58,6 +58,30 @@ func NewUser(username, pwd, email, phone string) (*User, error) {
 	return u, nil
 }
 
+func (u *User) Login(pwd string) (string, string, error) {
+	// validate password
+	if !auth.CheckPasswordHash(pwd, u.PwdSecret) {
+		return "", "", errors.New("invalid username or password")
+	}
+
+	return u.BuildToken()
+}
+
+func (u *User) BuildToken() (string, string, error) {
+	// build access token and refresh token
+	accessToken, err := auth.GenerateAccessToken(u.ID, u.Username)
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken, err := auth.GenerateRefreshToken(u.ID, u.Username)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
+}
+
 func validateUsername(username string) error {
 	username = strings.TrimSpace(username)
 	if username == "" {

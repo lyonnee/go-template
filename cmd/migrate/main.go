@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/lyonnee/go-template/config"
+	"github.com/lyonnee/go-template/pkg/database"
 	"github.com/lyonnee/go-template/pkg/logger"
-	"github.com/lyonnee/go-template/pkg/persistence"
 )
 
 func main() {
@@ -19,19 +19,22 @@ func main() {
 	flag.Parse()
 
 	// initialize config
-	if err := config.Load(*env); err != nil {
+	conf, err := config.Load(*env)
+	if err != nil {
 		stdLog.Printf("load config failed, err:%s", err)
 		os.Exit(1)
 	}
 
 	// initialize logger
-	if err := logger.Initialize(); err != nil {
+	newLogger, err := logger.NewLogger(conf.Log)
+	if err != nil {
 		stdLog.Printf("init logger failed, err:%s", err)
 		os.Exit(1)
 	}
 
 	// initialize database connection
-	if err := persistence.Initialize(); err != nil {
+	dbContext, err := database.NewDB(&conf.Persistence, newLogger)
+	if err != nil {
 		stdLog.Printf("Failed to initialize persistence: %v", err)
 		os.Exit(1)
 	}

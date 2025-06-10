@@ -8,24 +8,11 @@ import (
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
 	"github.com/lyonnee/go-template/internal/domain/repository"
+	"github.com/lyonnee/go-template/internal/infrastructure/auth"
+	"github.com/lyonnee/go-template/internal/infrastructure/di"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
-	"github.com/lyonnee/go-template/pkg/auth"
-	"github.com/lyonnee/go-template/pkg/container"
-	"github.com/lyonnee/go-template/pkg/persistence"
+	"github.com/lyonnee/go-template/internal/infrastructure/persistence"
 )
-
-type AuthCommandService struct {
-	userRepo repository.UserRepository
-	logger   log.Logger
-}
-
-// NewAuthService 创建认证服务
-func NewAuthCommandService() (*AuthCommandService, error) {
-	return &AuthCommandService{
-		userRepo: container.GetService[repository.UserRepository](),
-		logger:   container.GetService[log.Logger](),
-	}, nil
-}
 
 // SignUpCmd 注册命令
 type SignUpCmd struct {
@@ -64,6 +51,23 @@ type RefreshTokenResult struct {
 	AccessToken string
 }
 
+type AuthCommandService struct {
+	logger    log.Logger
+	dbContext persistence.DBContext
+
+	userRepo repository.UserRepository
+}
+
+// NewAuthService 创建认证服务
+func NewAuthCommandService() (*AuthCommandService, error) {
+	return &AuthCommandService{
+		logger:    di.GetService[log.Logger](),
+		dbContext: di.GetService[persistence.DBContext](),
+
+		userRepo: di.GetService[repository.UserRepository](),
+	}, nil
+}
+
 // SignUp 用户注册
 func (s *AuthCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignUpResult, error) {
 	s.logger.InfoKV("Starting user registration",
@@ -71,7 +75,7 @@ func (s *AuthCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 		"email", cmd.Email)
 
 	// 开启事务
-	tx, err := persistence.NewTx(ctx)
+	tx, err := s.dbContext.NewTx(ctx)
 	if err != nil {
 		s.logger.ErrorKV("Failed to start transaction", "error", err)
 		return nil, err
@@ -131,7 +135,7 @@ func (s *AuthCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginResult, error) {
 	s.logger.DebugKV("Login attempt", "username", cmd.Username)
 
-	conn, err := persistence.NewConn(ctx)
+	conn, err := s.dbContext.NewConn(ctx)
 	if err != nil {
 		s.logger.ErrorKV("Failed to create database connection for login", "error", err, "username", cmd.Username)
 		return nil, err

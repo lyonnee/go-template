@@ -7,10 +7,10 @@ import (
 	"time"
 
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
-	"github.com/lyonnee/go-template/pkg/container"
 
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	"github.com/lyonnee/go-template/internal/domain/repository"
+	"github.com/lyonnee/go-template/internal/infrastructure/di"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/infrastructure/repository_impl/model"
 )
@@ -25,7 +25,7 @@ type UserRepositoryImpl struct {
 func NewUserRepository() (repository.UserRepository, error) {
 	return &UserRepositoryImpl{
 		executor: nil, // 初始化时没有执行器，需要通过 WithExecutor 设置
-		logger:   container.GetService[log.Logger](),
+		logger:   di.GetService[log.Logger](),
 	}, nil
 }
 

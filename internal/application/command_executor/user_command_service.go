@@ -6,23 +6,10 @@ import (
 	"github.com/lyonnee/go-template/internal/domain"
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	"github.com/lyonnee/go-template/internal/domain/repository"
+	"github.com/lyonnee/go-template/internal/infrastructure/di"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
-	"github.com/lyonnee/go-template/pkg/container"
-	"github.com/lyonnee/go-template/pkg/persistence"
+	"github.com/lyonnee/go-template/internal/infrastructure/persistence"
 )
-
-type UserCommandService struct {
-	userRepo repository.UserRepository
-	logger   log.Logger
-}
-
-// NewUserApplicationService 创建用户应用服务
-func NewUserCommandService() (*UserCommandService, error) {
-	return &UserCommandService{
-		userRepo: container.GetService[repository.UserRepository](),
-		logger:   container.GetService[log.Logger](),
-	}, nil
-}
 
 // UpdateUsernameCmd 更新用户名命令
 type UpdateUsernameCmd struct {
@@ -34,6 +21,23 @@ type UpdateResult struct {
 	Ok bool
 }
 
+type UserCommandService struct {
+	logger    log.Logger
+	dbContext persistence.DBContext
+
+	userRepo repository.UserRepository
+}
+
+// NewUserApplicationService 创建用户应用服务
+func NewUserCommandService() (*UserCommandService, error) {
+	return &UserCommandService{
+		logger:    di.GetService[log.Logger](),
+		dbContext: di.GetService[persistence.DBContext](),
+
+		userRepo: di.GetService[repository.UserRepository](),
+	}, nil
+}
+
 // UpdateUsername 更新用户名
 func (s *UserCommandService) UpdateUsername(ctx context.Context, cmd *UpdateUsernameCmd) (*entity.User, error) {
 	s.logger.DebugKV("UpdateUsername called",
@@ -41,7 +45,7 @@ func (s *UserCommandService) UpdateUsername(ctx context.Context, cmd *UpdateUser
 		"newUsername", cmd.Username)
 
 	// 开启事务
-	tx, err := persistence.NewTx(ctx)
+	tx, err := s.dbContext.NewTx(ctx)
 	if err != nil {
 		s.logger.ErrorKV("Failed to start transaction", "error", err, "userId", cmd.UserID)
 		return nil, err

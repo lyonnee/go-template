@@ -11,9 +11,11 @@ import (
 
 	"github.com/lyonnee/go-template/config"
 	"github.com/lyonnee/go-template/internal/bootstrap"
+	"github.com/lyonnee/go-template/internal/infrastructure/di"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
-	"github.com/lyonnee/go-template/pkg"
-	"github.com/lyonnee/go-template/pkg/container"
+	"github.com/lyonnee/go-template/internal/infrastructure/persistence"
+	"github.com/lyonnee/go-template/pkg/database"
+	"github.com/lyonnee/go-template/pkg/logger"
 )
 
 func main() {
@@ -34,16 +36,33 @@ func main() {
 
 func start(env string) {
 	// initialize config
-	if err := config.Load(env); err != nil {
+	conf, err := config.Load(env)
+	if err != nil {
 		stdLog.Printf("load config failed, err:%s", err)
 		os.Exit(1)
 	}
 
-	// initialize pkg modules
-	if err := pkg.Initialize(); err != nil {
-		stdLog.Printf("init pkg modules failed, err:%s", err)
+	di.AddSingletonService[*config.Config](func() (*config.Config, error) {
+		return conf, nil
+	})
+
+	newLogger, err := logger.NewLogger(conf.Log)
+	if err != nil {
+		stdLog.Printf("init logger failed, err:%s", err)
 		os.Exit(1)
 	}
+	di.AddSingletonService[log.Logger](func() (log.Logger, error) {
+		return newLogger, nil
+	})
+
+	dbContext, err := database.NewDB(&conf.Persistence, newLogger)
+	if err != nil {
+		stdLog.Printf("init persistence failed, err:%s", err)
+		os.Exit(1)
+	}
+	di.AddSingletonService[persistence.DBContext](func() (persistence.DBContext, error) {
+		return dbContext, nil
+	})
 
 	// bootstrap the application all services
 	bootstrap.Run()
@@ -57,6 +76,6 @@ func shutdown() {
 	_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	logger := container.GetService[log.Logger]()
+	logger := di.GetService[log.Logger]()
 	logger.Sync()
 }

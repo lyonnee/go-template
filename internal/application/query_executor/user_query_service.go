@@ -3,25 +3,29 @@ package query_executor
 import (
 	"context"
 
+	"github.com/lyonnee/go-template/internal/infrastructure/di"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/internal/infrastructure/persistence"
 
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	"github.com/lyonnee/go-template/internal/domain/repository"
-	"github.com/lyonnee/go-template/pkg/container"
-	"github.com/lyonnee/go-template/pkg/persistence"
 )
 
 // UserApplicationService 用户应用服务
 type UserQueryService struct {
+	logger    log.Logger
+	dbContext persistence.DBContext
+
 	userRepo repository.UserRepository
-	logger   log.Logger
 }
 
 // NewUserApplicationService 创建用户应用服务
 func NewUserQueryService() (*UserQueryService, error) {
 	return &UserQueryService{
-		userRepo: container.GetService[repository.UserRepository](),
-		logger:   container.GetService[log.Logger](),
+		logger:    di.GetService[log.Logger](),
+		dbContext: di.GetService[persistence.DBContext](),
+
+		userRepo: di.GetService[repository.UserRepository](),
 	}, nil
 }
 
@@ -29,7 +33,7 @@ func NewUserQueryService() (*UserQueryService, error) {
 func (s *UserQueryService) GetUserById(ctx context.Context, userId int64) (*entity.User, error) {
 	s.logger.DebugKV("GetUserById called", "userId", userId)
 
-	conn, err := persistence.NewConn(ctx)
+	conn, err := s.dbContext.NewConn(ctx)
 	if err != nil {
 		s.logger.ErrorKV("Failed to create database connection", "error", err, "userId", userId)
 		return nil, err

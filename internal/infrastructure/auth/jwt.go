@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lyonnee/go-template/config"
-	"github.com/lyonnee/go-template/pkg/container"
+	"github.com/lyonnee/go-template/internal/infrastructure/di"
 )
 
 // Claims 自定义Claims
@@ -18,7 +18,7 @@ type Claims struct {
 
 func SecretKey() jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
-		config := container.GetService[*config.Config]().Auth
+		config := di.GetService[*config.Config]().Auth
 
 		return []byte(config.JWT.SecretKey), nil
 	}
@@ -27,7 +27,7 @@ func SecretKey() jwt.Keyfunc {
 // GenerateAccessToken 构建访问token
 // @dev AccessToken 用于身份验证，有效期较短（如 15 分钟）
 func GenerateAccessToken(userID int64, alternativeID string) (string, error) {
-	config := container.GetService[*config.Config]().Auth
+	config := di.GetService[*config.Config]().Auth
 
 	return genToken(userID, alternativeID, config.JWT.AccessTokenExpiry)
 }
@@ -35,7 +35,7 @@ func GenerateAccessToken(userID int64, alternativeID string) (string, error) {
 // GenerateRefreshToken 生成刷新令牌
 // @dev RefreshToken 用于刷新 Access Token，有效期较长（如 7 天），通常存储于安全位置（如 HttpOnly Cookie）
 func GenerateRefreshToken(userID int64, alternativeID string) (string, error) {
-	config := container.GetService[*config.Config]().Auth
+	config := di.GetService[*config.Config]().Auth
 
 	return genToken(userID, alternativeID, config.JWT.RefreshTokenExpiry)
 }
@@ -54,7 +54,7 @@ func RefreshToken(refreshToken string) (string, error) {
 
 // ValidateToken 验证JWT令牌
 func ValidateToken(tokenString string) (*Claims, error) {
-	config := container.GetService[*config.Config]().Auth
+	config := di.GetService[*config.Config]().Auth
 
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -79,7 +79,7 @@ func ValidateToken(tokenString string) (*Claims, error) {
 }
 
 func genToken(userID int64, alternativeID string, expiry time.Duration) (string, error) {
-	config := container.GetService[*config.Config]().Auth
+	config := di.GetService[*config.Config]().Auth
 
 	claims := Claims{
 		AlternativeID: alternativeID,

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/lyonnee/go-template/pkg/container"
 	"github.com/spf13/viper"
 )
 
@@ -18,7 +17,7 @@ type Config struct {
 
 var conf = new(Config)
 
-func Load(env string) error {
+func Load(env string) (*Config, error) {
 	if env == "" {
 		env = "prod"
 	}
@@ -26,7 +25,7 @@ func Load(env string) error {
 	// 使用viper作为配置加载中间件
 	workDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
+		return nil, fmt.Errorf("failed to get working directory: %w", err)
 	}
 
 	viper.SetConfigName(fmt.Sprintf("config.%s", env))
@@ -36,19 +35,15 @@ func Load(env string) error {
 	if err := viper.ReadInConfig(); err != nil {
 		switch err.(type) {
 		case viper.ConfigFileNotFoundError:
-			return fmt.Errorf("config file not found for environment %s: %w", env, err)
+			return nil, fmt.Errorf("config file not found for environment %s: %w", env, err)
 		default:
-			return fmt.Errorf("error reading config file: %w", err)
+			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 	}
 
 	if err := viper.Unmarshal(conf); err != nil {
-		return fmt.Errorf("failed to unmarshal config: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	container.AddSingletonService[*Config](func() (*Config, error) {
-		return conf, nil
-	})
-
-	return nil
+	return conf, nil
 }

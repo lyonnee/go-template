@@ -7,9 +7,9 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/lyonnee/go-template/internal/application/command_executor"
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
+	"github.com/lyonnee/go-template/internal/infrastructure/di"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
-	"github.com/lyonnee/go-template/pkg/container"
 )
 
 type AuthController struct {
@@ -19,8 +19,8 @@ type AuthController struct {
 
 func NewAuthController() (*AuthController, error) {
 	return &AuthController{
-		authCmdService: container.GetService[*command_executor.AuthCommandService](),
-		logger:         container.GetService[log.Logger](),
+		authCmdService: di.GetService[*command_executor.AuthCommandService](),
+		logger:         di.GetService[log.Logger](),
 	}, nil
 }
 

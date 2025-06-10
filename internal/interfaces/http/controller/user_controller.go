@@ -9,10 +9,10 @@ import (
 	"github.com/lyonnee/go-template/internal/application/command_executor"
 	"github.com/lyonnee/go-template/internal/application/query_executor"
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
+	"github.com/lyonnee/go-template/internal/infrastructure/auth"
+	"github.com/lyonnee/go-template/internal/infrastructure/di"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
-	"github.com/lyonnee/go-template/pkg/auth"
-	"github.com/lyonnee/go-template/pkg/container"
 )
 
 type UserController struct {
@@ -23,9 +23,9 @@ type UserController struct {
 
 func NewUserController() (*UserController, error) {
 	return &UserController{
-		userCmdService:   container.GetService[*command_executor.UserCommandService](),
-		userQueryService: container.GetService[*query_executor.UserQueryService](),
-		logger:           container.GetService[log.Logger](),
+		userCmdService:   di.GetService[*command_executor.UserCommandService](),
+		userQueryService: di.GetService[*query_executor.UserQueryService](),
+		logger:           di.GetService[log.Logger](),
 	}, nil
 }
 

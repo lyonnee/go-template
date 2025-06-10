@@ -3,6 +3,7 @@ module github.com/lyonnee/go-template
 go 1.23.7
 
 require (
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/hertz-contrib/cors v0.1.0
 	github.com/lib/pq v1.10.9
@@ -15,6 +16,8 @@ require (
 )
 
 require (
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/samber/go-type-to-string v1.4.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
@@ -56,6 +59,5 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

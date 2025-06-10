@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/lyonnee/go-template/internal/infrastructure/auth"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
-	"github.com/lyonnee/go-template/pkg/auth"
 )
 
 type Token struct {

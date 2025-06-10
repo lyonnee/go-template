@@ -1,52 +1,16 @@
-package persistence
+package database
 
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"time"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
-	"github.com/lyonnee/go-template/config"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
-	"github.com/lyonnee/go-template/pkg/container"
-	"github.com/qustavo/sqlhooks/v2"
 )
 
-var db *sqlx.DB
-
-func Initialize() error {
-	config := container.GetService[*config.Config]().Persistence
-	logger := container.GetService[log.Logger]()
-
-	sql.Register(SQL_LOGGER_DRIVER, sqlhooks.Wrap(pq.Driver{}, &LoggerHooks{Logger: logger}))
-
-	pgDb, err := initPostgres(config.Postgres)
-	if err != nil {
-		return err
-	}
-
-	db = pgDb
-	db.SetMaxOpenConns(config.MaxOpenConns)
-	db.SetMaxIdleConns(config.MaxIdleConns)
-	db.SetConnMaxLifetime(config.ConnMaxLifetime)
-	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
-
-	return nil
-}
-
-func NewConn(ctx context.Context) (*sqlx.Conn, error) {
-	return db.Connx(ctx)
-}
-
-func NewTx(ctx context.Context) (*sqlx.Tx, error) {
-	return db.BeginTxx(ctx, nil)
-}
-
-func NewTxWith(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error) {
-	return db.BeginTxx(ctx, opts)
-}
+const (
+	SQL_LOGGER_DRIVER = "sql_logger_driver"
+)
 
 type LoggerHooks struct {
 	Logger log.Logger

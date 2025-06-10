@@ -7,14 +7,14 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/route"
+	"github.com/lyonnee/go-template/internal/infrastructure/di"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/interfaces/http/controller"
 	"github.com/lyonnee/go-template/internal/interfaces/http/middleware"
-	"github.com/lyonnee/go-template/pkg/container"
 )
 
 func Register(hz *server.Hertz) {
-	logger := container.GetService[log.Logger]()
+	logger := di.GetService[log.Logger]()
 
 	// process panic
 	hz.PanicHandler = panicHandler
@@ -40,7 +40,7 @@ func addV1(r *route.RouterGroup) {
 
 	// 健康检查
 	{
-		healthController := container.GetService[*controller.HealthController]()
+		healthController := di.GetService[*controller.HealthController]()
 
 		base.GET("/health", healthController.HealthCheck)
 		base.GET("/ready", healthController.ReadinessCheck)
@@ -49,7 +49,7 @@ func addV1(r *route.RouterGroup) {
 
 	// 认证相关
 	{
-		authController := container.GetService[*controller.AuthController]()
+		authController := di.GetService[*controller.AuthController]()
 
 		authRouter := base.Group("/auth")
 		authRouter.POST("/signup", authController.SignUp)
@@ -59,7 +59,7 @@ func addV1(r *route.RouterGroup) {
 
 	// 用户相关 (需要认证)
 	{
-		userController := container.GetService[*controller.UserController]()
+		userController := di.GetService[*controller.UserController]()
 
 		userRouter := base.Group("/users")
 		userRouter.Use(middleware.JWTAuth())

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lyonnee/go-template/pkg/auth"
+	"github.com/lyonnee/go-template/internal/infrastructure/auth"
 )
 
 type User struct {

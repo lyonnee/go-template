@@ -24,13 +24,13 @@ const (
 )
 
 // base response
-type Response[T any | PagequeryData[any]] struct {
+type Response[T any | PagequeryRespData[any]] struct {
 	Code uint16 `json:"code"`
 	Msg  string `json:"msg,omitempty"`
 	Data T      `json:"data,omitempty"`
 }
 
-func NewResponse[T any](code uint16, msg string, data T) *Response[T] {
+func NewResponse[T any | PagequeryRespData[any]](code uint16, msg string, data T) *Response[T] {
 	return &Response[T]{
 		Code: code,
 		Msg:  msg,
@@ -38,7 +38,7 @@ func NewResponse[T any](code uint16, msg string, data T) *Response[T] {
 	}
 }
 
-func Ok[T any](c *app.RequestContext, msg string, data T) {
+func Ok[T any | PagequeryRespData[any]](c *app.RequestContext, msg string, data T) {
 	resp := NewResponse(SUCCESS_CODE, msg, data)
 	c.JSON(
 		http.StatusOK,
@@ -52,14 +52,4 @@ func Fail(c *app.RequestContext, code uint16, msg string) {
 		http.StatusOK,
 		resp,
 	)
-}
-
-func NewPagequeryResponse[T PagequeryData[any]](code uint16, msg string, page, limit, total int64, list T) *Response[PagequeryData[T]] {
-	data := NewPagequeryData(page, limit, total, list)
-
-	return &Response[PagequeryData[T]]{
-		Code: code,
-		Msg:  msg,
-		Data: data,
-	}
 }

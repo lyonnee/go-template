@@ -5,7 +5,7 @@ type PagequeryReq struct {
 	PageSize int64 `json:"page_size" query:"page_size"`
 }
 
-type PagequeryData[T any] struct {
+type PagequeryRespData[T any] struct {
 	Page      int64 `json:"page"`
 	PageSize  int64 `json:"page_size"`
 	Total     int64 `json:"total"`
@@ -13,8 +13,8 @@ type PagequeryData[T any] struct {
 	Items     T     `json:"items,omitempty"`
 }
 
-func NewPagequeryData[T any](page, pageSize, total int64, items T) PagequeryData[T] {
-	return PagequeryData[T]{
+func NewPagequeryRespData[T any](page, pageSize, total int64, items T) PagequeryRespData[T] {
+	return PagequeryRespData[T]{
 		Page:      page,
 		PageSize:  pageSize,
 		Total:     total,

@@ -1,10 +1,14 @@
 package dto
 
 type PagequeryReq struct {
-	Page     int64 `json:"page" query:"page"`
-	PageSize int64 `json:"page_size" query:"page_size"`
+	Page     int64  `json:"page" query:"page"`
+	PageSize int64  `json:"page_size" query:"page_size"`
+	OrderBy  string `json:"order_by" query:"order_by"` // 排序字段
+	Order    string `json:"order" query:"order"`       // 是否降序
+	Filter   string `json:"filter" query:"filter"`     // 过滤条件
 }
 
+// PagequeryRespData 分页查询响应数据
 type PagequeryRespData[T any] struct {
 	Page      int64 `json:"page"`
 	PageSize  int64 `json:"page_size"`

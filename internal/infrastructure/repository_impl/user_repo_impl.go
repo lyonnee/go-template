@@ -12,35 +12,33 @@ import (
 	"github.com/lyonnee/go-template/internal/domain/repository"
 	"github.com/lyonnee/go-template/internal/infrastructure/di"
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/internal/infrastructure/persistence"
 	"github.com/lyonnee/go-template/internal/infrastructure/repository_impl/model"
 )
 
 // UserRepositoryImpl 用户存储库实现
 type UserRepositoryImpl struct {
-	executor repository.Executor
+	executor persistence.Executor
 	logger   log.Logger
 }
 
 // NewUserRepository 创建一个新的用户存储库实例
 func NewUserRepository() (repository.UserRepository, error) {
 	return &UserRepositoryImpl{
-		executor: nil, // 初始化时没有执行器，需要通过 WithExecutor 设置
+		executor: nil, // 初始化时没有执行器，需要通过 SetExecuter 设置
 		logger:   di.GetService[log.Logger](),
 	}, nil
 }
 
-// WithExecutor 设置特定的执行器，返回一个新的存储库实例
-func (r *UserRepositoryImpl) WithExecutor(executor repository.Executor) repository.UserRepository {
-	return &UserRepositoryImpl{
-		executor: executor,
-		logger:   r.logger,
-	}
+// SetExecuter 设置特定的执行器，返回一个新的存储库实例
+func (r *UserRepositoryImpl) SetExecuter(executor persistence.Executor) {
+	r.executor = executor
 }
 
 // 获取当前执行器，如果未设置则返回错误
-func (r *UserRepositoryImpl) getExecutor() (repository.Executor, error) {
+func (r *UserRepositoryImpl) getExecutor() (persistence.Executor, error) {
 	if r.executor == nil {
-		return nil, errors.New("executor not set, use WithExecutor() to set an executor")
+		return nil, errors.New("executor not set, use SetExecuter() to set an executor")
 	}
 	return r.executor, nil
 }

@@ -51,23 +51,21 @@ func (s *UserCommandService) UpdateUsername(ctx context.Context, cmd *UpdateUser
 		return nil, err
 	}
 	defer tx.Rollback()
-	// 使用事务执行器
-	userRepoWithTx := s.userRepo.WithExecutor(tx)
 
 	// 检查用户是否存在
-	user, err := userRepoWithTx.FindById(ctx, cmd.UserID)
+	user, err := s.userRepo.FindById(ctx, cmd.UserID)
 	if err != nil {
 		s.logger.ErrorKV("Failed to find user for username update", "error", err, "userId", cmd.UserID)
 		return nil, err
 	}
 
-	userDomainService := domain.NewUserDomainService(userRepoWithTx, s.logger)
+	userDomainService := domain.NewUserDomainService(s.userRepo, s.logger)
 	if err := userDomainService.UpdateUsername(ctx, user, cmd.Username); err != nil {
 		s.logger.ErrorKV("Username update failed", "error", err, "userId", cmd.UserID)
 		return nil, err
 	}
 
-	if err := userRepoWithTx.UpdateUsername(ctx, user); err != nil {
+	if err := s.userRepo.UpdateUsername(ctx, user); err != nil {
 		s.logger.ErrorKV("Failed to update username in repository", "error", err, "userId", cmd.UserID)
 		return nil, err
 	}

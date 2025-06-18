@@ -20,10 +20,10 @@ func Register(hz *server.Hertz) {
 	hz.PanicHandler = panicHandler
 
 	// register middleware
+	hz.Use(middleware.Logger(logger))
 	hz.Use(recovery.Recovery(recovery.WithRecoveryHandler(middleware.Recovery(logger))))
 	hz.Use(middleware.CORS())
 	hz.Use(middleware.AddTrace())
-	hz.Use(middleware.Logger(logger))
 
 	// register handler
 	apiRouter := hz.Group("/api")

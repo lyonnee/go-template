@@ -21,18 +21,19 @@ func Run() {
 
 func registerServices() error {
 	// controller
-	di.AddSingletonService(controller.NewAuthController)
-	di.AddSingletonService(controller.NewUserController)
-	di.AddSingletonService(controller.NewHealthController)
+	di.AddSingletonController(controller.NewAuthController)
+	di.AddSingletonController(controller.NewUserController)
+	di.AddSingletonController(controller.NewHealthController)
 
 	// application service
+	// command
 	di.AddSingletonService(command_executor.NewAuthCommandService)
 	di.AddSingletonService(command_executor.NewUserCommandService)
-
+	// query
 	di.AddSingletonService(query_executor.NewUserQueryService)
 
 	// repository
-	di.AddTransientService(repository_impl.NewUserRepository)
+	di.AddTransientRepository(repository_impl.NewUserRepository)
 
 	return nil
 }

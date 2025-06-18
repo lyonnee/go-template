@@ -54,8 +54,6 @@ type RefreshTokenResult struct {
 type AuthCommandService struct {
 	logger    log.Logger
 	dbContext persistence.DBContext
-
-	userRepo repository.UserRepository
 }
 
 // NewAuthService 创建认证服务
@@ -63,8 +61,6 @@ func NewAuthCommandService() (*AuthCommandService, error) {
 	return &AuthCommandService{
 		logger:    di.GetService[log.Logger](),
 		dbContext: di.GetService[persistence.DBContext](),
-
-		userRepo: di.GetService[repository.UserRepository](),
 	}, nil
 }
 
@@ -81,16 +77,17 @@ func (s *AuthCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 		return nil, err
 	}
 	defer tx.Rollback()
-	userRepoWithTx := s.userRepo.WithExecutor(tx)
 
-	userDomainService := domain.NewUserDomainService(userRepoWithTx, s.logger)
+	userRepo := di.GetRepository[repository.UserRepository](tx)
+
+	userDomainService := domain.NewUserDomainService(userRepo, s.logger)
 	user, err := userDomainService.CreateUser(ctx, cmd.Username, cmd.Password, cmd.Email, cmd.Phone)
 	if err != nil {
 		s.logger.ErrorKV("Failed to create user", "error", err)
 		return nil, err
 	}
 
-	if err := userRepoWithTx.Create(ctx, user); err != nil {
+	if err := userRepo.Create(ctx, user); err != nil {
 		s.logger.ErrorKV("Failed to create user in database", "error", err)
 		return nil, err
 	}
@@ -141,10 +138,10 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 		return nil, err
 	}
 	defer conn.Close()
-	userRepoConn := s.userRepo.WithExecutor(conn)
 
+	userRepo := di.GetRepository[repository.UserRepository](conn)
 	// 查找用户
-	user, err := userRepoConn.FindByUsername(ctx, cmd.Username)
+	user, err := userRepo.FindByUsername(ctx, cmd.Username)
 	if err != nil {
 		if errors.Is(err, domainErrors.ErrUserNotFound) {
 			s.logger.WarnKV("Login failed - user not found", "username", cmd.Username)

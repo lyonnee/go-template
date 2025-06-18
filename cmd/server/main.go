@@ -15,6 +15,7 @@ import (
 	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/infrastructure/persistence"
 	"github.com/lyonnee/go-template/pkg/database"
+	"github.com/lyonnee/go-template/pkg/id_generator"
 	"github.com/lyonnee/go-template/pkg/logger"
 )
 
@@ -36,35 +37,47 @@ func main() {
 
 func start(env string) {
 	// initialize config
+	// Note: config must be loaded before any other service that depends on it
 	conf, err := config.Load(env)
 	if err != nil {
 		stdLog.Printf("load config failed, err:%s", err)
 		os.Exit(1)
 	}
 
-	di.AddSingletonService[*config.Config](func() (*config.Config, error) {
+	di.AddSingleton[*config.Config](func() (*config.Config, error) {
 		return conf, nil
 	})
 
+	// initialize ID generator
+	// Note: ID generator must be initialized before any other service that depends on it
+	if err := id_generator.Initialize(conf.App.NodeId); err != nil {
+		stdLog.Printf("initialize ID generator failed, err:%s", err)
+		os.Exit(1)
+	}
+
+	// initialize logger
+	// Note: logger must be initialized before any other service that depends on it
 	newLogger, err := logger.NewLogger(conf.Log)
 	if err != nil {
 		stdLog.Printf("init logger failed, err:%s", err)
 		os.Exit(1)
 	}
-	di.AddSingletonService[log.Logger](func() (log.Logger, error) {
+	di.AddSingleton[log.Logger](func() (log.Logger, error) {
 		return newLogger, nil
 	})
 
+	// initialize database connection
 	dbContext, err := database.NewDB(&conf.Persistence, newLogger)
 	if err != nil {
 		stdLog.Printf("init persistence failed, err:%s", err)
 		os.Exit(1)
 	}
-	di.AddSingletonService[persistence.DBContext](func() (persistence.DBContext, error) {
+	di.AddSingleton[persistence.DBContext](func() (persistence.DBContext, error) {
 		return dbContext, nil
 	})
 
 	// bootstrap the application all services
+	bootstrap.Initialize()
 	bootstrap.Run()
 
 	stdLog.Println("Server started successfully")

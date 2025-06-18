@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	App         AppConfig         `mapstructure:"app"`
 	Http        HttpConfig        `mapstructure:"http"`
 	Log         LogConfig         `mapstructure:"log"`
 	Auth        AuthConfig        `mapstructure:"auth"`

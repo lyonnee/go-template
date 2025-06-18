@@ -40,8 +40,7 @@ func (s *UserQueryService) GetUserById(ctx context.Context, userId int64) (*enti
 	}
 	defer conn.Close()
 
-	userRepoConn := s.userRepo.WithExecutor(conn)
-	user, err := userRepoConn.FindById(ctx, userId)
+	user, err := s.userRepo.FindById(ctx, userId)
 	if err != nil {
 		s.logger.ErrorKV("Failed to find user by ID", "error", err, "userId", userId)
 		return nil, err

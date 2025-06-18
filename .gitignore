@@ -17,9 +17,17 @@ _logs_
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# env file
+.env
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-/logs
+_logs
 .vscode/
-

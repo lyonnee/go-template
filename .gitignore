@@ -1,8 +1,6 @@
 .idea
-*.log
 .DS_Store
 
-_logs_
 
 # Binaries for programs and plugins
 *.exe
@@ -29,5 +27,8 @@ profile.cov
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# log file
 _logs
+*.log
+
 .vscode/

@@ -1,4 +1,4 @@
-package id_generator
+package idgen
 
 import (
 	"fmt"
@@ -8,9 +8,9 @@ import (
 
 var node *snowflake.Node
 
-func Initialize(nodeId int64) error {
+func Initialize(hostId int64) error {
 	var err error
-	node, err = snowflake.NewNode(nodeId)
+	node, err = snowflake.NewNode(hostId)
 	if err != nil {
 		fmt.Println(err)
 		return err

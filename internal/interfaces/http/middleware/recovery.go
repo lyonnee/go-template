@@ -5,12 +5,12 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"go.uber.org/zap"
 )
 
-func Recovery(logger log.Logger) func(ctx context.Context, reqCtx *app.RequestContext, err interface{}, stack []byte) {
+func Recovery(logger *zap.Logger) func(ctx context.Context, reqCtx *app.RequestContext, err interface{}, stack []byte) {
 	return func(ctx context.Context, reqCtx *app.RequestContext, err interface{}, stack []byte) {
-		logger.FatalKV("[Recovery from panic]", "err", err, "stack", string(stack))
+		logger.Fatal("[Recovery from panic]", zap.Any("err", err), zap.ByteString("stack", stack))
 		reqCtx.AbortWithStatus(consts.StatusInternalServerError)
 	}
 }

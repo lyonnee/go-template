@@ -6,20 +6,20 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/bootstrap/di"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
+	"go.uber.org/zap"
 )
 
 // HealthController 健康检查控制器
 type HealthController struct {
-	logger log.Logger
+	logger *zap.Logger
 }
 
 // NewHealthController 创建健康检查控制器
 func NewHealthController() (*HealthController, error) {
 	return &HealthController{
-		logger: di.GetService[log.Logger](),
+		logger: di.Get[*zap.Logger](),
 	}, nil
 }
 

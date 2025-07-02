@@ -82,7 +82,7 @@ go-template/
 │   ├── app/
 │   │   └── container.go             # Dependency injection container
 │   ├── application/                 # Application layer (Use Cases)
-│   │   ├── command_executor/        # Command handlers (CQRS)
+│   │   ├── command_service/        # Command handlers (CQRS)
 │   │   │   ├── auth_command_service.go
 │   │   │   └── user_command_service.go
 │   │   └── query_executor/          # Query handlers (CQRS)
@@ -326,11 +326,11 @@ func (r *productRepoImpl) Save(ctx context.Context, product *entity.Product) err
 }
 ```
 
-4. **Create Application Service** (`internal/application/command_executor/`)
+4. **Create Application Service** (`internal/application/command_service/`)
 ```go
 type ProductCommandService struct {
     productRepo repository.ProductRepository
-    logger      log.Logger
+    logger      *zap.Logger
 }
 
 func (s *ProductCommandService) CreateProduct(ctx context.Context, cmd CreateProductCommand) error {
@@ -341,7 +341,7 @@ func (s *ProductCommandService) CreateProduct(ctx context.Context, cmd CreatePro
 5. **Add HTTP Controller** (`internal/interfaces/http/controller/`)
 ```go
 type ProductController struct {
-    productCmdService *command_executor.ProductCommandService
+    productCmdService *command_service.ProductCommandService
 }
 
 func (c *ProductController) CreateProduct(ctx context.Context, req *app.RequestContext) {

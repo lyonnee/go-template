@@ -6,12 +6,12 @@ import (
 	"errors"
 	"time"
 
+	"github.com/lyonnee/go-template/bootstrap/di"
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
+	"go.uber.org/zap"
 
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	"github.com/lyonnee/go-template/internal/domain/repository"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/infrastructure/persistence"
 	"github.com/lyonnee/go-template/internal/infrastructure/repository_impl/model"
 )
@@ -19,14 +19,14 @@ import (
 // UserRepositoryImpl 用户存储库实现
 type UserRepositoryImpl struct {
 	executor persistence.Executor
-	logger   log.Logger
+	logger   *zap.Logger
 }
 
 // NewUserRepository 创建一个新的用户存储库实例
 func NewUserRepository() (repository.UserRepository, error) {
 	return &UserRepositoryImpl{
 		executor: nil, // 初始化时没有执行器，需要通过 SetExecuter 设置
-		logger:   di.GetService[log.Logger](),
+		logger:   di.Get[*zap.Logger](),
 	}, nil
 }
 
@@ -45,11 +45,11 @@ func (r *UserRepositoryImpl) getExecutor() (persistence.Executor, error) {
 
 // FindById 根据ID查找用户
 func (r *UserRepositoryImpl) FindById(ctx context.Context, userId int64) (*entity.User, error) {
-	r.logger.DebugKV("Finding user by ID", "userId", userId)
+	r.logger.Debug("Finding user by ID", zap.Int64("userId", userId))
 
 	executor, err := r.getExecutor()
 	if err != nil {
-		r.logger.ErrorKV("Failed to get executor", "error", err)
+		r.logger.Error("Failed to get executor", zap.Error(err))
 		return nil, err
 	}
 
@@ -73,24 +73,24 @@ func (r *UserRepositoryImpl) FindById(ctx context.Context, userId int64) (*entit
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			r.logger.DebugKV("User not found", "userId", userId)
+			r.logger.Debug("User not found", zap.Int64("userId", userId))
 			return nil, domainErrors.ErrUserNotFound
 		}
-		r.logger.ErrorKV("Failed to find user by ID", "userId", userId, "error", err)
+		r.logger.Error("Failed to find user by ID", zap.Int64("userId", userId), zap.Error(err))
 		return nil, err
 	}
 
-	r.logger.DebugKV("User found successfully", "userId", userId, "username", userModel.Username)
+	r.logger.Debug("User found successfully", zap.Int64("userId", userId), zap.String("username", userModel.Username))
 	return r.modelToEntity(&userModel), nil
 }
 
 // Create 创建新用户
 func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) error {
-	r.logger.InfoKV("Creating new user", "username", user.Username, "email", user.Email)
+	r.logger.Info("Creating new user", zap.String("username", user.Username), zap.String("email", user.Email))
 
 	executor, err := r.getExecutor()
 	if err != nil {
-		r.logger.ErrorKV("Failed to get executor", "error", err)
+		r.logger.Error("Failed to get executor", zap.Error(err))
 		return err
 	}
 
@@ -102,16 +102,16 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 	// 检查用户名、邮箱和手机号是否已存在
 	exists, err := r.checkUserFieldsExist(ctx, user)
 	if err != nil {
-		r.logger.ErrorKV("Failed to check user fields existence",
-			"username", user.Username,
-			"email", user.Email,
-			"error", err)
+		r.logger.Error("Failed to check user fields existence",
+			zap.String("username", user.Username),
+			zap.String("email", user.Email),
+			zap.Error(err))
 		return err
 	}
 	if exists {
-		r.logger.WarnKV("User with these details already exists",
-			"username", user.Username,
-			"email", user.Email)
+		r.logger.Warn("User with these details already exists",
+			zap.String("username", user.Username),
+			zap.String("email", user.Email))
 		return errors.New("user with these details already exists")
 	}
 
@@ -134,10 +134,10 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 	).Scan(&id)
 
 	if err != nil {
-		r.logger.ErrorKV("Failed to create user",
-			"username", user.Username,
-			"email", user.Email,
-			"error", err)
+		r.logger.Error("Failed to create user",
+			zap.String("username", user.Username),
+			zap.String("email", user.Email),
+			zap.Error(err))
 		return err
 	}
 
@@ -146,9 +146,9 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 	user.UpdatedAt = now
 	user.DeletedAt = 0
 
-	r.logger.InfoKV("User created successfully",
-		"userId", id,
-		"username", user.Username)
+	r.logger.Info("User created successfully",
+		zap.Int64("userId", id),
+		zap.String("username", user.Username))
 
 	return nil
 }
@@ -333,35 +333,35 @@ func (r *UserRepositoryImpl) FindByPhone(ctx context.Context, phone string) (*en
 
 // UpdateUsername 更新用户名
 func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.User) error {
-	r.logger.InfoKV("Updating username",
-		"userId", user.ID,
-		"newUsername", user.Username)
+	r.logger.Info("Updating username",
+		zap.Int64("userId", user.ID),
+		zap.String("newUsername", user.Username))
 
 	executor, err := r.getExecutor()
 	if err != nil {
-		r.logger.ErrorKV("Failed to get executor", "error", err)
+		r.logger.Error("Failed to get executor", zap.Error(err))
 		return err
 	}
 
 	if user == nil || user.ID == 0 || user.Username == "" {
-		r.logger.ErrorKV("Invalid user input for username update",
-			"userId", user.ID,
-			"username", user.Username)
+		r.logger.Error("Invalid user input for username update",
+			zap.Int64("userId", user.ID),
+			zap.String("username", user.Username))
 		return domainErrors.ErrInvalidUserInput
 	}
 
 	// 检查用户名是否已被使用
 	existingUser, err := r.FindByUsername(ctx, user.Username)
 	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-		r.logger.ErrorKV("Failed to check username availability",
-			"username", user.Username,
-			"error", err)
+		r.logger.Error("Failed to check username availability",
+			zap.String("username", user.Username),
+			zap.Error(err))
 		return err
 	}
 	if existingUser != nil && existingUser.ID != user.ID {
-		r.logger.WarnKV("Username already taken",
-			"username", user.Username,
-			"existingUserId", existingUser.ID)
+		r.logger.Warn("Username already taken",
+			zap.String("username", user.Username),
+			zap.Int64("existingUserId", existingUser.ID))
 		return domainErrors.ErrUsernameTaken
 	}
 
@@ -374,28 +374,29 @@ func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.Us
 
 	result, err := executor.ExecContext(ctx, query, now, user.Username, user.ID)
 	if err != nil {
-		r.logger.ErrorKV("Failed to update username",
-			"userId", user.ID,
-			"username", user.Username,
-			"error", err)
+		r.logger.Error("Failed to update username",
+			zap.Int64("userId", user.ID),
+			zap.String("username", user.Username),
+			zap.Error(err))
 		return err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		r.logger.ErrorKV("Failed to get affected rows", "error", err)
+		r.logger.Error("Failed to get affected rows", zap.Error(err))
 		return err
 	}
 
 	if rowsAffected == 0 {
-		r.logger.WarnKV("No rows affected during username update", "userId", user.ID)
+		r.logger.Warn("No rows affected during username update",
+			zap.Int64("userId", user.ID))
 		return domainErrors.ErrUserNotFound
 	}
 
 	user.UpdatedAt = now
-	r.logger.InfoKV("Username updated successfully",
-		"userId", user.ID,
-		"newUsername", user.Username)
+	r.logger.Info("Username updated successfully",
+		zap.Int64("userId", user.ID),
+		zap.String("newUsername", user.Username))
 
 	return nil
 }

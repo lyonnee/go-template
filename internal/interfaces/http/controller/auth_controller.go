@@ -5,22 +5,22 @@ import (
 	"errors"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/lyonnee/go-template/internal/application/command_executor"
+	"github.com/lyonnee/go-template/bootstrap/di"
+	"github.com/lyonnee/go-template/internal/application/service"
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
+	"go.uber.org/zap"
 )
 
 type AuthController struct {
-	authCmdService *command_executor.AuthCommandService
-	logger         log.Logger
+	authCmdService *service.AuthCommandService
+	logger         *zap.Logger
 }
 
 func NewAuthController() (*AuthController, error) {
 	return &AuthController{
-		authCmdService: di.GetService[*command_executor.AuthCommandService](),
-		logger:         di.GetService[log.Logger](),
+		authCmdService: di.Get[*service.AuthCommandService](),
+		logger:         di.Get[*zap.Logger](),
 	}, nil
 }
 
@@ -32,15 +32,15 @@ func (c *AuthController) SignUp(ctx context.Context, reqCtx *app.RequestContext)
 
 	// 绑定参数
 	if err := reqCtx.Bind(&req); err != nil {
-		c.logger.ErrorKV("SignUp bind params failed", "error", err)
+		c.logger.Error("SignUp bind params failed", zap.Error(err))
 		dto.Fail(reqCtx, dto.CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
 		return
 	}
 
-	c.logger.DebugKV("SignUp request bound successfully", "username", req.Username, "email", req.Email)
+	c.logger.Debug("SignUp request bound successfully", zap.String("username", req.Username), zap.String("email", req.Email))
 
 	// 创建命令
-	cmd := &command_executor.SignUpCmd{
+	cmd := &service.SignUpCmd{
 		Username: req.Username,
 		Password: req.Password,
 		Email:    req.Email,
@@ -50,7 +50,7 @@ func (c *AuthController) SignUp(ctx context.Context, reqCtx *app.RequestContext)
 	// 执行注册
 	result, err := c.authCmdService.SignUp(ctx, cmd)
 	if err != nil {
-		c.logger.ErrorKV("SignUp failed", "error", err, "username", req.Username)
+		c.logger.Error("SignUp failed", zap.Error(err), zap.String("username", req.Username))
 
 		// 处理业务错误
 		switch {
@@ -66,7 +66,7 @@ func (c *AuthController) SignUp(ctx context.Context, reqCtx *app.RequestContext)
 		return
 	}
 
-	c.logger.InfoKV("User registered successfully", "username", req.Username, "userId", result.User.ID)
+	c.logger.Info("User registered successfully", zap.String("username", req.Username), zap.Int64("userId", result.User.ID))
 
 	// 构造响应
 	resp := dto.SignUpResp{
@@ -91,15 +91,15 @@ func (c *AuthController) Login(ctx context.Context, reqCtx *app.RequestContext) 
 
 	// 绑定参数
 	if err := reqCtx.Bind(&req); err != nil {
-		c.logger.ErrorKV("Login bind params failed", "error", err)
+		c.logger.Error("Login bind params failed", zap.Error(err))
 		dto.Fail(reqCtx, dto.CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
 		return
 	}
 
-	c.logger.DebugKV("Login request bound successfully", "username", req.Username)
+	c.logger.Debug("Login request bound successfully", zap.String("username", req.Username))
 
 	// 创建命令
-	cmd := &command_executor.LoginCmd{
+	cmd := &service.LoginCmd{
 		Username: req.Username,
 		Password: req.Password,
 	}
@@ -107,12 +107,12 @@ func (c *AuthController) Login(ctx context.Context, reqCtx *app.RequestContext) 
 	// 执行登录
 	result, err := c.authCmdService.Login(ctx, cmd)
 	if err != nil {
-		c.logger.ErrorKV("Login failed", "error", err, "username", req.Username)
+		c.logger.Error("Login failed", zap.Error(err), zap.String("username", req.Username))
 		dto.Fail(reqCtx, dto.CODE_INVALID_BODY_ARGUMENT, "用户名或密码错误")
 		return
 	}
 
-	c.logger.InfoKV("User logged in successfully", "username", req.Username)
+	c.logger.Info("User logged in successfully", zap.String("username", req.Username))
 
 	// 构造响应
 	resp := dto.LoginResp{
@@ -131,7 +131,7 @@ func (c *AuthController) RefreshToken(ctx context.Context, reqCtx *app.RequestCo
 
 	// 绑定参数
 	if err := reqCtx.Bind(&req); err != nil {
-		c.logger.ErrorKV("RefreshToken bind params failed", "error", err)
+		c.logger.Error("RefreshToken bind params failed", zap.Error(err))
 		dto.Fail(reqCtx, dto.CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
 		return
 	}
@@ -139,14 +139,14 @@ func (c *AuthController) RefreshToken(ctx context.Context, reqCtx *app.RequestCo
 	c.logger.Debug("RefreshToken request bound successfully")
 
 	// 创建命令
-	cmd := &command_executor.RefreshTokenCmd{
+	cmd := &service.RefreshTokenCmd{
 		RefreshToken: req.RefreshToken,
 	}
 
 	// 执行刷新
 	result, err := c.authCmdService.RefreshToken(ctx, cmd)
 	if err != nil {
-		c.logger.ErrorKV("RefreshToken failed", "error", err)
+		c.logger.Error("RefreshToken failed", zap.Error(err))
 		dto.Fail(reqCtx, dto.CODE_TOKEN_INVALID, "刷新token无效")
 		return
 	}

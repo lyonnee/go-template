@@ -6,26 +6,25 @@ import (
 	"strconv"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/lyonnee/go-template/internal/application/command_executor"
-	"github.com/lyonnee/go-template/internal/application/query_executor"
+	"github.com/lyonnee/go-template/bootstrap/di"
+	"github.com/lyonnee/go-template/internal/application/service"
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
 	"github.com/lyonnee/go-template/internal/infrastructure/auth"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
+	"go.uber.org/zap"
 )
 
 type UserController struct {
-	userCmdService   *command_executor.UserCommandService
-	userQueryService *query_executor.UserQueryService
-	logger           log.Logger
+	userCmdService   *service.UserCommandService
+	userQueryService *service.UserQueryService
+	logger           *zap.Logger
 }
 
 func NewUserController() (*UserController, error) {
 	return &UserController{
-		userCmdService:   di.GetService[*command_executor.UserCommandService](),
-		userQueryService: di.GetService[*query_executor.UserQueryService](),
-		logger:           di.GetService[log.Logger](),
+		userCmdService:   di.Get[*service.UserCommandService](),
+		userQueryService: di.Get[*service.UserQueryService](),
+		logger:           di.Get[*zap.Logger](),
 	}, nil
 }
 
@@ -35,12 +34,12 @@ func (c *UserController) GetUser(ctx context.Context, reqCtx *app.RequestContext
 	userIDStr := reqCtx.Param("id")
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
-		c.logger.ErrorKV("GetUser invalid user ID format", "userIdStr", userIDStr, "error", err)
+		c.logger.Error("GetUser invalid user ID format", zap.String("userIdStr", userIDStr), zap.Error(err))
 		dto.Fail(reqCtx, dto.CODE_INVALID_PATH_ARGUMENT, "用户ID格式错误")
 		return
 	}
 
-	c.logger.DebugKV("GetUser request received", "userId", userID)
+	c.logger.Debug("GetUser request received", zap.Int64("userId", userID))
 
 	// 获取当前登录用户信息
 	claims, exists := reqCtx.Get("claims")
@@ -59,9 +58,9 @@ func (c *UserController) GetUser(ctx context.Context, reqCtx *app.RequestContext
 
 	// 检查权限：只能查看自己的信息
 	if userClaims.UserId != userID {
-		c.logger.WarnKV("GetUser unauthorized access attempt",
-			"requestedUserId", userID,
-			"authenticatedUserId", userClaims.UserId)
+		c.logger.Warn("GetUser unauthorized access attempt",
+			zap.Int64("requestedUserId", userID),
+			zap.Int64("authenticatedUserId", userClaims.UserId))
 		dto.Fail(reqCtx, dto.CODE_TOKEN_INVALID, "无权查看该用户信息")
 		return
 	}
@@ -69,7 +68,7 @@ func (c *UserController) GetUser(ctx context.Context, reqCtx *app.RequestContext
 	// 获取用户信息
 	user, err := c.userQueryService.GetUserById(ctx, userID)
 	if err != nil {
-		c.logger.ErrorKV("GetUser failed", "error", err, "userId", userID)
+		c.logger.Error("GetUser failed", zap.Error(err), zap.Int64("userId", userID))
 		if errors.Is(err, domainErrors.ErrUserNotFound) {
 			dto.Fail(reqCtx, dto.CODE_INVALID_PATH_ARGUMENT, "用户不存在")
 		} else {
@@ -78,7 +77,7 @@ func (c *UserController) GetUser(ctx context.Context, reqCtx *app.RequestContext
 		return
 	}
 
-	c.logger.InfoKV("User information retrieved successfully", "userId", userID)
+	c.logger.Info("User information retrieved successfully", zap.Int64("userId", userID))
 
 	// 构造响应
 	resp := dto.GetUserResp{
@@ -99,12 +98,12 @@ func (c *UserController) UpdateUsername(ctx context.Context, reqCtx *app.Request
 	userIDStr := reqCtx.Param("id")
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
-		c.logger.ErrorKV("UpdateUsername invalid user ID format", "userIdStr", userIDStr, "error", err)
+		c.logger.Error("UpdateUsername invalid user ID format", zap.String("userIdStr", userIDStr), zap.Error(err))
 		dto.Fail(reqCtx, dto.CODE_INVALID_PATH_ARGUMENT, "用户ID格式错误")
 		return
 	}
 
-	c.logger.DebugKV("UpdateUsername request received", "userId", userID)
+	c.logger.Debug("UpdateUsername request received", zap.Int64("userId", userID))
 
 	// 获取当前登录用户信息
 	claims, exists := reqCtx.Get("claims")
@@ -123,9 +122,9 @@ func (c *UserController) UpdateUsername(ctx context.Context, reqCtx *app.Request
 
 	// 检查权限：只能修改自己的信息
 	if userClaims.UserId != userID {
-		c.logger.WarnKV("UpdateUsername unauthorized access attempt",
-			"requestedUserId", userID,
-			"authenticatedUserId", userClaims.UserId)
+		c.logger.Warn("UpdateUsername unauthorized access attempt",
+			zap.Int64("requestedUserId", userID),
+			zap.Int64("authenticatedUserId", userClaims.UserId))
 		dto.Fail(reqCtx, dto.CODE_TOKEN_INVALID, "无权修改该用户信息")
 		return
 	}
@@ -133,17 +132,17 @@ func (c *UserController) UpdateUsername(ctx context.Context, reqCtx *app.Request
 	// 绑定参数
 	var req dto.UpdateUsernameReq
 	if err := reqCtx.Bind(&req); err != nil {
-		c.logger.ErrorKV("UpdateUsername bind params failed", "error", err, "userId", userID)
+		c.logger.Error("UpdateUsername bind params failed", zap.Error(err), zap.Int64("userId", userID))
 		dto.Fail(reqCtx, dto.CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
 		return
 	}
 
-	c.logger.DebugKV("UpdateUsername request bound successfully",
-		"userId", userID,
-		"newUsername", req.Username)
+	c.logger.Debug("UpdateUsername request bound successfully",
+		zap.Int64("userId", userID),
+		zap.String("newUsername", req.Username))
 
 	// 创建命令
-	cmd := &command_executor.UpdateUsernameCmd{
+	cmd := &service.UpdateUsernameCmd{
 		UserID:   userID,
 		Username: req.Username,
 	}
@@ -151,7 +150,7 @@ func (c *UserController) UpdateUsername(ctx context.Context, reqCtx *app.Request
 	// 执行更新
 	user, err := c.userCmdService.UpdateUsername(ctx, cmd)
 	if err != nil {
-		c.logger.ErrorKV("UpdateUsername failed", "error", err, "userId", userID, "newUsername", req.Username)
+		c.logger.Error("UpdateUsername failed", zap.Error(err), zap.Int64("userId", userID), zap.String("newUsername", req.Username))
 
 		switch {
 		case errors.Is(err, domainErrors.ErrUserNotFound):
@@ -164,9 +163,7 @@ func (c *UserController) UpdateUsername(ctx context.Context, reqCtx *app.Request
 		return
 	}
 
-	c.logger.InfoKV("Username updated successfully",
-		"userId", userID,
-		"newUsername", req.Username)
+	c.logger.Info("Username updated successfully", zap.Int64("userId", userID), zap.String("newUsername", req.Username))
 
 	// 构造响应
 	resp := dto.UpdateUsernameResp{

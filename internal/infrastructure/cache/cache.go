@@ -24,3 +24,9 @@ type CacheContext interface {
 	// Decr atomically decrements the integer value of a key by 1.
 	Decr(key string) (int64, error)
 }
+
+func Initialize() error {
+	// Initialize cache-related services or configurations here
+	// For example, setting up Redis, Memcached, etc.
+	return nil
+}

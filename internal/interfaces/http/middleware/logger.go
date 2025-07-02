@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"go.uber.org/zap"
 )
 
-func Logger(logger log.Logger) app.HandlerFunc {
+func Logger(logger *zap.Logger) app.HandlerFunc {
 	return func(ctx context.Context, reqCtx *app.RequestContext) {
 		start := time.Now() // 请求的时间
 
@@ -16,16 +16,16 @@ func Logger(logger log.Logger) app.HandlerFunc {
 
 		cost := time.Since(start)
 
-		logger.InfoKV("Request processed",
-			"status", reqCtx.Response.StatusCode(), // 状态码
-			"method", string(reqCtx.Request.Method()), // 请求的方法
-			"path", string(reqCtx.Request.Path()), // 请求的路径
-			"query", string(reqCtx.Request.QueryString()), // 请求的参数
-			"ip", reqCtx.ClientIP(), // 请求的IP
-			"user-agent", string(reqCtx.Request.Header.UserAgent()), // 请求头
-			"errors", reqCtx.Errors.String(), // 错误信息
-			"cost", cost, // 请求时间
-			"trace_id", reqCtx.GetString("trace_id"), // 请求id
+		logger.Info("Request processed",
+			zap.Int("status", reqCtx.Response.StatusCode()),                     // 状态码
+			zap.String("method", string(reqCtx.Request.Method())),               // 请求的方法
+			zap.String("path", string(reqCtx.Request.Path())),                   // 请求的路径
+			zap.String("query", string(reqCtx.Request.QueryString())),           // 请求的参数
+			zap.String("ip", reqCtx.ClientIP()),                                 // 请求的IP
+			zap.String("user-agent", string(reqCtx.Request.Header.UserAgent())), // 请求头
+			zap.String("errors", reqCtx.Errors.String()),                        // 错误信息
+			zap.String("cost", cost.String()),                                   // 请求时间
+			zap.String("trace_id", reqCtx.GetString("trace_id")),                // 请求id
 		)
 	}
 }

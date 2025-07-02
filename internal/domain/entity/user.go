@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lyonnee/go-template/bootstrap/di"
 	"github.com/lyonnee/go-template/internal/infrastructure/auth"
 )
 
@@ -68,13 +69,14 @@ func (u *User) Login(pwd string) (string, string, error) {
 }
 
 func (u *User) BuildToken() (string, string, error) {
+	jwtManager := di.Get[*auth.JWTManager]()
 	// build access token and refresh token
-	accessToken, err := auth.GenerateAccessToken(u.ID, u.Username)
+	accessToken, err := jwtManager.GenerateAccessToken(u.ID, u.Username)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := auth.GenerateRefreshToken(u.ID, u.Username)
+	refreshToken, err := jwtManager.GenerateRefreshToken(u.ID, u.Username)
 	if err != nil {
 		return "", "", err
 	}

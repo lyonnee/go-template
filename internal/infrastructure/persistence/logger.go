@@ -1,11 +1,11 @@
-package database
+package persistence
 
 import (
 	"bytes"
 	"context"
 	"time"
 
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"go.uber.org/zap"
 )
 
 const (
@@ -13,7 +13,7 @@ const (
 )
 
 type LoggerHooks struct {
-	Logger log.Logger
+	Logger *zap.Logger
 }
 
 // Before hook will print the query with it's args and return the context with the timestamp
@@ -32,10 +32,10 @@ func (hooks *LoggerHooks) After(ctx context.Context, query string, args ...inter
 	}
 	begin := ctx.Value("sql_begin").(time.Time)
 
-	hooks.Logger.InfoKV("SQL executed",
-		"sql", removeEscapes(query),
-		"args", args,
-		"duration", time.Since(begin).String(),
+	hooks.Logger.Info("SQL executed",
+		zap.String("sql", removeEscapes(query)),
+		zap.Any("args", args),
+		zap.String("duration", time.Since(begin).String()),
 	)
 	return ctx, nil
 }
@@ -45,10 +45,10 @@ func (hooks *LoggerHooks) OnError(_ context.Context, err error, query string, ar
 		return nil
 	}
 
-	hooks.Logger.ErrorKV("SQL error",
-		"sql", removeEscapes(query),
-		"args", args,
-		"error", err,
+	hooks.Logger.Info("SQL error",
+		zap.String("sql", removeEscapes(query)),
+		zap.Any("args", args),
+		zap.Error(err),
 	)
 	return nil
 }

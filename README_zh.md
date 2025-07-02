@@ -81,7 +81,7 @@ go-template/                          # 项目根目录
 │   ├── app/                         # 应用容器
 │   │   └── container.go             # 依赖注入容器
 │   ├── application/                 # 应用层：处理业务流程
-│   │   ├── command_executor/        # 命令执行器 (CQRS)
+│   │   ├── command_service/        # 命令执行器 (CQRS)
 │   │   └── query_executor/          # 查询执行器 (CQRS)
 │   ├── domain/                      # 领域层：核心业务逻辑
 │   │   ├── entity/                  # 领域实体

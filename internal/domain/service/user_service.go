@@ -1,4 +1,4 @@
-package domain
+package service
 
 import (
 	"context"
@@ -7,35 +7,33 @@ import (
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
 	"github.com/lyonnee/go-template/internal/domain/repository"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"go.uber.org/zap"
 )
 
-type UserDomainService struct {
+type UserService struct {
 	userRepo repository.UserRepository
-	logger   log.Logger
+	logger   *zap.Logger
 }
 
-func NewUserDomainService(
+func NewUserService(
 	userRepo repository.UserRepository,
-	logger log.Logger,
-) *UserDomainService {
-	return &UserDomainService{
+	logger *zap.Logger,
+) *UserService {
+	return &UserService{
 		userRepo: userRepo,
 		logger:   logger,
 	}
 }
 
-func (s *UserDomainService) CreateUser(ctx context.Context, username, pwd, email, phone string) (*entity.User, error) {
+func (s *UserService) CreateUser(ctx context.Context, username, pwd, email, phone string) (*entity.User, error) {
 	// 检查用户名是否已存在
 	existingUser, err := s.userRepo.FindByUsername(ctx, username)
 	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-		s.logger.ErrorKV("Failed to check username existence",
-			"username", username,
-			"error", err)
+		s.logger.Error("Failed to check username existence", zap.String("username", username), zap.Error(err))
 		return nil, err
 	}
 	if existingUser != nil {
-		s.logger.WarnKV("Username already exists", "username", username)
+		s.logger.Warn("Username already exists", zap.String("username", username))
 		return nil, domainErrors.ErrUsernameTaken
 	}
 
@@ -43,13 +41,11 @@ func (s *UserDomainService) CreateUser(ctx context.Context, username, pwd, email
 	if email != "" {
 		existingUser, err := s.userRepo.FindByEmail(ctx, email)
 		if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-			s.logger.ErrorKV("Failed to check email existence",
-				"email", email,
-				"error", err)
+			s.logger.Error("Failed to check email existence", zap.String("email", email), zap.Error(err))
 			return nil, err
 		}
 		if existingUser != nil {
-			s.logger.WarnKV("Email already exists", "email", email)
+			s.logger.Warn("Email already exists", zap.String("email", email))
 			return nil, domainErrors.ErrEmailTaken
 		}
 	}
@@ -58,13 +54,11 @@ func (s *UserDomainService) CreateUser(ctx context.Context, username, pwd, email
 	if phone != "" {
 		existingUser, err := s.userRepo.FindByPhone(ctx, phone)
 		if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-			s.logger.ErrorKV("Failed to check phone existence",
-				"phone", phone,
-				"error", err)
+			s.logger.Error("Failed to check phone existence", zap.String("phone", phone), zap.Error(err))
 			return nil, err
 		}
 		if existingUser != nil {
-			s.logger.WarnKV("Phone already exists", "phone", phone)
+			s.logger.Warn("Phone already exists", zap.String("phone", phone))
 			return nil, domainErrors.ErrPhoneTaken
 		}
 	}
@@ -77,22 +71,22 @@ func (s *UserDomainService) CreateUser(ctx context.Context, username, pwd, email
 	return user, nil
 }
 
-func (s *UserDomainService) UpdateUsername(ctx context.Context, user *entity.User, newUsername string) error {
+func (s *UserService) UpdateUsername(ctx context.Context, user *entity.User, newUsername string) error {
 	// 检查新用户名是否已被其他用户使用
 	existingUser, err := s.userRepo.FindByUsername(ctx, newUsername)
 	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-		s.logger.ErrorKV("Failed to check username availability", "error", err, "username", newUsername)
+		s.logger.Error("Failed to check username availability", zap.Error(err), zap.String("username", newUsername))
 		return err
 	}
 	if existingUser != nil && existingUser.ID != user.ID {
-		s.logger.WarnKV("Username already taken",
-			"username", newUsername,
-			"existingUserId", existingUser.ID,
-			"requestingUserId", user.ID)
+		s.logger.Warn("Username already taken",
+			zap.String("username", newUsername),
+			zap.Int64("existingUserId", existingUser.ID),
+			zap.Int64("requestingUserId", user.ID))
 		return domainErrors.ErrUsernameTaken
 	}
 
-	s.logger.DebugKV("Username is available", "username", newUsername)
+	s.logger.Debug("Username is available", zap.String("username", newUsername))
 
 	// 更新用户名
 	user.Username = newUsername

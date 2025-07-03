@@ -1,10 +1,10 @@
 package bootstrap
 
 import (
+	"github.com/lyonnee/go-template/application/service"
 	"github.com/lyonnee/go-template/bootstrap/di"
-	"github.com/lyonnee/go-template/internal/application/service"
-	"github.com/lyonnee/go-template/internal/infrastructure/repository_impl"
-	"github.com/lyonnee/go-template/internal/interfaces/http/controller"
+	"github.com/lyonnee/go-template/infrastructure/repository_impl"
+	"github.com/lyonnee/go-template/interfaces/http/controller"
 )
 
 func registerServices() error {

@@ -2,8 +2,8 @@ package bootstrap
 
 import (
 	"github.com/lyonnee/go-template/bootstrap/di"
-	"github.com/lyonnee/go-template/config"
-	"github.com/lyonnee/go-template/internal/infrastructure/persistence"
+	"github.com/lyonnee/go-template/infrastructure/config"
+	"github.com/lyonnee/go-template/infrastructure/persistence"
 	"go.uber.org/zap"
 )
 

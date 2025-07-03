@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/lyonnee/go-template/config"
+	"github.com/lyonnee/go-template/infrastructure/config"
 )
 
 func initConfig(env string) (*config.Config, error) {

@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/lyonnee/go-template/bootstrap/di"
-	"github.com/lyonnee/go-template/config"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/infrastructure/config"
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"go.uber.org/zap"
 )
 

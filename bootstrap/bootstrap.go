@@ -1,8 +1,8 @@
 package bootstrap
 
 import (
-	"github.com/lyonnee/go-template/internal/interfaces/grpc"
-	"github.com/lyonnee/go-template/internal/interfaces/http"
+	"github.com/lyonnee/go-template/interfaces/grpc"
+	"github.com/lyonnee/go-template/interfaces/http"
 )
 
 func Initialize(env string) error {

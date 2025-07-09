@@ -2,15 +2,27 @@ package middleware
 
 import (
 	"context"
+	"sync"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/lyonnee/go-template/bootstrap/di"
 	"go.uber.org/zap"
 )
 
-func Recovery(logger *zap.Logger) func(ctx context.Context, reqCtx *app.RequestContext, err interface{}, stack []byte) {
-	return func(ctx context.Context, reqCtx *app.RequestContext, err interface{}, stack []byte) {
-		logger.Fatal("[Recovery from panic]", zap.Any("err", err), zap.ByteString("stack", stack))
-		reqCtx.AbortWithStatus(consts.StatusInternalServerError)
+var once sync.Once
+var recoveryLogger *zap.SugaredLogger
+
+func getRecoveryLogger() *zap.SugaredLogger {
+	if recoveryLogger == nil {
+		once.Do(func() {
+			recoveryLogger = di.Get[*zap.Logger]().Sugar()
+		})
 	}
+	return recoveryLogger
+}
+
+func Recovery(ctx context.Context, c *app.RequestContext, err interface{}, stack []byte) {
+	getRecoveryLogger().Errorf("[Recovery] err=%v\nstack=%s", err, stack)
+	c.AbortWithStatusJSON(consts.StatusInternalServerError, map[string]string{"error": "Internal Server Error"})
 }

@@ -1,4 +1,4 @@
-package persistence
+package database
 
 import (
 	"context"
@@ -13,22 +13,22 @@ import (
 	"go.uber.org/zap"
 )
 
-type PostgresContext struct {
+type PostgresDB struct {
 	db *sqlx.DB
 }
 
-func (dbc *PostgresContext) Conn(fn func(*sqlx.Conn) error) error {
-	conn, err := dbc.db.Connx(context.TODO())
+func (dbc *PostgresDB) Conn(ctx context.Context, fn func(context.Context) error) error {
+	conn, err := dbc.db.Connx(ctx)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	return fn(conn)
+	return fn(SetDBExecutor(ctx, conn))
 }
 
-func (dbc *PostgresContext) Transaction(fn func(*sqlx.Tx) error, opts *sql.TxOptions) error {
-	tx, err := dbc.db.BeginTxx(context.TODO(), opts)
+func (dbc *PostgresDB) Transaction(ctx context.Context, opts *sql.TxOptions, fn func(context.Context) error) error {
+	tx, err := dbc.db.BeginTxx(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -45,12 +45,19 @@ func (dbc *PostgresContext) Transaction(fn func(*sqlx.Tx) error, opts *sql.TxOpt
 		}
 	}()
 
-	err = fn(tx)
+	err = fn(SetDBExecutor(ctx, tx))
 
 	return err
 }
 
-func newPostgresDB(config config.PostgresConfig, logger *zap.Logger) (DBContext, error) {
+func (dbc *PostgresDB) Close() error {
+	if dbc.db != nil {
+		return dbc.db.Close()
+	}
+	return nil
+}
+
+func newPostgresDB(config config.PostgresConfig, logger *zap.Logger) (Database, error) {
 	sql.Register(SQL_LOGGER_DRIVER, sqlhooks.Wrap(pq.Driver{}, &LoggerHooks{Logger: logger}))
 
 	pgDb, err := sqlx.Connect(SQL_LOGGER_DRIVER, config.DSN)
@@ -64,5 +71,5 @@ func newPostgresDB(config config.PostgresConfig, logger *zap.Logger) (DBContext,
 	db.SetConnMaxLifetime(config.ConnMaxLifetime)
 	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
 
-	return &PostgresContext{db: db}, nil
+	return &PostgresDB{db: db}, nil
 }

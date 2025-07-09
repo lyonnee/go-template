@@ -1,13 +1,13 @@
 .idea
 .DS_Store
 
-
 # Binaries for programs and plugins
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
+__debug_bin*
 
 # Test binary, built with `go test -c`
 *.test
@@ -31,4 +31,8 @@ profile.cov
 _logs
 *.log
 
+# vscode
 .vscode/
+
+# pprof files
+pprof/

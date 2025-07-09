@@ -13,17 +13,20 @@ func Initialize(env string) error {
 	}
 
 	// logger
-	logger, err := initLogger(conf.Log)
-	if err != nil {
+	if _, err := initLogger(conf.Log); err != nil {
 		return err
 	}
 
-	// data access
-	if _, err := initPersistence(conf.Persistence, logger); err != nil {
+	// database
+	if _, err := initDatabase(conf.Persistence); err != nil {
 		return err
 	}
 
 	// need init utils
+	if err := initAuth(conf.Auth); err != nil {
+		return err
+	}
+
 	if err := initUtils(conf.App.HostId); err != nil {
 		return err
 	}

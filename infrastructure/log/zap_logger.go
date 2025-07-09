@@ -32,7 +32,7 @@ func newZapLogger(
 
 	core := zapcore.NewTee(cores...)
 
-	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1)), nil
+	return zap.New(core, zap.AddCaller()), nil
 }
 
 func getConsoleWriterCore(conf config.LogConsoleWriterConfig) (zapcore.Core, error) {

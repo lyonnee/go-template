@@ -5,18 +5,16 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/lyonnee/go-template/bootstrap/di"
-	"github.com/lyonnee/go-template/infrastructure/persistence"
-
 	"github.com/lyonnee/go-template/domain/entity"
 	"github.com/lyonnee/go-template/domain/repository"
+	"github.com/lyonnee/go-template/infrastructure/database"
 )
 
 // UserApplicationService 用户应用服务
 type UserQueryService struct {
 	logger    *zap.Logger
-	dbContext persistence.DBContext
+	dbContext database.Database
 
 	userRepo repository.UserRepository
 }
@@ -25,7 +23,7 @@ type UserQueryService struct {
 func NewUserQueryService() (*UserQueryService, error) {
 	return &UserQueryService{
 		logger:    di.Get[*zap.Logger](),
-		dbContext: di.Get[persistence.DBContext](),
+		dbContext: di.Get[database.Database](),
 
 		userRepo: di.Get[repository.UserRepository](),
 	}, nil
@@ -36,10 +34,9 @@ func (s *UserQueryService) GetUserById(ctx context.Context, userId int64) (*enti
 	s.logger.Debug("GetUserById called", zap.Int64("userId", userId))
 
 	var user *entity.User
-	if err := s.dbContext.Conn(func(c *sqlx.Conn) error {
+	if err := s.dbContext.Conn(ctx, func(ctx context.Context) error {
 		userInfo, err := s.userRepo.FindById(ctx, userId)
 		if err != nil {
-			s.logger.Error("Failed to find user by ID", zap.Error(err), zap.Int64("userId", userId))
 			return err
 		}
 

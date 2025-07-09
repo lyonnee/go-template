@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/lyonnee/go-template/bootstrap"
-	"github.com/lyonnee/go-template/bootstrap/di"
-	"go.uber.org/zap"
+	"github.com/lyonnee/go-template/infrastructure/database"
+	"github.com/lyonnee/go-template/infrastructure/log"
+	"github.com/lyonnee/go-template/interfaces/http"
 )
 
 func main() {
@@ -39,6 +40,7 @@ func shutdown() {
 	_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	logger := di.Get[*zap.Logger]()
-	logger.Sync()
+	http.CloseServer()
+	database.Close()
+	log.Sync()
 }

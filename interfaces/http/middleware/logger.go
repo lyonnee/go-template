@@ -9,6 +9,8 @@ import (
 )
 
 func Logger(logger *zap.Logger) app.HandlerFunc {
+	logger = logger.WithOptions(zap.WithCaller(false)) // Skip the logger call in the stack trace
+
 	return func(ctx context.Context, reqCtx *app.RequestContext) {
 		start := time.Now() // 请求的时间
 
@@ -16,7 +18,7 @@ func Logger(logger *zap.Logger) app.HandlerFunc {
 
 		cost := time.Since(start)
 
-		logger.Info("Request processed",
+		logger.Info("http request",
 			zap.Int("status", reqCtx.Response.StatusCode()),                     // 状态码
 			zap.String("method", string(reqCtx.Request.Method())),               // 请求的方法
 			zap.String("path", string(reqCtx.Request.Path())),                   // 请求的路径

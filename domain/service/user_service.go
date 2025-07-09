@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/lyonnee/go-template/bootstrap/di"
 	"github.com/lyonnee/go-template/domain/entity"
 	domainErrors "github.com/lyonnee/go-template/domain/errors"
 	"github.com/lyonnee/go-template/domain/repository"
@@ -11,56 +12,28 @@ import (
 )
 
 type UserService struct {
-	userRepo repository.UserRepository
 	logger   *zap.Logger
+	userRepo repository.UserRepository
 }
 
-func NewUserService(
-	userRepo repository.UserRepository,
-	logger *zap.Logger,
-) *UserService {
+func NewUserService() (*UserService, error) {
 	return &UserService{
-		userRepo: userRepo,
-		logger:   logger,
-	}
+		logger:   di.Get[*zap.Logger](),
+		userRepo: di.Get[repository.UserRepository](),
+	}, nil
 }
 
 func (s *UserService) CreateUser(ctx context.Context, username, pwd, email, phone string) (*entity.User, error) {
 	// 检查用户名是否已存在
-	existingUser, err := s.userRepo.FindByUsername(ctx, username)
+	existingUser, err := s.userRepo.CheckUserFieldsExist(ctx, username, email, phone)
 	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-		s.logger.Error("Failed to check username existence", zap.String("username", username), zap.Error(err))
+		s.logger.Error("Failed to check user fields existence", zap.String("username", username), zap.String("email", email), zap.String("phone", phone), zap.Error(err))
 		return nil, err
 	}
-	if existingUser != nil {
-		s.logger.Warn("Username already exists", zap.String("username", username))
-		return nil, domainErrors.ErrUsernameTaken
-	}
 
-	// 检查邮箱是否已存在
-	if email != "" {
-		existingUser, err := s.userRepo.FindByEmail(ctx, email)
-		if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-			s.logger.Error("Failed to check email existence", zap.String("email", email), zap.Error(err))
-			return nil, err
-		}
-		if existingUser != nil {
-			s.logger.Warn("Email already exists", zap.String("email", email))
-			return nil, domainErrors.ErrEmailTaken
-		}
-	}
-
-	// 检查手机号是否已存在
-	if phone != "" {
-		existingUser, err := s.userRepo.FindByPhone(ctx, phone)
-		if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-			s.logger.Error("Failed to check phone existence", zap.String("phone", phone), zap.Error(err))
-			return nil, err
-		}
-		if existingUser != nil {
-			s.logger.Warn("Phone already exists", zap.String("phone", phone))
-			return nil, domainErrors.ErrPhoneTaken
-		}
+	if existingUser {
+		s.logger.Warn("User with these details already exists", zap.String("username", username), zap.String("email", email), zap.String("phone", phone))
+		return nil, errors.New("user with these details already exists")
 	}
 
 	user, err := entity.NewUser(username, pwd, email, phone)

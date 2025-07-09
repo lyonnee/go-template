@@ -1,9 +1,6 @@
 package http
 
 import (
-	"context"
-
-	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/lyonnee/go-template/bootstrap/di"
@@ -15,12 +12,9 @@ import (
 func registerRoutes(hz *server.Hertz) {
 	logger := di.Get[*zap.Logger]()
 
-	// process panic
-	hz.PanicHandler = panicHandler
-
 	// register middleware
 	hz.Use(middleware.Logger(logger))
-	hz.Use(recovery.Recovery(recovery.WithRecoveryHandler(middleware.Recovery(logger))))
+	hz.Use(recovery.Recovery(recovery.WithRecoveryHandler(middleware.Recovery)))
 	hz.Use(middleware.CORS())
 	hz.Use(middleware.AddTrace())
 
@@ -41,7 +35,6 @@ func registerRoutes(hz *server.Hertz) {
 		authController := di.Get[*controller.AuthController]()
 
 		authRouter := apiRouter.Group("/auth")
-		authRouter.POST("/signup", authController.SignUp)
 		authRouter.POST("/login", authController.Login)
 		authRouter.POST("/refresh", authController.RefreshToken)
 	}
@@ -51,12 +44,10 @@ func registerRoutes(hz *server.Hertz) {
 		userController := di.Get[*controller.UserController]()
 
 		userRouter := apiRouter.Group("/users")
+		userRouter.POST("", userController.Register)
+
 		userRouter.Use(middleware.JWTAuth())
 		userRouter.GET("/:id", userController.GetUser)
 		userRouter.PUT("/:id/username", userController.UpdateUsername)
 	}
-}
-
-func panicHandler(c context.Context, ctx *app.RequestContext) {
-
 }

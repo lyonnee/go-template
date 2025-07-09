@@ -30,4 +30,6 @@ type UserRepository interface {
 	UpdatePwdSecret(ctx context.Context, user *entity.User) error
 	UpdateEmail(ctx context.Context, user *entity.User) error
 	UpdatePhone(ctx context.Context, user *entity.User) error
+
+	CheckUserFieldsExist(ctx context.Context, username, email, phone string) (bool, error)
 }

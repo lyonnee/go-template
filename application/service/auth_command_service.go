@@ -4,19 +4,17 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/lyonnee/go-template/bootstrap/di"
 	"github.com/lyonnee/go-template/domain/entity"
 	"github.com/lyonnee/go-template/domain/repository"
-	"github.com/lyonnee/go-template/domain/service"
 	"github.com/lyonnee/go-template/infrastructure/auth"
-	"github.com/lyonnee/go-template/infrastructure/persistence"
+	"github.com/lyonnee/go-template/infrastructure/database"
 	"go.uber.org/zap"
 )
 
 type AuthCommandService struct {
 	logger    *zap.Logger
-	dbContext persistence.DBContext
+	dbContext database.Database
 
 	userRepo repository.UserRepository
 }
@@ -25,74 +23,9 @@ type AuthCommandService struct {
 func NewAuthCommandService() (*AuthCommandService, error) {
 	return &AuthCommandService{
 		logger:    di.Get[*zap.Logger](),
-		dbContext: di.Get[persistence.DBContext](),
-		userRepo:  di.Get[repository.UserRepository](),
-	}, nil
-}
+		dbContext: di.Get[database.Database](),
 
-// SignUpCmd 注册命令
-type SignUpCmd struct {
-	Username string
-	Password string
-	Email    string
-	Phone    string
-}
-
-// SignUpResult 注册结果
-type SignUpResult struct {
-	AccessToken  string
-	RefreshToken string
-	User         *entity.User
-}
-
-// SignUp 用户注册
-func (s *AuthCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignUpResult, error) {
-	s.logger.Info("Starting user registration",
-		zap.String("username", cmd.Username),
-		zap.String("email", cmd.Email))
-
-	var user *entity.User
-	if err := s.dbContext.Conn(func(c *sqlx.Conn) error {
-		userDomainService := service.NewUserService(s.userRepo, s.logger)
-		newUser, err := userDomainService.CreateUser(ctx, cmd.Username, cmd.Password, cmd.Email, cmd.Phone)
-		if err != nil {
-			s.logger.Error("Failed to create user", zap.Error(err))
-			return err
-		}
-
-		if err := s.userRepo.Create(ctx, newUser); err != nil {
-			s.logger.Error("Failed to create user in database", zap.Error(err))
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		s.logger.Error("User registration failed", zap.Error(err), zap.String("username", cmd.Username))
-		return nil, err
-	}
-
-	jwtManager := di.Get[*auth.JWTManager]()
-	// 生成token
-	accessToken, err := jwtManager.GenerateAccessToken(user.ID, user.Username)
-	if err != nil {
-		s.logger.Error("Failed to generate access token for new user", zap.Error(err), zap.Int64("userId", user.ID))
-		return nil, err
-	}
-
-	refreshToken, err := jwtManager.GenerateRefreshToken(user.ID, user.Username)
-	if err != nil {
-		s.logger.Error("Failed to generate refresh token for new user", zap.Error(err), zap.Int64("userId", user.ID))
-		return nil, err
-	}
-
-	s.logger.Info("User registration completed successfully",
-		zap.String("username", cmd.Username),
-		zap.Int64("userId", user.ID))
-
-	return &SignUpResult{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		User:         user,
+		userRepo: di.Get[repository.UserRepository](),
 	}, nil
 }
 
@@ -113,7 +46,7 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 	s.logger.Debug("Login attempt", zap.String("username", cmd.Username))
 
 	var user *entity.User
-	if err := s.dbContext.Conn(func(c *sqlx.Conn) error {
+	if err := s.dbContext.Conn(ctx, func(ctx context.Context) error {
 		// 查找用户
 		userInfo, err := s.userRepo.FindByUsername(ctx, cmd.Username)
 		if err != nil {
@@ -156,16 +89,15 @@ type RefreshTokenResult struct {
 func (s *AuthCommandService) RefreshToken(ctx context.Context, cmd *RefreshTokenCmd) (*RefreshTokenResult, error) {
 	s.logger.Debug("RefreshToken called")
 
-	jwtManager := di.Get[*auth.JWTManager]()
 	// 验证刷新token
-	claims, err := jwtManager.ValidateToken(cmd.RefreshToken)
+	claims, err := auth.JWTAuth().ValidateToken(cmd.RefreshToken)
 	if err != nil {
 		s.logger.Warn("Invalid refresh token provided", zap.Error(err))
 		return nil, errors.New("invalid refresh token")
 	}
 
 	// 生成新的访问token
-	newAccessToken, err := jwtManager.GenerateAccessToken(claims.UserId, claims.AlternativeID)
+	newAccessToken, err := auth.JWTAuth().GenerateAccessToken(claims.UserId, claims.AlternativeID)
 	if err != nil {
 		s.logger.Error("Failed to generate new access token", zap.Error(err), zap.Int64("userId", claims.UserId))
 		return nil, err

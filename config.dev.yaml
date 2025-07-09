@@ -15,15 +15,15 @@ log:
     enable: true
 
     format: console
-    level: debug
+    level: info
     caller: full
 
   file_writer_config:
     enable: true
 
     filename: ./_logs/dev.log
-    format: console # 日志格式，console / json
-    level: debug # 日志级别，debug / info / warn / error / fatal / panic
+    format: json # 日志格式，console / json
+    level: info # 日志级别，debug / info / warn / error / fatal / panic
     caller: full # 日志调用者，full / short
     max_size: 10 # 最大文件大小(MB)，默认值10MB
     max_age: 3 # 保留旧文件的最大天数，默认值3天

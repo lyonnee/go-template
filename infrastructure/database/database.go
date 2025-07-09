@@ -16,7 +16,7 @@ type Database interface {
 
 var db Database
 
-func Initialize(config config.PersistenceConfig, logger *zap.Logger) (Database, error) {
+func Initialize(config config.DatabaseConfig, logger *zap.Logger) (Database, error) {
 	pgsql, err := newPostgresDB(config.Postgres, logger)
 	if err != nil {
 		return nil, err

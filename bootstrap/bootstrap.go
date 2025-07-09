@@ -18,7 +18,7 @@ func Initialize(env string) error {
 	}
 
 	// database
-	if _, err := initDatabase(conf.Persistence); err != nil {
+	if _, err := initDatabase(conf.Database); err != nil {
 		return err
 	}
 

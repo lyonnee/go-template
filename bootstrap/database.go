@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func initDatabase(conf config.PersistenceConfig) (database.Database, error) {
+func initDatabase(conf config.DatabaseConfig) (database.Database, error) {
 	logger := di.Get[*zap.Logger]()
 	logger = logger.WithOptions(zap.WithCaller(false))
 

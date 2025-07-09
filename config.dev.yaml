@@ -30,7 +30,7 @@ log:
     max_backups: 100 # 保留旧文件的最大个数，默认值100个
     isCompression: false # 是否压缩
 
-persistence:
+database:
   mysql:
     dsn: root:admin123@tcp(localhost:3306)/go-template?charset=utf8mb4&parseTime=true
   postgres:

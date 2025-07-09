@@ -8,12 +8,12 @@ import (
 )
 
 type Config struct {
-	App         AppConfig         `mapstructure:"app"`
-	Http        HttpConfig        `mapstructure:"http"`
-	Log         LogConfig         `mapstructure:"log"`
-	Auth        AuthConfig        `mapstructure:"auth"`
-	Persistence PersistenceConfig `mapstructure:"persistence"`
-	Cache       CacheConfig       `mapstructure:"cache"`
+	App      AppConfig      `mapstructure:"app"`
+	Http     HttpConfig     `mapstructure:"http"`
+	Log      LogConfig      `mapstructure:"log"`
+	Auth     AuthConfig     `mapstructure:"auth"`
+	Database DatabaseConfig `mapstructure:"database"`
+	Cache    CacheConfig    `mapstructure:"cache"`
 }
 
 var conf = new(Config)

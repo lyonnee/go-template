@@ -3,14 +3,14 @@ package http
 import (
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
-	"github.com/lyonnee/go-template/bootstrap/di"
+	"github.com/lyonnee/go-template/infrastructure/di"
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"github.com/lyonnee/go-template/interfaces/http/controller"
 	"github.com/lyonnee/go-template/interfaces/http/middleware"
-	"go.uber.org/zap"
 )
 
 func registerRoutes(hz *server.Hertz) {
-	logger := di.Get[*zap.Logger]()
+	logger := di.Get[*log.Logger]()
 
 	// register middleware
 	hz.Use(middleware.Logger(logger))

@@ -1,9 +1,11 @@
 package config
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
+	"github.com/lyonnee/go-template/infrastructure/di"
 	"github.com/spf13/viper"
 )
 
@@ -17,6 +19,15 @@ type Config struct {
 }
 
 var conf = new(Config)
+
+func init() {
+	var (
+		env = flag.String("env", "dev", "Environment (dev, test, prod)")
+	)
+	flag.Parse()
+
+	Load(*env)
+}
 
 func Load(env string) (*Config, error) {
 	if env == "" {
@@ -45,6 +56,10 @@ func Load(env string) (*Config, error) {
 	if err := viper.Unmarshal(conf); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+
+	di.AddSingleton[Config](func() (Config, error) {
+		return *conf, nil
+	})
 
 	return conf, nil
 }

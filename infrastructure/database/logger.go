@@ -5,6 +5,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"go.uber.org/zap"
 )
 
@@ -13,7 +14,7 @@ const (
 )
 
 type LoggerHooks struct {
-	Logger *zap.Logger
+	Logger *log.Logger
 }
 
 // Before hook will print the query with it's args and return the context with the timestamp

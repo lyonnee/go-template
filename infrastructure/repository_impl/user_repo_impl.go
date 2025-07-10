@@ -8,25 +8,30 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lyonnee/go-template/bootstrap/di"
 	domainErrors "github.com/lyonnee/go-template/domain/errors"
+	"github.com/lyonnee/go-template/infrastructure/di"
 	"go.uber.org/zap"
 
 	"github.com/lyonnee/go-template/domain/entity"
 	"github.com/lyonnee/go-template/domain/repository"
 	"github.com/lyonnee/go-template/infrastructure/database"
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"github.com/lyonnee/go-template/infrastructure/repository_impl/model"
 )
 
 // UserRepositoryImpl 用户存储库实现
 type UserRepositoryImpl struct {
-	logger *zap.Logger
+	logger *log.Logger
+}
+
+func init() {
+	di.AddSingleton[repository.UserRepository](NewUserRepository)
 }
 
 // NewUserRepository 创建一个新的用户存储库实例
 func NewUserRepository() (repository.UserRepository, error) {
 	repo := &UserRepositoryImpl{
-		logger: di.Get[*zap.Logger](),
+		logger: di.Get[*log.Logger](),
 	}
 
 	return repo, nil

@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/lyonnee/go-template/bootstrap/di"
 	"github.com/lyonnee/go-template/infrastructure/auth"
+	"github.com/lyonnee/go-template/infrastructure/di"
 	"github.com/lyonnee/go-template/interfaces/http/dto"
 )
 

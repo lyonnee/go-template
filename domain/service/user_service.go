@@ -4,21 +4,26 @@ import (
 	"context"
 	"errors"
 
-	"github.com/lyonnee/go-template/bootstrap/di"
 	"github.com/lyonnee/go-template/domain/entity"
 	domainErrors "github.com/lyonnee/go-template/domain/errors"
 	"github.com/lyonnee/go-template/domain/repository"
+	"github.com/lyonnee/go-template/infrastructure/di"
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"go.uber.org/zap"
 )
 
 type UserService struct {
-	logger   *zap.Logger
+	logger   *log.Logger
 	userRepo repository.UserRepository
+}
+
+func init() {
+	di.AddSingleton[*UserService](NewUserService)
 }
 
 func NewUserService() (*UserService, error) {
 	return &UserService{
-		logger:   di.Get[*zap.Logger](),
+		logger:   di.Get[*log.Logger](),
 		userRepo: di.Get[repository.UserRepository](),
 	}, nil
 }

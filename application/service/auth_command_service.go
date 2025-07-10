@@ -4,25 +4,30 @@ import (
 	"context"
 	"errors"
 
-	"github.com/lyonnee/go-template/bootstrap/di"
 	"github.com/lyonnee/go-template/domain/entity"
 	"github.com/lyonnee/go-template/domain/repository"
 	"github.com/lyonnee/go-template/infrastructure/auth"
 	"github.com/lyonnee/go-template/infrastructure/database"
+	"github.com/lyonnee/go-template/infrastructure/di"
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"go.uber.org/zap"
 )
 
 type AuthCommandService struct {
-	logger    *zap.Logger
+	logger    *log.Logger
 	dbContext database.Database
 
 	userRepo repository.UserRepository
 }
 
+func init() {
+	di.AddSingleton[*AuthCommandService](NewAuthCommandService)
+}
+
 // NewAuthService 创建认证服务
 func NewAuthCommandService() (*AuthCommandService, error) {
 	return &AuthCommandService{
-		logger:    di.Get[*zap.Logger](),
+		logger:    di.Get[*log.Logger](),
 		dbContext: di.Get[database.Database](),
 
 		userRepo: di.Get[repository.UserRepository](),

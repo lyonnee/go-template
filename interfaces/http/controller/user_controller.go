@@ -7,9 +7,10 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/lyonnee/go-template/application/service"
-	"github.com/lyonnee/go-template/bootstrap/di"
 	domainErrors "github.com/lyonnee/go-template/domain/errors"
 	"github.com/lyonnee/go-template/infrastructure/auth"
+	"github.com/lyonnee/go-template/infrastructure/di"
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"github.com/lyonnee/go-template/interfaces/http/dto"
 	"go.uber.org/zap"
 )
@@ -17,14 +18,18 @@ import (
 type UserController struct {
 	userCmdService   *service.UserCommandService
 	userQueryService *service.UserQueryService
-	logger           *zap.Logger
+	logger           *log.Logger
+}
+
+func init() {
+	di.AddSingleton[*UserController](NewUserController)
 }
 
 func NewUserController() (*UserController, error) {
 	return &UserController{
 		userCmdService:   di.Get[*service.UserCommandService](),
 		userQueryService: di.Get[*service.UserQueryService](),
-		logger:           di.Get[*zap.Logger](),
+		logger:           di.Get[*log.Logger](),
 	}, nil
 }
 

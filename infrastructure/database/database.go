@@ -5,7 +5,8 @@ import (
 	"database/sql"
 
 	"github.com/lyonnee/go-template/infrastructure/config"
-	"go.uber.org/zap"
+	"github.com/lyonnee/go-template/infrastructure/di"
+	"github.com/lyonnee/go-template/infrastructure/log"
 )
 
 type Database interface {
@@ -16,15 +17,20 @@ type Database interface {
 
 var db Database
 
-func Initialize(config config.DatabaseConfig, logger *zap.Logger) (Database, error) {
-	pgsql, err := newPostgresDB(config.Postgres, logger)
+func init() {
+	config := di.Get[config.Config]()
+	logger := di.Get[*log.Logger]()
+
+	pgsql, err := newPostgresDB(config.Database.Postgres, logger)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	db = pgsql
 
-	return db, nil
+	di.AddSingleton[Database](func() (Database, error) {
+		return db, nil
+	})
 }
 
 func Close() error {

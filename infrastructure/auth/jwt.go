@@ -22,7 +22,7 @@ type JWTManager struct {
 	issuer             string
 }
 
-func newJWTManger(conf *config.JWTConfig) *JWTManager {
+func newJWTManager(conf config.JWTConfig) *JWTManager {
 	jwtManager = &JWTManager{
 		secretKey:          []byte(conf.SecretKey),
 		accessTokenExpiry:  conf.AccessTokenExpiry,

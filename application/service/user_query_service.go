@@ -5,24 +5,29 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/lyonnee/go-template/bootstrap/di"
 	"github.com/lyonnee/go-template/domain/entity"
 	"github.com/lyonnee/go-template/domain/repository"
 	"github.com/lyonnee/go-template/infrastructure/database"
+	"github.com/lyonnee/go-template/infrastructure/di"
+	"github.com/lyonnee/go-template/infrastructure/log"
 )
 
 // UserApplicationService 用户应用服务
 type UserQueryService struct {
-	logger    *zap.Logger
+	logger    *log.Logger
 	dbContext database.Database
 
 	userRepo repository.UserRepository
 }
 
+func init() {
+	di.AddSingleton[*UserQueryService](NewUserQueryService)
+}
+
 // NewUserApplicationService 创建用户应用服务
 func NewUserQueryService() (*UserQueryService, error) {
 	return &UserQueryService{
-		logger:    di.Get[*zap.Logger](),
+		logger:    di.Get[*log.Logger](),
 		dbContext: di.Get[database.Database](),
 
 		userRepo: di.Get[repository.UserRepository](),

@@ -5,7 +5,7 @@ import "github.com/samber/do/v2"
 type Provider[T any] func() (T, error)
 
 func AddSingleton[T any](provider Provider[T]) error {
-	do.Provide(nil, func(i do.Injector) (T, error) {
+	do.Provide(nil, func(do.Injector) (T, error) {
 		return provider()
 	})
 
@@ -13,7 +13,7 @@ func AddSingleton[T any](provider Provider[T]) error {
 }
 
 func AddTransient[T any](provider Provider[T]) error {
-	do.ProvideTransient(nil, func(i do.Injector) (T, error) {
+	do.ProvideTransient(nil, func(do.Injector) (T, error) {
 		return provider()
 	})
 

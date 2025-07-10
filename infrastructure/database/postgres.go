@@ -10,7 +10,6 @@ import (
 	"github.com/lyonnee/go-template/infrastructure/config"
 	"github.com/lyonnee/go-template/infrastructure/log"
 	"github.com/qustavo/sqlhooks/v2"
-	"go.uber.org/zap"
 )
 
 type PostgresDB struct {
@@ -36,10 +35,8 @@ func (dbc *PostgresDB) Transaction(ctx context.Context, opts *sql.TxOptions, fn 
 	defer func() {
 		if p := recover(); p != nil {
 			_ = tx.Rollback()
-			log.Logger.Error("Failed to rollback transaction", zap.Any("err", p))
 		} else if err != nil {
 			_ = tx.Rollback()
-			log.Logger.Error("Failed to rollback transaction", zap.Error(err))
 		} else {
 			err = tx.Commit()
 		}
@@ -57,7 +54,7 @@ func (dbc *PostgresDB) Close() error {
 	return nil
 }
 
-func newPostgresDB(config config.PostgresConfig, logger *zap.Logger) (Database, error) {
+func newPostgresDB(config config.PostgresConfig, logger *log.Logger) (Database, error) {
 	sql.Register(SQL_LOGGER_DRIVER, sqlhooks.Wrap(pq.Driver{}, &LoggerHooks{Logger: logger}))
 
 	pgDb, err := sqlx.Connect(SQL_LOGGER_DRIVER, config.DSN)

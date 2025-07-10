@@ -13,14 +13,11 @@ http:
 log: 
   console_writer_config:
     enable: true
-
     format: console
     level: info
     caller: full
-
   file_writer_config:
     enable: true
-
     filename: ./_logs/dev.log
     format: json # 日志格式，console / json
     level: info # 日志级别，debug / info / warn / error / fatal / panic
@@ -44,7 +41,7 @@ auth:
   jwt:
     secret_key: go-template # 密钥
     access_token_expiry: 15m # 有效期
-    refresh_token_expiry: 168h # 有效期
+    refresh_token_expiry: 15d # 有效期
     issuer: lyon.nee # 签发人
 
 cache:

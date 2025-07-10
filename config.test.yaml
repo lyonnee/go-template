@@ -1,28 +1,55 @@
+app:
+  env: dev # 环境变量，dev / test / prod
+  name: go-template # 应用名称
+  version: 1.0.0 # 应用版本
+  description: Go Template Application # 应用描述
+  node_id: 1 # 节点ID，唯一标识一个节点
+
 http:
   port: :80
+  read_timeout: 5s
+  write_timeout: 10s
 
 log: 
-  format: "json"        # 输出格式，console 或 json，默认是 console
-  caller: "short"          # 输出文件路径，full 或 short，默认是 full
-  level: info # debug / info / warn / error / dpanic / panic / fatal
-  to_file: true
-  log_file_config:
+  console_writer_config:
+    enable: true
+    format: console
+    level: info
+    caller: short
+  file_writer_config:
+    enable: true
     filename: ./_logs/test.log
-    log_level: info
+    format: json # 日志格式，console / json
+    level: info # 日志级别，debug / info / warn / error / fatal / panic
+    caller: short # 日志调用者，full / short
     max_size: 10 # 最大文件大小(MB)，默认值10MB
     max_age: 7 # 保留旧文件的最大天数，默认值3天
     max_backups: 64 # 保留旧文件的最大个数，默认值100个
     isCompression: false # 是否压缩
 
-persistence:
+database:
   mysql:
-    dsn: root:admin123@tcp(localhost:3306)/go-gin-template?charset=utf8mb4&parseTime=true
+    dsn: root:admin123@tcp(localhost:3306)/go-template?charset=utf8mb4&parseTime=true
   postgres:
-    dsn: root:admin123@tcp(localhost:3306)/go-gin-template?charset=utf8mb4&parseTime=true
+    dsn: postgres://postgres:admin123@localhost:5432/go_template?sslmode=disable
+    max_open_conns: 25        # 最大打开连接数
+    max_idle_conns: 10        # 最大空闲连接数
+    conn_max_lifetime: 300s   # 连接最大生存时间
+    conn_max_idle_time: 60s   # 连接最大空闲时间
 
 auth:
   jwt:
-    secret_key: go-template
-    access_token_expiry: 15m
-    refresh_token_expiry: 7d
-    issuer: lyon.nee
+    secret_key: go-template # 密钥
+    access_token_expiry: 15m # 有效期
+    refresh_token_expiry: 15d # 有效期
+    issuer: lyon.nee # 签发人
+
+cache:
+  redis:
+    host: localhost # 主机
+    port: 6379 # 端口
+    username:  
+    password: 
+    database: 0 # 数据库
+    framework: standalone  # standalone or cluster
+    prefix: "go-template:"

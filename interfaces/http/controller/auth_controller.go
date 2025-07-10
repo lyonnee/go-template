@@ -5,20 +5,25 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/lyonnee/go-template/application/service"
-	"github.com/lyonnee/go-template/bootstrap/di"
+	"github.com/lyonnee/go-template/infrastructure/di"
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"github.com/lyonnee/go-template/interfaces/http/dto"
 	"go.uber.org/zap"
 )
 
 type AuthController struct {
 	authCmdService *service.AuthCommandService
-	logger         *zap.Logger
+	logger         *log.Logger
+}
+
+func init() {
+	di.AddSingleton[*AuthController](NewAuthController)
 }
 
 func NewAuthController() (*AuthController, error) {
 	return &AuthController{
 		authCmdService: di.Get[*service.AuthCommandService](),
-		logger:         di.Get[*zap.Logger](),
+		logger:         di.Get[*log.Logger](),
 	}, nil
 }
 

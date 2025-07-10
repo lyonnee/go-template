@@ -4,9 +4,22 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/lyonnee/go-template/infrastructure/config"
+	"github.com/lyonnee/go-template/infrastructure/di"
 )
 
 var node *snowflake.Node
+
+func init() {
+	config := di.Get[config.Config]()
+
+	newNode, err := snowflake.NewNode(config.App.HostId)
+	if err != nil {
+		panic(fmt.Sprintf("failed to initialize ID generator: %v", err))
+	}
+
+	node = newNode
+}
 
 func Initialize(hostId int64) error {
 	var err error

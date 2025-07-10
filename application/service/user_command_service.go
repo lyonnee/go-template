@@ -3,17 +3,18 @@ package service
 import (
 	"context"
 
-	"github.com/lyonnee/go-template/bootstrap/di"
 	"github.com/lyonnee/go-template/domain/entity"
 	"github.com/lyonnee/go-template/domain/repository"
 	"github.com/lyonnee/go-template/domain/service"
 	"github.com/lyonnee/go-template/infrastructure/auth"
 	"github.com/lyonnee/go-template/infrastructure/database"
+	"github.com/lyonnee/go-template/infrastructure/di"
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"go.uber.org/zap"
 )
 
 type UserCommandService struct {
-	logger    *zap.Logger
+	logger    *log.Logger
 	dbContext database.Database
 
 	userRepo repository.UserRepository
@@ -21,10 +22,14 @@ type UserCommandService struct {
 	userDomainService *service.UserService
 }
 
+func init() {
+	di.AddSingleton[*UserCommandService](NewUserCommandService)
+}
+
 // NewUserApplicationService 创建用户应用服务
 func NewUserCommandService() (*UserCommandService, error) {
 	return &UserCommandService{
-		logger:    di.Get[*zap.Logger](),
+		logger:    di.Get[*log.Logger](),
 		dbContext: di.Get[database.Database](),
 
 		userRepo: di.Get[repository.UserRepository](),

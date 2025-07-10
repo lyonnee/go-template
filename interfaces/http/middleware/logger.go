@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"go.uber.org/zap"
 )
 
-func Logger(logger *zap.Logger) app.HandlerFunc {
+func Logger(logger *log.Logger) app.HandlerFunc {
 	logger = logger.WithOptions(zap.WithCaller(false)) // Skip the logger call in the stack trace
 
 	return func(ctx context.Context, reqCtx *app.RequestContext) {

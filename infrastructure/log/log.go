@@ -2,63 +2,79 @@ package log
 
 import (
 	"github.com/lyonnee/go-template/infrastructure/config"
+	"github.com/lyonnee/go-template/infrastructure/di"
 	"go.uber.org/zap"
 )
 
+type Logger = zap.Logger
+
 var (
-	Logger *zap.Logger
+	logger *Logger
 )
 
-func Initialize(logConfig config.LogConfig,
-) (*zap.Logger, error) {
-	logger, err := newZapLogger(logConfig)
+func init() {
+	config := di.Get[config.Config]()
+	newLogger, err := newZapLogger(config.Log)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	Logger = logger
 
-	return Logger, nil
+	logger = newLogger
+	di.AddSingleton[*Logger](func() (*Logger, error) {
+		return logger, nil
+	})
 }
 
+// func Initialize(logConfig config.LogConfig,
+// ) (*zap.Logger, error) {
+// 	newLogger, err := newZapLogger(logConfig)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	logger = newLogger
+
+// 	return logger, nil
+// }
+
 func Debug(msg string, fields ...zap.Field) {
-	if Logger != nil {
-		Logger.Debug(msg, fields...)
+	if logger != nil {
+		logger.Debug(msg, fields...)
 	}
 }
 
 func Info(msg string, fields ...zap.Field) {
-	if Logger != nil {
-		Logger.Info(msg, fields...)
+	if logger != nil {
+		logger.Info(msg, fields...)
 	}
 }
 
 func Warn(msg string, fields ...zap.Field) {
-	if Logger != nil {
-		Logger.Warn(msg, fields...)
+	if logger != nil {
+		logger.Warn(msg, fields...)
 	}
 }
 
 func Error(msg string, fields ...zap.Field) {
-	if Logger != nil {
-		Logger.Error(msg, fields...)
+	if logger != nil {
+		logger.Error(msg, fields...)
 	}
 }
 
 func Fatal(msg string, fields ...zap.Field) {
-	if Logger != nil {
-		Logger.Fatal(msg, fields...)
+	if logger != nil {
+		logger.Fatal(msg, fields...)
 	}
 }
 
 func Panic(msg string, fields ...zap.Field) {
-	if Logger != nil {
-		Logger.Panic(msg, fields...)
+	if logger != nil {
+		logger.Panic(msg, fields...)
 	}
 }
 
 func Sync() error {
-	if Logger != nil {
-		return Logger.Sync()
+	if logger != nil {
+		return logger.Sync()
 	}
 	return nil
 }

@@ -6,7 +6,8 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	"github.com/lyonnee/go-template/bootstrap/di"
+	"github.com/lyonnee/go-template/infrastructure/di"
+	"github.com/lyonnee/go-template/infrastructure/log"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +17,7 @@ var recoveryLogger *zap.SugaredLogger
 func getRecoveryLogger() *zap.SugaredLogger {
 	if recoveryLogger == nil {
 		once.Do(func() {
-			recoveryLogger = di.Get[*zap.Logger]().Sugar()
+			recoveryLogger = di.Get[*log.Logger]().Sugar()
 		})
 	}
 	return recoveryLogger

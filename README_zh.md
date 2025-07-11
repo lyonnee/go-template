@@ -7,7 +7,7 @@
 
 ## 快速开始
 
-### 使用 gonew 创建项目
+### 使用模板创建项目
 
 1. 安装 gonew 工具
 ```bash
@@ -29,117 +29,92 @@ cd your-project
 go run cmd/server/main.go -e dev
 ```
 
-### 环境变量
+## 模板特性
 
-你可以通过以下方式设置运行环境：
-- 命令行参数: `-e` 或 `--env`
-- 环境变量: `APP_ENV`
-- 默认值: `prod`
+本模板提供了生产就绪的 Go Web 服务，包含：
 
-## 项目特性
-
-- 📦 **整洁架构** (Clean Architecture) - 清晰的分层架构设计
-- 🎯 **领域驱动设计** (DDD) - 以业务领域为核心的设计方法
-- 🔐 **JWT 认证** - 支持访问令牌和刷新令牌
-- 📝 **结构化日志** (Zap) - 高性能的结构化日志记录
-- 🗄️ **多数据库支持** - PostgreSQL 和 MySQL
-- 🔄 **优雅关机** - 信号处理和资源清理
-- 🐳 **Docker 支持** - 多阶段构建和容器化部署
-- ⚡ **高性能 HTTP 框架** (CloudWeGo Hertz) - 字节跳动开源的高性能 HTTP 框架
-- 🔌 **gRPC 支持** - 高性能 RPC 通信
+- 📦 **整洁架构** - 清晰的分层架构设计，关注点分离
+- 🎯 **领域驱动设计** - 丰富的领域模型和业务逻辑封装
+- 🔐 **认证系统** - JWT 和 OAuth 集成就绪
+- 📝 **日志基础设施** - 结构化日志，支持多种输出
+- 🗄️ **数据库支持** - 多数据库兼容性
+- 💾 **缓存层** - Redis 集成
+- 🔄 **优雅关机** - 合适的资源清理
+- 🐳 **Docker 就绪** - 包含多阶段构建
+- ⚡ **高性能 HTTP** - CloudWeGo Hertz 框架
+- 🔌 **gRPC 支持** - Protocol Buffer 集成
+- 📨 **消息队列** - 异步处理基础设施
+- ⏰ **任务调度** - 定时任务支持
+- 🔧 **多环境配置** - 开发、测试、生产配置
+- 🏗️ **依赖注入** - IoC 容器包含
+- 🆔 **ID 生成** - 分布式 ID 生成
+- 🧪 **测试结构** - 测试组织和工具
 - 📨 **消息队列集成** - 异步消息处理
-- 💾 **Redis 缓存** - 高性能缓存支持
 - ⏰ **定时任务调度** - 支持 Cron 表达式
-- 🔧 **多环境配置** - 开发、测试、生产环境配置
-- 🏗️ **依赖注入** - 基于容器的依赖管理
-- 📊 **CQRS 模式** - 命令查询职责分离
-- 🔍 **中间件支持** - 恢复、CORS、追踪、日志等
-- 🛡️ **密码加密** - bcrypt 密码哈希
-- 🔗 **区块链集成** - 区块链相关功能支持
+- 🔧 **多环境配置** - 基于 YAML 的配置管理
+- 🏗️ **依赖注入** - Samber/do IoC 容器
+- 🆔 **ID 生成** - 基于 Snowflake 的唯一 ID 生成
+- � **密码哈希** - bcrypt 安全密码存储
+- 🔗 **区块链集成** - 内置区块链工具
+- 🧪 **测试支持** - 完整的测试工具和结构
 
 ## 项目结构
 
+本模板遵循整洁架构和 DDD 原则，具有以下结构：
+
 ```
-go-template/                          # 项目根目录
-├── cmd/                             # 命令行入口目录
-│   ├── migrate/                     # 数据库迁移工具
-│   │   └── main.go                  # 迁移命令入口
-│   ├── schduler/                    # 定时任务调度器
-│   │   └── main.go                  # 调度器入口
-│   └── server/                      # 主服务器
-│       └── main.go                  # 服务器入口
+go-template/
+├── cmd/                             # 应用程序入口点
+│   ├── scheduler/                   # 后台任务调度器
+│   └── server/                      # 主 HTTP/gRPC 服务器
 │
-├── config/                          # 配置管理模块
-│   ├── auth.go                      # 认证配置
-│   ├── cache.go                     # 缓存配置
-│   ├── config.go                    # 配置加载逻辑
-│   ├── http.go                      # HTTP 服务配置
-│   ├── log.go                       # 日志配置
-│   └── persistence.go               # 持久化配置
+├── application/                     # 应用层（用例）
+│   ├── cron/                        # 定时任务定义
+│   └── service/                     # 应用服务
+│       ├── auth_command_service.go  # 认证操作
+│       ├── user_command_service.go  # 用户写操作
+│       └── user_query_service.go    # 用户读操作
 │
-├── internal/                        # 内部应用代码
-│   ├── app/                         # 应用容器
-│   │   └── container.go             # 依赖注入容器
-│   ├── application/                 # 应用层：处理业务流程
-│   │   ├── command_service/        # 命令执行器 (CQRS)
-│   │   └── query_executor/          # 查询执行器 (CQRS)
-│   ├── domain/                      # 领域层：核心业务逻辑
-│   │   ├── entity/                  # 领域实体
-│   │   ├── errors/                  # 领域错误
-│   │   ├── repository/              # 仓储接口
-│   │   ├── user_domain_service.go   # 用户领域服务
-│   │   └── valueobject/             # 值对象
-│   ├── infrastructure/              # 基础设施适配层
-│   │   ├── cache/                   # 缓存实现
-│   │   ├── eventbus/                # 事件总线
-│   │   ├── log/                     # 日志实现
-│   │   ├── repository/              # 仓储实现
-│   │   └── scheduler/               # 调度器实现
-│   └── interfaces/                  # 接口层
-│       ├── grpc/                    # gRPC 接口
-│       └── http/                    # HTTP 接口
-│           ├── controller/          # 控制器
-│           ├── dto/                 # 数据传输对象
-│           ├── middleware/          # 中间件
-│           └── router.go            # 路由配置
+├── domain/                          # 领域层（业务逻辑）
+│   ├── entity/                      # 业务实体
+│   ├── errors/                      # 领域特定错误
+│   ├── repository/                  # 仓储接口
+│   └── service/                     # 领域服务
 │
-├── pkg/                             # 公共包
-│   ├── auth/                        # 认证模块
-│   │   ├── jwt.go                   # JWT 实现
-│   │   ├── oauth.go                 # OAuth 实现
-│   │   └── password.go              # 密码处理
+├── infrastructure/                  # 基础设施层（技术细节）
+│   ├── auth/                        # 认证实现
 │   ├── blockchain/                  # 区块链集成
-│   │   └── blockchain.go            # 区块链功能
-│   ├── cache/                       # 缓存模块
-│   │   └── cache.go                 # 缓存接口
-│   ├── hash/                        # 哈希工具
-│   ├── log/                         # 日志模块
-│   │   ├── zap_logger.go            # Zap 日志器
-│   │   └── zap_sugar_logger.go      # Zap Sugar 日志器
-│   ├── mq/                          # 消息队列
-│   │   └── mq.go                    # 消息队列接口
-│   └── persistence/                 # 数据持久化
-│       ├── persistence.go           # 持久化接口
-│       └── postgres.go              # PostgreSQL 实现
+│   ├── cache/                       # 缓存实现
+│   ├── config/                      # 配置管理
+│   ├── database/                    # 数据库连接
+│   ├── di/                          # 依赖注入容器
+│   ├── log/                         # 日志实现
+│   ├── mq/                          # 消息队列实现
+│   └── repository_impl/             # 仓储实现
+│       └── model/                   # 数据库模型
 │
-├── server/                          # 服务器实现
-│   ├── http.go                      # HTTP 服务器
-│   └── rpc.go                       # RPC 服务器
+├── interfaces/                      # 接口层（外部接口）
+│   ├── event_handler/               # 事件处理器
+│   ├── grpc/                        # gRPC 服务定义
+│   └── http/                        # HTTP 接口
+│       ├── controller/              # HTTP 请求处理器
+│       ├── dto/                     # 数据传输对象
+│       ├── middleware/              # HTTP 中间件
+│       ├── router.go                # 路由定义
+│       └── server.go                # HTTP 服务器设置
 │
-├── scripts/                         # 脚本目录
-│   ├── build.sh                     # 构建脚本
-│   └── start.sh                     # 启动脚本
+├── pkg/                             # 共享工具
+│   └── idgen/                       # ID 生成工具
 │
-├── sql/                             # SQL 文件
-│   └── user.sql                     # 用户表结构
-│
-├── test/                            # 测试目录
+├── scripts/                         # 构建和部署脚本
+├── sqls/                            # 数据库架构文件
+├── test/                            # 测试文件和工具
 │
 ├── config.dev.yaml                  # 开发环境配置
 ├── config.test.yaml                 # 测试环境配置
 ├── config.prod.yaml                 # 生产环境配置
-├── Dockerfile                       # Docker 构建文件
-└── go.mod                           # Go 模块文件
+├── Dockerfile                       # 容器定义
+└── docker-compose.yml               # 多服务设置
 ```
 
 ## 架构说明
@@ -165,299 +140,499 @@ go-template/                          # 项目根目录
 - **仓储接口**: 数据访问抽象
 - **领域事件**: 业务事件定义
 
-### 4. 基础设施层 (Infrastructure Layer)
-- **仓储实现**: 数据持久化具体实现
-- **缓存实现**: Redis 缓存服务
-- **日志实现**: 结构化日志记录
-- **事件总线**: 事件发布和订阅
-- **调度器**: 定时任务执行
-
-## 技术栈
-
-- **Web 框架**: [CloudWeGo Hertz](https://github.com/cloudwego/hertz) - 高性能 HTTP 框架
-- **配置管理**: [Viper](https://github.com/spf13/viper) - 配置文件解析
-- **日志**: [Zap](https://github.com/uber-go/zap) - 高性能结构化日志
-- **数据库**: PostgreSQL/MySQL
-- **缓存**: Redis
-- **认证**: JWT (JSON Web Tokens)
-- **密码加密**: bcrypt
-- **测试**: Go 标准测试库 + [Testify](https://github.com/stretchr/testify)
-- **Mock**: [GoMock](https://github.com/golang/mock)
-- **容器化**: Docker
-
-## 配置管理
-
-项目使用 Viper 进行配置管理，支持多环境配置：
-
-### 配置文件结构
-
-```yaml
-# config.dev.yaml 示例
-http:
-  port: 8081
-
-log:
-  level: debug
-  format: json
-  output: stdout
-  file:
-    enabled: true
-    path: ./_logs/app.log
-    max_size: 100
-    max_backups: 3
-    max_age: 28
-    compress: true
-
-auth:
-  jwt:
-    secret: your-secret-key
-    access_token_expire: 15m
-    refresh_token_expire: 168h
-
-persistence:
-  database:
-    driver: postgres
-    host: localhost
-    port: 5432
-    username: postgres
-    password: password
-    database: go_template
-    ssl_mode: disable
-    max_open_conns: 25
-    max_idle_conns: 5
-    conn_max_lifetime: 300s
-
-cache:
-  redis:
-    host: localhost
-    port: 6379
-    password: ""
-    db: 0
-    pool_size: 10
-    min_idle_conns: 5
-```
-
-### 环境配置
-
-- `config.dev.yaml`: 开发环境配置
-- `config.test.yaml`: 测试环境配置  
-- `config.prod.yaml`: 生产环境配置
+### 4. **基础设施层**（技术细节）
+- **仓储实现**: 数据持久化实现
+- **缓存实现**: 缓存策略
+- **消息队列**: 异步通信
+- **配置**: 环境特定设置
 
 ## 开发指南
 
-### 添加新功能
+### 添加新的业务功能
 
-1. **定义领域模型** (`internal/domain/entity/`)
+#### 1. 定义领域实体
+在 `domain/entity/` 中创建新的业务实体：
+
 ```go
-type User struct {
-    ID       string
-    Username string
-    Email    string
-    // ... 其他字段
+// domain/entity/product.go
+type Product struct {
+    ID          int64     `json:"id"`
+    Name        string    `json:"name"`
+    Price       float64   `json:"price"`
+    CreatedAt   int64     `json:"created_at"`
+    UpdatedAt   int64     `json:"updated_at"`
 }
 ```
 
-2. **定义仓储接口** (`internal/domain/repository/`)
+#### 2. 创建仓储接口
+在 `domain/repository/` 中定义数据访问接口：
+
 ```go
-type UserRepository interface {
-    Save(ctx context.Context, user *entity.User) error
-    FindByID(ctx context.Context, id string) (*entity.User, error)
+// domain/repository/product_repository.go
+type ProductRepository interface {
+    Save(ctx context.Context, product *entity.Product) error
+    FindByID(ctx context.Context, id int64) (*entity.Product, error)
+    FindAll(ctx context.Context) ([]*entity.Product, error)
+    Delete(ctx context.Context, id int64) error
 }
 ```
 
-3. **实现应用服务** (`internal/application/`)
+#### 3. 实现仓储
+在 `infrastructure/repository_impl/` 中创建具体实现：
+
 ```go
-type UserService struct {
-    userRepo repository.UserRepository
+// infrastructure/repository_impl/product_repo_impl.go
+type ProductRepoImpl struct {
+    db *sqlx.DB
 }
 
-func (s *UserService) CreateUser(ctx context.Context, cmd CreateUserCommand) error {
+func (r *ProductRepoImpl) Save(ctx context.Context, product *entity.Product) error {
+    // 数据库实现
+}
+```
+
+#### 4. 注册仓储到依赖容器
+在同一个文件中使用 `init()` 函数注册仓储：
+
+```go
+// infrastructure/repository_impl/product_repo_impl.go
+type ProductRepoImpl struct {
+    db *sqlx.DB
+}
+
+func init() {
+    di.AddSingleton[repository.ProductRepository](NewProductRepository)
+}
+
+func NewProductRepository() (repository.ProductRepository, error) {
+    db := di.Get[*sqlx.DB]()
+    return &ProductRepoImpl{db: db}, nil
+}
+
+func (r *ProductRepoImpl) Save(ctx context.Context, product *entity.Product) error {
+    // 数据库实现
+}
+```
+
+#### 4. 创建应用服务
+在 `application/service/` 中实现业务逻辑：
+
+```go
+// application/service/product_service.go
+type ProductService struct {
+    productRepo repository.ProductRepository
+}
+
+func (s *ProductService) CreateProduct(ctx context.Context, req CreateProductRequest) error {
     // 业务逻辑实现
 }
 ```
 
-4. **添加 HTTP 控制器** (`internal/interfaces/http/controller/`)
+#### 5. 注册应用服务到依赖容器
+在同一个文件中注册应用服务：
+
 ```go
-func (c *UserController) CreateUser(ctx context.Context, req *app.RequestContext) {
+// application/service/product_service.go
+type ProductService struct {
+    productRepo repository.ProductRepository
+}
+
+func init() {
+    di.AddSingleton[*ProductService](NewProductService)
+}
+
+func NewProductService() (*ProductService, error) {
+    repo := di.Get[repository.ProductRepository]()
+    return &ProductService{productRepo: repo}, nil
+}
+
+func (s *ProductService) CreateProduct(ctx context.Context, req CreateProductRequest) error {
+    // 业务逻辑实现
+}
+```
+
+#### 5. 添加 HTTP 控制器
+在 `interfaces/http/controller/` 中处理 HTTP 请求：
+
+```go
+// interfaces/http/controller/product_controller.go
+type ProductController struct {
+    productService *service.ProductService
+}
+
+func (c *ProductController) CreateProduct(ctx context.Context, req *app.RequestContext) {
     // HTTP 请求处理
 }
 ```
 
-5. **注册路由** (`internal/interfaces/http/router.go`)
+#### 6. 注册控制器到依赖容器
+在同一个文件中注册控制器：
+
 ```go
-v1.POST("/users", userController.CreateUser)
+// interfaces/http/controller/product_controller.go
+type ProductController struct {
+    productService *service.ProductService
+}
+
+func init() {
+    di.AddSingleton[*ProductController](NewProductController)
+}
+
+func NewProductController() (*ProductController, error) {
+    service := di.Get[*ProductService]()
+    return &ProductController{productService: service}, nil
+}
+
+func (c *ProductController) CreateProduct(ctx context.Context, req *app.RequestContext) {
+    // HTTP 请求处理
+}
 ```
 
-### API 端点
+#### 6. 注册路由
+在 `interfaces/http/router.go` 中更新路由：
 
-#### 健康检查
-- `GET /health` - 服务健康状态
-- `GET /ready` - 服务就绪状态
-
-#### 认证相关
-- `POST /api/v1/auth/login` - 用户登录
-- `POST /api/v1/auth/refresh` - 刷新令牌
-- `POST /api/v1/auth/logout` - 用户登出
-
-#### 用户管理
-- `GET /api/v1/users` - 获取用户列表
-- `POST /api/v1/users` - 创建用户
-- `GET /api/v1/users/:id` - 获取用户详情
-- `PUT /api/v1/users/:id` - 更新用户
-- `DELETE /api/v1/users/:id` - 删除用户
-
-### 数据库迁移
-
-运行数据库迁移：
-```bash
-go run cmd/migrate/main.go -e dev
+```go
+// 添加到 router.go
+productController := di.Get[*ProductController]()
+v1.POST("/products", productController.CreateProduct)
+v1.GET("/products/:id", productController.GetProduct)
+v1.PUT("/products/:id", productController.UpdateProduct)
+v1.DELETE("/products/:id", productController.DeleteProduct)
 ```
 
-### 运行测试
+### 添加新的配置项
 
-运行所有测试：
+#### 1. 更新配置结构
+在 `infrastructure/config/types.go` 中添加新的配置部分：
+
+```go
+type Config struct {
+    // ... 现有字段
+    Email EmailConfig `mapstructure:"email"`
+}
+
+type EmailConfig struct {
+    Provider  string `mapstructure:"provider"`
+    SMTPHost  string `mapstructure:"smtp_host"`
+    SMTPPort  int    `mapstructure:"smtp_port"`
+    Username  string `mapstructure:"username"`
+    Password  string `mapstructure:"password"`
+}
+```
+
+#### 2. 更新配置文件
+在环境配置文件中添加配置：
+
+```yaml
+# config.dev.yaml
+email:
+  provider: smtp
+  smtp_host: smtp.gmail.com
+  smtp_port: 587
+  username: your-email@gmail.com
+  password: your-password
+```
+
+#### 3. 注册服务
+使用统一的依赖注入接口注册：
+
+```go
+// 在适当的初始化位置注册
+di.AddSingleton(func() (EmailService, error) {
+    config := di.Get[*config.Config]()
+    return &emailServiceImpl{
+        config: config.Email,
+    }, nil
+})
+```
+
+### 依赖注入使用指南
+
+本模板使用统一的依赖注入接口，基于 samber/do/v2 实现。**所有服务（仓储、领域服务、应用服务、控制器）都必须通过 `injector.go` 提供的接口进行注册。**
+
+#### 核心原则
+
+1. **自注册模式**：服务使用 `init()` 函数自己注册到容器
+2. **工厂模式**：使用 `New` 函数作为服务工厂
+3. **类型安全**：利用 Go 泛型确保类型安全
+4. **统一接口**：所有依赖注册都使用 `di.AddSingleton` 或 `di.AddTransient`
+
+#### 服务注册模式
+
+每个服务都应该遵循这个模式：
+
+```go
+// domain/service/user_service.go
+type UserService struct {
+    logger   *log.Logger
+    userRepo repository.UserRepository
+}
+
+func init() {
+    di.AddSingleton[*UserService](NewUserService)
+}
+
+func NewUserService() (*UserService, error) {
+    return &UserService{
+        logger:   di.Get[*log.Logger](),
+        userRepo: di.Get[repository.UserRepository](),
+    }, nil
+}
+
+func (s *UserService) CreateUser(ctx context.Context, user *entity.User) error {
+    // 业务逻辑实现
+}
+```
+
+#### 仓储注册
+
+```go
+// infrastructure/repository_impl/user_repo_impl.go
+type UserRepoImpl struct {
+    db *sqlx.DB
+}
+
+func init() {
+    di.AddSingleton[repository.UserRepository](NewUserRepository)
+}
+
+func NewUserRepository() (repository.UserRepository, error) {
+    db := di.Get[*sqlx.DB]()
+    return &UserRepoImpl{db: db}, nil
+}
+```
+
+#### 应用服务注册
+
+```go
+// application/service/user_command_service.go
+type UserCommandService struct {
+    userRepo      repository.UserRepository
+    userDomainSvc *domain.UserService
+}
+
+func init() {
+    di.AddSingleton[*UserCommandService](NewUserCommandService)
+}
+
+func NewUserCommandService() (*UserCommandService, error) {
+    return &UserCommandService{
+        userRepo:      di.Get[repository.UserRepository](),
+        userDomainSvc: di.Get[*domain.UserService](),
+    }, nil
+}
+```
+
+#### 控制器注册
+
+```go
+// interfaces/http/controller/user_controller.go
+type UserController struct {
+    userCommandService *service.UserCommandService
+    userQueryService   *service.UserQueryService
+}
+
+func init() {
+    di.AddSingleton[*UserController](NewUserController)
+}
+
+func NewUserController() (*UserController, error) {
+    return &UserController{
+        userCommandService: di.Get[*service.UserCommandService](),
+        userQueryService:   di.Get[*service.UserQueryService](),
+    }, nil
+}
+```
+
+#### 瞬态服务注册
+
+对于需要每次都创建新实例的服务：
+
+```go
+// infrastructure/email/email_service.go
+type EmailService struct {
+    config *config.EmailConfig
+}
+
+func init() {
+    di.AddTransient[*EmailService](NewEmailService)
+}
+
+func NewEmailService() (*EmailService, error) {
+    config := di.Get[*config.Config]()
+    return &EmailService{config: &config.Email}, nil
+}
+```
+
+#### 获取服务
+
+```go
+// 在路由或其他组件中获取服务
+func SetupRoutes() {
+    userController := di.Get[*controller.UserController]()
+    v1.POST("/users", userController.CreateUser)
+}
+
+// 在服务中获取依赖
+func (s *SomeService) ProcessUser() {
+    userRepo := di.Get[repository.UserRepository]()
+    // 使用仓储...
+}
+```
+
+#### 重要最佳实践
+
+- **自注册**：每个服务在自己的 `init()` 函数中注册
+- **工厂函数**：始终提供 `New` 函数作为服务工厂
+- **接口注册**：仓储和领域服务优先注册接口类型
+- **具体注册**：应用服务和控制器使用具体类型
+- **依赖注入**：在工厂函数中始终使用 `di.Get[T]()` 解析依赖
+- **错误处理**：工厂函数应该返回 `(T, error)` 以便正确处理错误
+
+### 添加新的中间件
+
+#### 1. 创建中间件
+在 `interfaces/http/middleware/` 中添加新中间件：
+
+```go
+// interfaces/http/middleware/rate_limit.go
+func RateLimit() app.HandlerFunc {
+    return func(ctx context.Context, c *app.RequestContext) {
+        // 限流逻辑
+        c.Next(ctx)
+    }
+}
+```
+
+#### 2. 注册中间件
+更新路由器以使用中间件：
+
+```go
+// interfaces/http/router.go
+h.Use(middleware.RateLimit())
+```
+
+### 添加新的服务
+
+#### 1. 创建服务接口
+在 `domain/service/` 中定义服务契约：
+
+```go
+// domain/service/notification_service.go
+type NotificationService interface {
+    SendEmail(ctx context.Context, to, subject, body string) error
+    SendSMS(ctx context.Context, to, message string) error
+}
+```
+
+#### 2. 实现领域服务
+在 `domain/service/` 中创建实现：
+
+```go
+// domain/service/notification_service_impl.go
+type NotificationServiceImpl struct {
+    config EmailConfig
+}
+
+func (s *NotificationServiceImpl) SendEmail(ctx context.Context, to, subject, body string) error {
+    // 邮件发送实现
+}
+```
+
+#### 3. 注册领域服务到依赖容器
+在同一个文件中实现和注册领域服务：
+
+```go
+// domain/service/notification_service_impl.go
+type NotificationServiceImpl struct {
+    config EmailConfig
+    logger *log.Logger
+}
+
+func init() {
+    di.AddSingleton[NotificationService](NewNotificationService)
+}
+
+func NewNotificationService() (NotificationService, error) {
+    config := di.Get[*config.Config]()
+    logger := di.Get[*log.Logger]()
+    return &NotificationServiceImpl{
+        config: config.Email,
+        logger: logger,
+    }, nil
+}
+
+func (s *NotificationServiceImpl) SendEmail(ctx context.Context, to, subject, body string) error {
+    // 邮件发送实现
+}
+```
+
+### 添加数据库模型
+
+#### 1. 创建数据库模型
+在 `infrastructure/repository_impl/model/` 中添加模型：
+
+```go
+// infrastructure/repository_impl/model/product.go
+type Product struct {
+    BaseModel
+    Name  string  `db:"name"`
+    Price float64 `db:"price"`
+}
+```
+
+#### 2. 创建迁移
+在 `sqls/` 中添加 SQL 文件：
+
+```sql
+-- sqls/product.sql
+CREATE TABLE IF NOT EXISTS products (
+    id SERIAL PRIMARY KEY,
+    created_at BIGINT NOT NULL,
+    updated_at BIGINT NOT NULL,
+    deleted_at BIGINT NOT NULL DEFAULT 0,
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL(10,2) NOT NULL
+);
+```
+
+### 测试你的更改
+
 ```bash
+# 运行所有测试
 go test ./...
-```
 
-运行特定包的测试：
-```bash
+# 运行特定包测试
 go test ./domain/...
-```
+go test ./application/...
 
-运行测试并生成覆盖率报告：
-```bash
+# 运行覆盖率测试
 go test -cover ./...
 ```
 
-### 代码生成
-
-生成 Mock 文件：
-```bash
-go generate ./...
-```
-
-## Docker 支持
-
-### 构建镜像
+### 构建和运行
 
 ```bash
-docker build -t go-template .
-```
+# 构建应用程序
+./scripts/build.sh
 
-### 运行容器
+# 运行开发服务器
+go run cmd/server/main.go -e dev
 
-```bash
-docker run -p 8081:8081 -e APP_ENV=prod go-template
-```
-
-### Docker Compose
-
-```yaml
-version: '3.8'
-services:
-  app:
-    build: .
-    ports:
-      - "8081:8081"
-    environment:
-      - APP_ENV=prod
-    depends_on:
-      - postgres
-      - redis
-  
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: go_template
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-  
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-```
-
-## 部署
-
-### 生产环境部署
-
-1. **构建生产镜像**
-```bash
-docker build -t go-template:latest .
-```
-
-2. **运行生产容器**
-```bash
-docker run -d \
-  --name go-template \
-  -p 8081:8081 \
-  -e APP_ENV=prod \
-  go-template:latest
-```
-
-3. **使用 Docker Compose**
-```bash
-docker-compose up -d
-```
-
-### 环境变量
-
-- `APP_ENV`: 运行环境 (dev/test/prod)
-- `HTTP_PORT`: HTTP 服务端口
-- `DB_HOST`: 数据库主机
-- `DB_PORT`: 数据库端口
-- `REDIS_HOST`: Redis 主机
-- `REDIS_PORT`: Redis 端口
-
-## 测试
-
-### 单元测试
-
-项目使用 Go 标准测试库和 Testify 进行单元测试：
-
-```go
-func TestUserService_CreateUser(t *testing.T) {
-    // 测试实现
-}
-```
-
-### 集成测试
-
-集成测试使用真实的数据库连接：
-
-```go
-func TestUserRepository_Integration(t *testing.T) {
-    // 集成测试实现
-}
-```
-
-### Mock 测试
-
-使用 GoMock 生成 Mock 对象：
-
-```bash
-mockgen -source=internal/domain/repository/user_repository.go -destination=test/mocks/user_repository_mock.go
+# 使用 Docker 运行
+docker build -t your-app .
+docker run -p 8080:8080 your-app
 ```
 
 ## 贡献指南
 
 1. Fork 项目
 2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
-3. 提交改动 (`git commit -m 'Add amazing feature'`)
-4. 推送分支 (`git push origin feature/amazing-feature`)
-5. 创建 Pull Request
-
-### 代码规范
-
-- 遵循 Go 官方代码规范
-- 使用 `gofmt` 格式化代码
-- 使用 `golint` 检查代码质量
-- 编写单元测试
-- 添加必要的注释
+3. 遵循模板结构和架构原则
+4. 为你的更改编写测试
+5. 提交改动 (`git commit -m 'Add amazing feature'`)
+6. 推送分支 (`git push origin feature/amazing-feature`)
+7. 创建 Pull Request
 
 ## 许可证
 
@@ -465,11 +640,4 @@ mockgen -source=internal/domain/repository/user_repository.go -destination=test/
 
 ## 维护者
 
-- [@lyonnee](https://github.com/lyonnee) - 项目创建者和主要维护者
-
-## 致谢
-
-- [CloudWeGo](https://github.com/cloudwego) - 提供高性能的 Hertz 框架
-- [Uber](https://github.com/uber-go) - 提供优秀的 Zap 日志库
-- [Spf13](https://github.com/spf13) - 提供强大的 Viper 配置库
-- 所有为这个项目做出贡献的开发者
+- [@lyonnee](https://github.com/lyonnee)

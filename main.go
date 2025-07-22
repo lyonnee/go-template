@@ -6,13 +6,13 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/lyonnee/go-template/application/cron"
-	"github.com/lyonnee/go-template/infrastructure/database"
-	"github.com/lyonnee/go-template/infrastructure/log"
-	"github.com/lyonnee/go-template/interfaces/grpc"
-	"github.com/lyonnee/go-template/interfaces/http"
+	"github.com/lyonnee/go-template/internal/application/cron"
+	"github.com/lyonnee/go-template/internal/infrastructure/database"
+	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/internal/interfaces/grpc"
+	"github.com/lyonnee/go-template/internal/interfaces/http"
 
-	_ "github.com/lyonnee/go-template/infrastructure/repository_impl"
+	_ "github.com/lyonnee/go-template/internal/infrastructure/repository_impl"
 )
 
 func main() {

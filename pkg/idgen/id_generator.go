@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/lyonnee/go-template/infrastructure/config"
-	"github.com/lyonnee/go-template/infrastructure/di"
+	"github.com/lyonnee/go-template/internal/infrastructure/config"
+	"github.com/lyonnee/go-template/internal/infrastructure/di"
 )
 
 var node *snowflake.Node

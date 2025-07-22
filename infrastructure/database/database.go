@@ -60,7 +60,7 @@ func init() {
 
 	pgsql, err := newPostgresDB(config.Database.Postgres, logger)
 	if err != nil {
-		panic(err)
+		panic("Failed to initialize PostgreSQL database: " + err.Error())
 	}
 
 	db = pgsql

@@ -2,16 +2,9 @@ package main
 
 import (
 	"context"
-
 	"os"
 	"os/signal"
 	"time"
-
-	// for dependency injection
-	_ "github.com/lyonnee/go-template/application/service"
-	_ "github.com/lyonnee/go-template/domain/service"
-	_ "github.com/lyonnee/go-template/infrastructure/repository_impl"
-	_ "github.com/lyonnee/go-template/interfaces/http/controller"
 
 	"github.com/lyonnee/go-template/infrastructure/database"
 	"github.com/lyonnee/go-template/infrastructure/log"

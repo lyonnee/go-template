@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/lyonnee/go-template/infrastructure/auth"
+	"github.com/lyonnee/go-template/infrastructure/di"
 )
 
 type User struct {
@@ -69,12 +70,14 @@ func (u *User) Login(pwd string) (string, string, error) {
 
 func (u *User) BuildToken() (string, string, error) {
 	// build access token and refresh token
-	accessToken, err := auth.JWTAuth().GenerateAccessToken(u.ID, u.Username)
+	jwtManager := di.Get[*auth.JWTManager]()
+
+	accessToken, err := jwtManager.GenerateAccessToken(u.ID, u.Username)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := auth.JWTAuth().GenerateRefreshToken(u.ID, u.Username)
+	refreshToken, err := jwtManager.GenerateRefreshToken(u.ID, u.Username)
 	if err != nil {
 		return "", "", err
 	}

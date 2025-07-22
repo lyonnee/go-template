@@ -41,7 +41,7 @@ auth:
   jwt:
     secret_key: go-template # 密钥
     access_token_expiry: 15m # 有效期
-    refresh_token_expiry: 15d # 有效期
+    refresh_token_expiry: 168h # 有效期
     issuer: lyon.nee # 签发人
 
 cache:

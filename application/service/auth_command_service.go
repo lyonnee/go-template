@@ -93,16 +93,17 @@ type RefreshTokenResult struct {
 // RefreshToken 刷新token
 func (s *AuthCommandService) RefreshToken(ctx context.Context, cmd *RefreshTokenCmd) (*RefreshTokenResult, error) {
 	s.logger.Debug("RefreshToken called")
+	jwtManager := di.Get[*auth.JWTManager]()
 
 	// 验证刷新token
-	claims, err := auth.JWTAuth().ValidateToken(cmd.RefreshToken)
+	claims, err := jwtManager.ValidateToken(cmd.RefreshToken)
 	if err != nil {
 		s.logger.Warn("Invalid refresh token provided", zap.Error(err))
 		return nil, errors.New("invalid refresh token")
 	}
 
 	// 生成新的访问token
-	newAccessToken, err := auth.JWTAuth().GenerateAccessToken(claims.UserId, claims.AlternativeID)
+	newAccessToken, err := jwtManager.GenerateAccessToken(claims.UserId, claims.AlternativeID)
 	if err != nil {
 		s.logger.Error("Failed to generate new access token", zap.Error(err), zap.Int64("userId", claims.UserId))
 		return nil, err

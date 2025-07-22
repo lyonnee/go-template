@@ -26,7 +26,18 @@ func init() {
 	)
 	flag.Parse()
 
-	Load(*env)
+	newConf, err := Load(*env)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+		os.Exit(1)
+	}
+
+	conf = newConf
+
+	di.AddSingleton[Config](func() (Config, error) {
+		return *conf, nil
+	})
+
 }
 
 func Load(env string) (*Config, error) {
@@ -53,13 +64,10 @@ func Load(env string) (*Config, error) {
 		}
 	}
 
-	if err := viper.Unmarshal(conf); err != nil {
+	var newConf Config
+	if err := viper.Unmarshal(&newConf); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	di.AddSingleton[Config](func() (Config, error) {
-		return *conf, nil
-	})
-
-	return conf, nil
+	return &newConf, nil
 }

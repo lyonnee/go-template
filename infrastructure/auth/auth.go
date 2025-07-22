@@ -7,18 +7,12 @@ import (
 
 var jwtManager *JWTManager
 
-// func Initialize(conf config.AuthConfig) error {
-// 	jwt := newJWTManager(&conf.JWT)
-// 	jwtManager = jwt
-
-// 	return nil
-// }
-
 func init() {
 	conf := di.Get[config.Config]()
-	jwtManager = newJWTManager(conf.Auth.JWT)
-}
 
-func JWTAuth() *JWTManager {
-	return jwtManager
+	jwtManager := newJWTManager(conf.Auth.JWT)
+
+	di.AddSingleton(func() (*JWTManager, error) {
+		return jwtManager, nil
+	})
 }

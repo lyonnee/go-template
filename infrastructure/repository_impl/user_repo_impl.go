@@ -25,11 +25,11 @@ type UserRepositoryImpl struct {
 }
 
 func init() {
-	di.AddSingleton[repository.UserRepository](NewUserRepository)
+	di.AddSingletonImpl[repository.UserRepository, *UserRepositoryImpl](NewUserRepository)
 }
 
 // NewUserRepository 创建一个新的用户存储库实例
-func NewUserRepository() (repository.UserRepository, error) {
+func NewUserRepository() (*UserRepositoryImpl, error) {
 	repo := &UserRepositoryImpl{
 		logger: di.Get[*log.Logger](),
 	}

@@ -23,7 +23,7 @@ type JWTManager struct {
 }
 
 func newJWTManager(conf config.JWTConfig) *JWTManager {
-	jwtManager = &JWTManager{
+	jwtManager := &JWTManager{
 		secretKey:          []byte(conf.SecretKey),
 		accessTokenExpiry:  conf.AccessTokenExpiry,
 		refreshTokenExpiry: conf.RefreshTokenExpiry,

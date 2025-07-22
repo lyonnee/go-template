@@ -76,14 +76,15 @@ func (s *UserCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 		return nil, err
 	}
 
+	jwtManager := di.Get[*auth.JWTManager]()
 	// 生成token
-	accessToken, err := auth.JWTAuth().GenerateAccessToken(user.ID, user.Username)
+	accessToken, err := jwtManager.GenerateAccessToken(user.ID, user.Username)
 	if err != nil {
 		s.logger.Error("Failed to generate access token for new user", zap.Error(err), zap.Int64("userId", user.ID))
 		return nil, err
 	}
 
-	refreshToken, err := auth.JWTAuth().GenerateRefreshToken(user.ID, user.Username)
+	refreshToken, err := jwtManager.GenerateRefreshToken(user.ID, user.Username)
 	if err != nil {
 		s.logger.Error("Failed to generate refresh token for new user", zap.Error(err), zap.Int64("userId", user.ID))
 		return nil, err

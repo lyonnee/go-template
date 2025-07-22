@@ -15,7 +15,7 @@ import (
 // UserApplicationService 用户应用服务
 type UserQueryService struct {
 	logger    *log.Logger
-	dbContext database.Database
+	dbContext *database.Database
 
 	userRepo repository.UserRepository
 }
@@ -28,7 +28,7 @@ func init() {
 func NewUserQueryService() (*UserQueryService, error) {
 	return &UserQueryService{
 		logger:    di.Get[*log.Logger](),
-		dbContext: di.Get[database.Database](),
+		dbContext: di.Get[*database.Database](),
 
 		userRepo: di.Get[repository.UserRepository](),
 	}, nil

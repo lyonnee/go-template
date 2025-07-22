@@ -15,7 +15,7 @@ import (
 
 type AuthCommandService struct {
 	logger    *log.Logger
-	dbContext database.Database
+	dbContext *database.Database
 
 	userRepo repository.UserRepository
 }
@@ -28,7 +28,7 @@ func init() {
 func NewAuthCommandService() (*AuthCommandService, error) {
 	return &AuthCommandService{
 		logger:    di.Get[*log.Logger](),
-		dbContext: di.Get[database.Database](),
+		dbContext: di.Get[*database.Database](),
 
 		userRepo: di.Get[repository.UserRepository](),
 	}, nil

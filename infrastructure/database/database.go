@@ -4,18 +4,55 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/lyonnee/go-template/infrastructure/config"
 	"github.com/lyonnee/go-template/infrastructure/di"
 	"github.com/lyonnee/go-template/infrastructure/log"
 )
 
-type Database interface {
-	Conn(ctx context.Context, fn func(context.Context) error) error
-	Transaction(ctx context.Context, opts *sql.TxOptions, fn func(context.Context) error) error
-	Close() error
+type Database struct {
+	db *sqlx.DB
 }
 
-var db Database
+func (dbc *Database) Conn(ctx context.Context, fn func(context.Context) error) error {
+	conn, err := dbc.db.Connx(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	return fn(SetDBExecutor(ctx, conn))
+}
+
+func (dbc *Database) Transaction(ctx context.Context, opts *sql.TxOptions, fn func(context.Context) error) error {
+	tx, err := dbc.db.BeginTxx(ctx, opts)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback()
+		} else if err != nil {
+			_ = tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	err = fn(SetDBExecutor(ctx, tx))
+
+	return err
+}
+
+func (dbc *Database) Close() error {
+	if dbc.db != nil {
+		return dbc.db.Close()
+	}
+	return nil
+}
+
+var db *Database
 
 func init() {
 	config := di.Get[config.Config]()
@@ -28,7 +65,7 @@ func init() {
 
 	db = pgsql
 
-	di.AddSingleton[Database](func() (Database, error) {
+	di.AddSingleton[*Database](func() (*Database, error) {
 		return db, nil
 	})
 }

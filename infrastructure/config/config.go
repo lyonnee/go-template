@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/lyonnee/go-template/infrastructure/di"
 	"github.com/spf13/viper"
@@ -53,7 +54,7 @@ func Load(env string) (*Config, error) {
 
 	viper.SetConfigName(fmt.Sprintf("config.%s", env))
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(workDir)
+	viper.AddConfigPath(path.Join(workDir, "configs"))
 
 	if err := viper.ReadInConfig(); err != nil {
 		switch err.(type) {

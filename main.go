@@ -10,6 +10,8 @@ import (
 	"github.com/lyonnee/go-template/infrastructure/log"
 	"github.com/lyonnee/go-template/interfaces/grpc"
 	"github.com/lyonnee/go-template/interfaces/http"
+
+	_ "github.com/lyonnee/go-template/infrastructure/repository_impl"
 )
 
 func main() {

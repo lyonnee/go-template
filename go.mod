@@ -10,6 +10,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/qustavo/sqlhooks/v2 v2.1.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/samber/do/v2 v2.0.0-beta.7
 	github.com/spf13/viper v1.20.1
 	go.uber.org/zap v1.27.0

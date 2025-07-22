@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/lyonnee/go-template/application/cron"
 	"github.com/lyonnee/go-template/infrastructure/database"
 	"github.com/lyonnee/go-template/infrastructure/log"
 	"github.com/lyonnee/go-template/interfaces/grpc"
@@ -15,6 +16,7 @@ import (
 )
 
 func main() {
+	go cron.RunScheduler()
 	go http.RunServer()
 	go grpc.RunServer()
 

@@ -3,7 +3,7 @@ package http
 import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/lyonnee/go-template/internal/infrastructure/config"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
+	"github.com/lyonnee/go-template/pkg/di"
 )
 
 var s *server.Hertz

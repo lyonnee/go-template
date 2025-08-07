@@ -3,7 +3,7 @@ package cron
 import (
 	"context"
 
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
+	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/robfig/cron/v3"
 )
 

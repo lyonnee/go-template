@@ -8,9 +8,9 @@ import (
 
 	"github.com/lyonnee/go-template/internal/application/cron"
 	"github.com/lyonnee/go-template/internal/infrastructure/database"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/interfaces/grpc"
 	"github.com/lyonnee/go-template/internal/interfaces/http"
+	"github.com/lyonnee/go-template/pkg/log"
 
 	_ "github.com/lyonnee/go-template/internal/infrastructure/repository_impl"
 )

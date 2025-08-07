@@ -6,8 +6,8 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/pkg/di"
+	"github.com/lyonnee/go-template/pkg/log"
 	"go.uber.org/zap"
 )
 

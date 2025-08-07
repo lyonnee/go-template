@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/pkg/log"
 	"go.uber.org/zap"
 )
 

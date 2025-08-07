@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
+	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/spf13/viper"
 )
 

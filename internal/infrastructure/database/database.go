@@ -6,8 +6,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lyonnee/go-template/internal/infrastructure/config"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/pkg/di"
+	"github.com/lyonnee/go-template/pkg/log"
 )
 
 type Database struct {

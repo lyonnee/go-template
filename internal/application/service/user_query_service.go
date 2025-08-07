@@ -8,8 +8,8 @@ import (
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	"github.com/lyonnee/go-template/internal/domain/repository"
 	"github.com/lyonnee/go-template/internal/infrastructure/database"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/pkg/di"
+	"github.com/lyonnee/go-template/pkg/log"
 )
 
 // UserApplicationService 用户应用服务

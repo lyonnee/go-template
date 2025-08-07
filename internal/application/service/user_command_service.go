@@ -8,8 +8,8 @@ import (
 	"github.com/lyonnee/go-template/internal/domain/service"
 	"github.com/lyonnee/go-template/internal/infrastructure/auth"
 	"github.com/lyonnee/go-template/internal/infrastructure/database"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/pkg/di"
+	"github.com/lyonnee/go-template/pkg/log"
 	"go.uber.org/zap"
 )
 

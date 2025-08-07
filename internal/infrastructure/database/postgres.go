@@ -7,7 +7,7 @@ import (
 	"github.com/lib/pq"
 	_ "github.com/lib/pq" // PostgreSQL驱动
 	"github.com/lyonnee/go-template/internal/infrastructure/config"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/pkg/log"
 	"github.com/qustavo/sqlhooks/v2"
 )
 

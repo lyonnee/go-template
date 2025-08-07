@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
+	"github.com/lyonnee/go-template/pkg/log"
 	"go.uber.org/zap"
 )
 

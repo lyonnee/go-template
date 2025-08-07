@@ -3,10 +3,10 @@ package http
 import (
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
-	"github.com/lyonnee/go-template/internal/infrastructure/log"
 	"github.com/lyonnee/go-template/internal/interfaces/http/controller"
 	"github.com/lyonnee/go-template/internal/interfaces/http/middleware"
+	"github.com/lyonnee/go-template/pkg/di"
+	"github.com/lyonnee/go-template/pkg/log"
 )
 
 func registerRoutes(hz *server.Hertz) {

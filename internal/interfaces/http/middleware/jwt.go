@@ -6,8 +6,8 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/lyonnee/go-template/internal/infrastructure/auth"
-	"github.com/lyonnee/go-template/internal/infrastructure/di"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
+	"github.com/lyonnee/go-template/pkg/di"
 )
 
 // JWTAuth 中间件，检查token

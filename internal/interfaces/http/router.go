@@ -9,7 +9,7 @@ import (
 	"github.com/lyonnee/go-template/pkg/log"
 )
 
-func registerRoutes(hz *server.Hertz) {
+func RegisterRoutes(hz *server.Hertz) {
 	logger := di.Get[*log.Logger]()
 
 	// register middleware

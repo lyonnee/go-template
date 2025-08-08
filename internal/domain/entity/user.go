@@ -8,6 +8,7 @@ import (
 
 	"github.com/lyonnee/go-template/internal/infrastructure/auth"
 	"github.com/lyonnee/go-template/pkg/di"
+	"github.com/lyonnee/go-template/pkg/util"
 )
 
 type User struct {
@@ -39,7 +40,7 @@ func NewUser(username, pwd, email, phone string) (*User, error) {
 		return nil, err
 	}
 
-	pwdSecret, err := auth.HashPassword(pwd)
+	pwdSecret, err := util.HashPassword(pwd)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func NewUser(username, pwd, email, phone string) (*User, error) {
 
 func (u *User) Login(pwd string) (string, string, error) {
 	// validate password
-	if !auth.CheckPasswordHash(pwd, u.PwdSecret) {
+	if !util.CheckPasswordHash(pwd, u.PwdSecret) {
 		return "", "", errors.New("invalid username or password")
 	}
 

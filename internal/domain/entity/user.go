@@ -15,13 +15,13 @@ type User struct {
 	ID        int64
 	CreatedAt int64
 	UpdatedAt int64
-
-	Username  string
-	PwdSecret string
-	Email     string
-	Phone     string
-
 	DeletedAt int64
+
+	Username    string
+	PwdSecret   string
+	Email       string
+	Phone       string
+	LastLoginAt int64
 }
 
 func NewUser(username, pwd, email, phone string) (*User, error) {
@@ -46,10 +46,10 @@ func NewUser(username, pwd, email, phone string) (*User, error) {
 	}
 
 	u := &User{
-		CreatedAt: now,
-		UpdatedAt: now,
-
-		DeletedAt: 0,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		LastLoginAt: 0,
+		DeletedAt:   0,
 
 		Username:  username,
 		PwdSecret: pwdSecret,
@@ -61,12 +61,35 @@ func NewUser(username, pwd, email, phone string) (*User, error) {
 }
 
 func (u *User) Login(pwd string) (string, string, error) {
-	// validate password
-	if !util.CheckPasswordHash(pwd, u.PwdSecret) {
-		return "", "", errors.New("invalid username or password")
+	if u.DeletedAt > 0 {
+		return "", "", errors.New("user is deleted")
 	}
 
+	// validate password
+	if err := util.ComparePassword(pwd, u.PwdSecret); err != nil {
+		return "", "", errors.New("invalid password")
+	}
+
+	// update last login time
+	u.LastLoginAt = time.Now().Unix()
+
 	return u.BuildToken()
+}
+
+func (u *User) UpdatePassword(pwd string) error {
+	if err := validatePassword(pwd); err != nil {
+		return err
+	}
+
+	pwdSecret, err := util.HashPassword(pwd)
+	if err != nil {
+		return err
+	}
+
+	u.PwdSecret = pwdSecret
+	u.UpdatedAt = time.Now().Unix()
+
+	return nil
 }
 
 func (u *User) BuildToken() (string, string, error) {

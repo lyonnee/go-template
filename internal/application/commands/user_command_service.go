@@ -1,4 +1,4 @@
-package service
+package commands
 
 import (
 	"context"
@@ -76,23 +76,23 @@ func (s *UserCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 		return nil, err
 	}
 
-	jwtManager := di.Get[*auth.JWTManager]()
+	jwtManager := di.Get[*auth.JWTGenerator]()
 	// 生成token
 	accessToken, err := jwtManager.GenerateAccessToken(user.ID, user.Username)
 	if err != nil {
-		s.logger.Error("Failed to generate access token for new user", zap.Error(err), zap.Int64("userId", user.ID))
+		s.logger.Error("Failed to generate access token for new user", zap.Error(err), zap.Uint64("userId", user.ID))
 		return nil, err
 	}
 
 	refreshToken, err := jwtManager.GenerateRefreshToken(user.ID, user.Username)
 	if err != nil {
-		s.logger.Error("Failed to generate refresh token for new user", zap.Error(err), zap.Int64("userId", user.ID))
+		s.logger.Error("Failed to generate refresh token for new user", zap.Error(err), zap.Uint64("userId", user.ID))
 		return nil, err
 	}
 
 	s.logger.Info("User registration completed successfully",
 		zap.String("username", cmd.Username),
-		zap.Int64("userId", user.ID))
+		zap.Uint64("userId", user.ID))
 
 	return &SignUpResult{
 		AccessToken:  accessToken,
@@ -103,7 +103,7 @@ func (s *UserCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 
 // UpdateUsernameCmd 更新用户名命令
 type UpdateUsernameCmd struct {
-	UserID   int64
+	UserID   uint64
 	Username string
 }
 
@@ -114,7 +114,7 @@ type UpdateResult struct {
 // UpdateUsername 更新用户名
 func (s *UserCommandService) UpdateUsername(ctx context.Context, cmd *UpdateUsernameCmd) (*entity.User, error) {
 	s.logger.Debug("UpdateUsername called",
-		zap.Int64("userId", cmd.UserID),
+		zap.Uint64("userId", cmd.UserID),
 		zap.String("newUsername", cmd.Username))
 
 	var user *entity.User
@@ -135,7 +135,7 @@ func (s *UserCommandService) UpdateUsername(ctx context.Context, cmd *UpdateUser
 
 		return nil
 	}); err != nil {
-		s.logger.Error("Transaction failed during username update", zap.Error(err), zap.Int64("userId", cmd.UserID))
+		s.logger.Error("Transaction failed during username update", zap.Error(err), zap.Uint64("userId", cmd.UserID))
 		return nil, err
 	}
 

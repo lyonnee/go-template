@@ -37,8 +37,8 @@ func NewUserRepository() (*UserRepositoryImpl, error) {
 }
 
 // FindById 根据ID查找用户
-func (r *UserRepositoryImpl) FindById(ctx context.Context, userId int64) (*entity.User, error) {
-	r.logger.Debug("Finding user by ID", zap.Int64("userId", userId))
+func (r *UserRepositoryImpl) FindById(ctx context.Context, userId uint64) (*entity.User, error) {
+	r.logger.Debug("Finding user by ID", zap.Uint64("userId", userId))
 
 	dbExecutor, err := database.GetDBExecutor(ctx)
 	if err != nil {
@@ -66,14 +66,14 @@ func (r *UserRepositoryImpl) FindById(ctx context.Context, userId int64) (*entit
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			r.logger.Debug("User not found", zap.Int64("userId", userId))
+			r.logger.Debug("User not found", zap.Uint64("userId", userId))
 			return nil, domainErrors.ErrUserNotFound
 		}
-		r.logger.Error("Failed to find user by ID", zap.Int64("userId", userId), zap.Error(err))
+		r.logger.Error("Failed to find user by ID", zap.Uint64("userId", userId), zap.Error(err))
 		return nil, err
 	}
 
-	r.logger.Debug("User found successfully", zap.Int64("userId", userId), zap.String("username", userModel.Username))
+	r.logger.Debug("User found successfully", zap.Uint64("userId", userId), zap.String("username", userModel.Username))
 	return r.modelToEntity(&userModel), nil
 }
 
@@ -99,7 +99,7 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 		RETURNING id
 	`
 
-	var id int64
+	var id uint64
 	err = dbExecutor.QueryRowxContext(ctx, query,
 		now,
 		now,
@@ -123,7 +123,7 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 	user.DeletedAt = 0
 
 	r.logger.Info("User created successfully",
-		zap.Int64("userId", id),
+		zap.Uint64("userId", id),
 		zap.String("username", user.Username))
 
 	return nil
@@ -303,7 +303,7 @@ func (r *UserRepositoryImpl) FindByPhone(ctx context.Context, phone string) (*en
 // UpdateUsername 更新用户名
 func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.User) error {
 	r.logger.Debug("Updating username",
-		zap.Int64("userId", user.ID),
+		zap.Uint64("userId", user.ID),
 		zap.String("newUsername", user.Username))
 
 	dbExecutor, err := database.GetDBExecutor(ctx)
@@ -314,7 +314,7 @@ func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.Us
 
 	if user == nil || user.ID == 0 || user.Username == "" {
 		r.logger.Error("Invalid user input for username update",
-			zap.Int64("userId", user.ID),
+			zap.Uint64("userId", user.ID),
 			zap.String("username", user.Username))
 		return domainErrors.ErrInvalidUserInput
 	}
@@ -330,7 +330,7 @@ func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.Us
 	if existingUser != nil && existingUser.ID != user.ID {
 		r.logger.Warn("Username already taken",
 			zap.String("username", user.Username),
-			zap.Int64("existingUserId", existingUser.ID))
+			zap.Uint64("existingUserId", existingUser.ID))
 		return domainErrors.ErrUsernameTaken
 	}
 
@@ -344,7 +344,7 @@ func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.Us
 	result, err := dbExecutor.ExecContext(ctx, query, now, user.Username, user.ID)
 	if err != nil {
 		r.logger.Error("Failed to update username",
-			zap.Int64("userId", user.ID),
+			zap.Uint64("userId", user.ID),
 			zap.String("username", user.Username),
 			zap.Error(err))
 		return err
@@ -358,13 +358,13 @@ func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.Us
 
 	if rowsAffected == 0 {
 		r.logger.Warn("No rows affected during username update",
-			zap.Int64("userId", user.ID))
+			zap.Uint64("userId", user.ID))
 		return domainErrors.ErrUserNotFound
 	}
 
 	user.UpdatedAt = now
 	r.logger.Info("Username updated successfully",
-		zap.Int64("userId", user.ID),
+		zap.Uint64("userId", user.ID),
 		zap.String("newUsername", user.Username))
 
 	return nil

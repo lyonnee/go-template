@@ -10,20 +10,20 @@ import (
 
 // Claims 自定义Claims
 type Claims struct {
-	UserId        int64  `json:"user_id"`
+	UserId        uint64 `json:"user_id"`
 	AlternativeID string `json:"alternative_id"` // 备选id， username/email/phone number/wallet address
 	jwt.RegisteredClaims
 }
 
-type JWTManager struct {
+type JWTGenerator struct {
 	secretKey          []byte
 	accessTokenExpiry  time.Duration
 	refreshTokenExpiry time.Duration
 	issuer             string
 }
 
-func newJWTManager(conf config.JWTConfig) *JWTManager {
-	jwtManager := &JWTManager{
+func newJWTGenerator(conf config.JWTConfig) *JWTGenerator {
+	jwtManager := &JWTGenerator{
 		secretKey:          []byte(conf.SecretKey),
 		accessTokenExpiry:  conf.AccessTokenExpiry,
 		refreshTokenExpiry: conf.RefreshTokenExpiry,
@@ -33,7 +33,7 @@ func newJWTManager(conf config.JWTConfig) *JWTManager {
 	return jwtManager
 }
 
-func (m *JWTManager) SecretKey() jwt.Keyfunc {
+func (m *JWTGenerator) SecretKey() jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
 		return m.secretKey, nil
 	}
@@ -41,18 +41,18 @@ func (m *JWTManager) SecretKey() jwt.Keyfunc {
 
 // GenerateAccessToken 构建访问token
 // @dev AccessToken 用于身份验证，有效期较短（如 15 分钟）
-func (m *JWTManager) GenerateAccessToken(userID int64, alternativeID string) (string, error) {
-	return m.genToken(userID, alternativeID, m.accessTokenExpiry)
+func (m *JWTGenerator) GenerateAccessToken(userID uint64, alternativeID string) (string, error) {
+	return m.genToken((userID), alternativeID, m.accessTokenExpiry)
 }
 
 // GenerateRefreshToken 生成刷新令牌
 // @dev RefreshToken 用于刷新 Access Token，有效期较长（如 7 天），通常存储于安全位置（如 HttpOnly Cookie）
-func (m *JWTManager) GenerateRefreshToken(userID int64, alternativeID string) (string, error) {
-	return m.genToken(userID, alternativeID, m.refreshTokenExpiry)
+func (m *JWTGenerator) GenerateRefreshToken(userID uint64, alternativeID string) (string, error) {
+	return m.genToken((userID), alternativeID, m.refreshTokenExpiry)
 }
 
 // RefreshToken 刷新JWT（使用刷新令牌生成新的访问令牌）
-func (m *JWTManager) RefreshToken(refreshToken string) (string, error) {
+func (m *JWTGenerator) RefreshToken(refreshToken string) (string, error) {
 	// 验证刷新令牌
 	claims, err := m.ValidateToken(refreshToken)
 	if err != nil {
@@ -64,7 +64,7 @@ func (m *JWTManager) RefreshToken(refreshToken string) (string, error) {
 }
 
 // ValidateToken 验证JWT令牌
-func (m *JWTManager) ValidateToken(tokenString string) (*Claims, error) {
+func (m *JWTGenerator) ValidateToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method %v", token.Header["alg"])
@@ -87,7 +87,7 @@ func (m *JWTManager) ValidateToken(tokenString string) (*Claims, error) {
 	}
 }
 
-func (m *JWTManager) genToken(userID int64, alternativeID string, expiry time.Duration) (string, error) {
+func (m *JWTGenerator) genToken(userID uint64, alternativeID string, expiry time.Duration) (string, error) {
 	claims := Claims{
 		AlternativeID: alternativeID,
 		UserId:        userID,

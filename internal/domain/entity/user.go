@@ -1,18 +1,16 @@
 package entity
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/lyonnee/go-template/internal/infrastructure/auth"
-	"github.com/lyonnee/go-template/pkg/di"
+	"github.com/lyonnee/go-template/internal/domain/errors"
 	"github.com/lyonnee/go-template/pkg/util"
 )
 
 type User struct {
-	ID        int64
+	ID        uint64
 	CreatedAt int64
 	UpdatedAt int64
 	DeletedAt int64
@@ -60,20 +58,20 @@ func NewUser(username, pwd, email, phone string) (*User, error) {
 	return u, nil
 }
 
-func (u *User) Login(pwd string) (string, string, error) {
+func (u *User) Login(pwd string) error {
 	if u.DeletedAt > 0 {
-		return "", "", errors.New("user is deleted")
+		return errors.ErrUserDeleted
 	}
 
 	// validate password
 	if err := util.ComparePassword(pwd, u.PwdSecret); err != nil {
-		return "", "", errors.New("invalid password")
+		return errors.ErrInvalidPassword
 	}
 
 	// update last login time
 	u.LastLoginAt = time.Now().Unix()
 
-	return u.BuildToken()
+	return nil
 }
 
 func (u *User) UpdatePassword(pwd string) error {
@@ -92,37 +90,20 @@ func (u *User) UpdatePassword(pwd string) error {
 	return nil
 }
 
-func (u *User) BuildToken() (string, string, error) {
-	// build access token and refresh token
-	jwtManager := di.Get[*auth.JWTManager]()
-
-	accessToken, err := jwtManager.GenerateAccessToken(u.ID, u.Username)
-	if err != nil {
-		return "", "", err
-	}
-
-	refreshToken, err := jwtManager.GenerateRefreshToken(u.ID, u.Username)
-	if err != nil {
-		return "", "", err
-	}
-
-	return accessToken, refreshToken, nil
-}
-
 func validateUsername(username string) error {
 	username = strings.TrimSpace(username)
 	if username == "" {
-		return errors.New("username cannot be empty")
+		return errors.ErrInvalidUsername
 	}
 
 	if len(username) < 3 || len(username) > 50 {
-		return errors.New("username length must be between 3 and 50 characters")
+		return errors.ErrInvalidUsername
 	}
 
 	// 用户名只能包含字母、数字和下划线
 	usernameRegex := regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 	if !usernameRegex.MatchString(username) {
-		return errors.New("username can only contain letters, numbers and underscores")
+		return errors.ErrInvalidUsernameFormat
 	}
 
 	return nil
@@ -131,13 +112,13 @@ func validateUsername(username string) error {
 func validateEmail(email string) error {
 	email = strings.TrimSpace(email)
 	if email == "" {
-		return errors.New("email cannot be empty")
+		return errors.ErrInvalidEmail
 	}
 
 	// 简单的邮箱格式验证
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 	if !emailRegex.MatchString(email) {
-		return errors.New("invalid email format")
+		return errors.ErrInvalidEmailFormat
 	}
 
 	return nil
@@ -146,13 +127,13 @@ func validateEmail(email string) error {
 func validatePhone(phone string) error {
 	phone = strings.TrimSpace(phone)
 	if phone == "" {
-		return errors.New("phone cannot be empty")
+		return errors.ErrInvalidPhone
 	}
 
 	// 简单的手机号格式验证 (中国手机号)
 	phoneRegex := regexp.MustCompile(`^1[3-9]\d{9}$`)
 	if !phoneRegex.MatchString(phone) {
-		return errors.New("invalid phone format")
+		return errors.ErrInvalidPhoneFormat
 	}
 
 	return nil
@@ -161,10 +142,10 @@ func validatePhone(phone string) error {
 func validatePassword(pwd string) error {
 	pwd = strings.TrimSpace(pwd)
 	if pwd == "" {
-		return errors.New("password cannot be empty")
+		return errors.ErrInvalidPassword
 	}
 	if len(pwd) < 6 || len(pwd) > 50 {
-		return errors.New("password length must be between 6 and 50 characters")
+		return errors.ErrInvalidPassword
 	}
 	return nil
 }

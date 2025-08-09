@@ -50,4 +50,36 @@ var (
 		Code:    1010,
 		Message: "user already exist",
 	}
+	ErrUserDeleted = &DomainError{
+		Code:    1011,
+		Message: "user deleted",
+	}
+	ErrInvalidUsername = &DomainError{
+		Code:    1012,
+		Message: "invalid username",
+	}
+	ErrInvalidUsernameFormat = &DomainError{
+		Code:    1013,
+		Message: "invalid username format",
+	}
+	ErrInvalidEmail = &DomainError{
+		Code:    1014,
+		Message: "invalid email",
+	}
+	ErrInvalidEmailFormat = &DomainError{
+		Code:    1015,
+		Message: "invalid email format",
+	}
+	ErrInvalidPhone = &DomainError{
+		Code:    1016,
+		Message: "invalid phone",
+	}
+	ErrInvalidPhoneFormat = &DomainError{
+		Code:    1017,
+		Message: "invalid phone format",
+	}
+	ErrInvalidPasswordFormat = &DomainError{
+		Code:    1018,
+		Message: "invalid password format",
+	}
 )

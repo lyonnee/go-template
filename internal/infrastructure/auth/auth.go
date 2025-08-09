@@ -8,9 +8,9 @@ import (
 func init() {
 	conf := di.Get[config.Config]()
 
-	jwtManager := newJWTManager(conf.Auth.JWT)
+	jwtGenerator := newJWTGenerator(conf.Auth.JWT)
 
-	di.AddSingleton(func() (*JWTManager, error) {
-		return jwtManager, nil
+	di.AddSingleton(func() (*JWTGenerator, error) {
+		return jwtGenerator, nil
 	})
 }

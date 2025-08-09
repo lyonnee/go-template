@@ -59,8 +59,8 @@ func (s *UserService) UpdateUsername(ctx context.Context, user *entity.User, new
 	if existingUser != nil && existingUser.ID != user.ID {
 		s.logger.Warn("Username already taken",
 			zap.String("username", newUsername),
-			zap.Int64("existingUserId", existingUser.ID),
-			zap.Int64("requestingUserId", user.ID))
+			zap.Uint64("existingUserId", existingUser.ID),
+			zap.Uint64("requestingUserId", user.ID))
 		return domainErrors.ErrUsernameTaken
 	}
 

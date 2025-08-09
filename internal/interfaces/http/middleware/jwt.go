@@ -28,9 +28,9 @@ func JWTAuth() app.HandlerFunc {
 			return
 		}
 
-		jwtManager := di.Get[*auth.JWTManager]()
+		jwtGenerator := di.Get[*auth.JWTGenerator]()
 		//解析token包含的信息
-		claims, err := jwtManager.ValidateToken(parts[1])
+		claims, err := jwtGenerator.ValidateToken(parts[1])
 		if err != nil {
 			dto.Fail(reqCtx, dto.CODE_TOKEN_INVALID, "Invalid JSON Web Token")
 			reqCtx.Abort()

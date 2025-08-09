@@ -39,7 +39,7 @@ type SignUpResp struct {
 
 // UserInfo 用户信息
 type UserInfo struct {
-	ID       int64  `json:"id"`
+	ID       uint64 `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Phone    string `json:"phone"`

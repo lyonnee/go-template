@@ -1,15 +1,16 @@
-package service
+package commands
 
 import (
 	"context"
 	"errors"
+
+	"github.com/lyonnee/go-template/pkg/log"
 
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	"github.com/lyonnee/go-template/internal/domain/repository"
 	"github.com/lyonnee/go-template/internal/infrastructure/auth"
 	"github.com/lyonnee/go-template/internal/infrastructure/database"
 	"github.com/lyonnee/go-template/pkg/di"
-	"github.com/lyonnee/go-template/pkg/log"
 	"go.uber.org/zap"
 )
 
@@ -66,13 +67,24 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 		return nil, err
 	}
 
-	accessToken, refreshToken, err := user.Login(cmd.Password)
-	if err != nil {
-		s.logger.Warn("Login failed - invalid password", zap.String("username", cmd.Username), zap.Int64("userId", user.ID))
+	if err := user.Login(cmd.Password); err != nil {
+		s.logger.Warn("Login failed - invalid password", zap.String("username", cmd.Username), zap.Uint64("userId", user.ID))
 		return nil, errors.New("invalid username or password")
 	}
 
-	s.logger.Info("User logged in successfully", zap.String("username", cmd.Username), zap.Int64("userId", user.ID))
+	jwtGenerator := di.Get[*auth.JWTGenerator]()
+
+	accessToken, err := jwtGenerator.GenerateAccessToken(user.ID, user.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, err := jwtGenerator.GenerateRefreshToken(user.ID, user.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("User logged in successfully", zap.String("username", cmd.Username), zap.Uint64("userId", user.ID))
 
 	return &LoginResult{
 		AccessToken:  accessToken,
@@ -93,7 +105,7 @@ type RefreshTokenResult struct {
 // RefreshToken 刷新token
 func (s *AuthCommandService) RefreshToken(ctx context.Context, cmd *RefreshTokenCmd) (*RefreshTokenResult, error) {
 	s.logger.Debug("RefreshToken called")
-	jwtManager := di.Get[*auth.JWTManager]()
+	jwtManager := di.Get[*auth.JWTGenerator]()
 
 	// 验证刷新token
 	claims, err := jwtManager.ValidateToken(cmd.RefreshToken)
@@ -105,11 +117,11 @@ func (s *AuthCommandService) RefreshToken(ctx context.Context, cmd *RefreshToken
 	// 生成新的访问token
 	newAccessToken, err := jwtManager.GenerateAccessToken(claims.UserId, claims.AlternativeID)
 	if err != nil {
-		s.logger.Error("Failed to generate new access token", zap.Error(err), zap.Int64("userId", claims.UserId))
+		s.logger.Error("Failed to generate new access token", zap.Error(err), zap.Uint64("userId", claims.UserId))
 		return nil, err
 	}
 
-	s.logger.Info("Access token refreshed successfully", zap.Int64("userId", claims.UserId))
+	s.logger.Info("Access token refreshed successfully", zap.Uint64("userId", claims.UserId))
 
 	return &RefreshTokenResult{
 		AccessToken: newAccessToken,

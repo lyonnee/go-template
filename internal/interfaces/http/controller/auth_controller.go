@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/lyonnee/go-template/internal/application/service"
+	"github.com/lyonnee/go-template/internal/application/commands"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
 	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/lyonnee/go-template/pkg/log"
@@ -12,7 +12,7 @@ import (
 )
 
 type AuthController struct {
-	authCmdService *service.AuthCommandService
+	authCmdService *commands.AuthCommandService
 	logger         *log.Logger
 }
 
@@ -22,7 +22,7 @@ func init() {
 
 func NewAuthController() (*AuthController, error) {
 	return &AuthController{
-		authCmdService: di.Get[*service.AuthCommandService](),
+		authCmdService: di.Get[*commands.AuthCommandService](),
 		logger:         di.Get[*log.Logger](),
 	}, nil
 }
@@ -43,7 +43,7 @@ func (c *AuthController) Login(ctx context.Context, reqCtx *app.RequestContext) 
 	c.logger.Debug("Login request bound successfully", zap.String("username", req.Username))
 
 	// 创建命令
-	cmd := &service.LoginCmd{
+	cmd := &commands.LoginCmd{
 		Username: req.Username,
 		Password: req.Password,
 	}
@@ -83,7 +83,7 @@ func (c *AuthController) RefreshToken(ctx context.Context, reqCtx *app.RequestCo
 	c.logger.Debug("RefreshToken request bound successfully")
 
 	// 创建命令
-	cmd := &service.RefreshTokenCmd{
+	cmd := &commands.RefreshTokenCmd{
 		RefreshToken: req.RefreshToken,
 	}
 

@@ -17,10 +17,10 @@ type UserRepository interface {
 	// 基本的CRUD操作
 	Create(ctx context.Context, user *entity.User) error
 	Update(ctx context.Context, user *entity.User) error
-	Delete(ctx context.Context, userId int64) error
+	Delete(ctx context.Context, userId uint64) error
 
 	// 查询操作
-	FindById(ctx context.Context, userId int64) (*entity.User, error)
+	FindById(ctx context.Context, userId uint64) (*entity.User, error)
 	FindByUsername(ctx context.Context, username string) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindByPhone(ctx context.Context, phone string) (*entity.User, error)

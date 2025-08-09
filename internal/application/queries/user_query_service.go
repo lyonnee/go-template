@@ -1,4 +1,4 @@
-package service
+package queries
 
 import (
 	"context"
@@ -35,8 +35,8 @@ func NewUserQueryService() (*UserQueryService, error) {
 }
 
 // GetUserById 根据ID获取用户
-func (s *UserQueryService) GetUserById(ctx context.Context, userId int64) (*entity.User, error) {
-	s.logger.Debug("GetUserById called", zap.Int64("userId", userId))
+func (s *UserQueryService) GetUserById(ctx context.Context, userId uint64) (*entity.User, error) {
+	s.logger.Debug("GetUserById called", zap.Uint64("userId", userId))
 
 	var user *entity.User
 	if err := s.dbContext.Conn(ctx, func(ctx context.Context) error {
@@ -49,10 +49,10 @@ func (s *UserQueryService) GetUserById(ctx context.Context, userId int64) (*enti
 
 		return nil
 	}); err != nil {
-		s.logger.Error("Database connection failed", zap.Error(err), zap.Int64("userId", userId))
+		s.logger.Error("Database connection failed", zap.Error(err), zap.Uint64("userId", userId))
 		return nil, err
 	}
 
-	s.logger.Info("User found successfully", zap.Int64("userId", userId), zap.String("username", user.Username))
+	s.logger.Info("User found successfully", zap.Uint64("userId", userId), zap.String("username", user.Username))
 	return user, nil
 }

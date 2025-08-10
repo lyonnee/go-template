@@ -10,7 +10,7 @@ import (
 	"github.com/lyonnee/go-template/pkg/log"
 	"github.com/lyonnee/go-template/services"
 
-	_ "github.com/lyonnee/go-template/internal/infrastructure/repository_impl"
+	_ "github.com/lyonnee/go-template/internal/infrastructure/persistence"
 )
 
 func main() {

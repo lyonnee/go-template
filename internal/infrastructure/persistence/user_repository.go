@@ -1,4 +1,4 @@
-package repository_impl
+package persistence
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
 	"github.com/lyonnee/go-template/internal/domain/repository"
 	"github.com/lyonnee/go-template/internal/infrastructure/database"
-	"github.com/lyonnee/go-template/internal/infrastructure/repository_impl/model"
+	"github.com/lyonnee/go-template/internal/infrastructure/persistence/model"
 	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/lyonnee/go-template/pkg/log"
 	"go.uber.org/zap"

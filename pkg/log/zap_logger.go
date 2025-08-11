@@ -3,44 +3,67 @@ package log
 import (
 	"os"
 
-	"github.com/lyonnee/go-template/config"
+	"github.com/lyonnee/go-template/internal/infrastructure/config"
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-func NewZapLogger(
+func newZapLogger(
 	logConfig config.LogConfig,
 ) (*zap.Logger, error) {
-	encoder := getEncoder(logConfig.Format, logConfig.Caller)
-
 	var cores = make([]zapcore.Core, 0)
 
-	consoleCore, err := getConsoleWriterCore(encoder, logConfig.Level)
+	consoleCore, err := getConsoleWriterCore(logConfig.ConsoleWriterConfig)
 	if err != nil {
 		return nil, err
 	}
-	cores = append(cores, consoleCore)
+	if consoleCore != nil {
+		cores = append(cores, consoleCore)
+	}
 
-	if logConfig.ToFile {
-		fileCore, err := getFileWriterCore(
-			encoder,
-			logConfig.LogFileConfig.Filename,
-			logConfig.LogFileConfig.LogLevel,
-			logConfig.LogFileConfig.MaxSize,
-			logConfig.LogFileConfig.MaxBackups,
-			logConfig.LogFileConfig.MaxAge,
-			logConfig.LogFileConfig.IsCompression,
-		)
-		if err != nil {
-			return nil, err
-		}
+	fileCore, err := getFileWriterCore(logConfig.FileWriterConfig)
+	if err != nil {
+		return nil, err
+	}
+	if fileCore != nil {
 		cores = append(cores, fileCore)
 	}
 
 	core := zapcore.NewTee(cores...)
 
-	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1)), nil
+	return zap.New(core, zap.AddCaller()), nil
+}
+
+func getConsoleWriterCore(conf config.LogConsoleWriterConfig) (zapcore.Core, error) {
+	level, err := zapcore.ParseLevel(conf.Level)
+	if err != nil {
+		return nil, err
+	}
+
+	encode := getEncoder(conf.Format, conf.Caller)
+
+	return zapcore.NewCore(encode, zapcore.AddSync(os.Stdout), level), nil
+}
+
+func getFileWriterCore(conf config.LogFileWriterConfig) (zapcore.Core, error) {
+	level, err := zapcore.ParseLevel(conf.Level)
+	if err != nil {
+		return nil, err
+	}
+
+	encoder := getEncoder(conf.Format, conf.Caller)
+
+	lumberJackLogger := &lumberjack.Logger{
+		Filename:   conf.Filename,
+		MaxSize:    conf.MaxSize,
+		MaxBackups: conf.MaxBackups,
+		MaxAge:     conf.MaxAge,
+		Compress:   conf.IsCompression,
+	}
+	syncer := zapcore.AddSync(lumberJackLogger)
+
+	return zapcore.NewCore(encoder, syncer, level), nil
 }
 
 func getEncoder(format, encodeCaller string) zapcore.Encoder {
@@ -64,31 +87,4 @@ func getEncoder(format, encodeCaller string) zapcore.Encoder {
 	}
 
 	return encoder(encoderConfig)
-}
-
-func getConsoleWriterCore(encoder zapcore.Encoder, levelStr string) (zapcore.Core, error) {
-	level, err := zapcore.ParseLevel(levelStr)
-	if err != nil {
-		return nil, err
-	}
-
-	return zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), level), nil
-}
-
-func getFileWriterCore(encoder zapcore.Encoder, filename, levelStr string, maxSize, maxBackups, maxAge int, isCompression bool) (zapcore.Core, error) {
-	level, err := zapcore.ParseLevel(levelStr)
-	if err != nil {
-		return nil, err
-	}
-
-	lumberJackLogger := &lumberjack.Logger{
-		Filename:   filename,
-		MaxSize:    maxSize,
-		MaxBackups: maxBackups,
-		MaxAge:     maxAge,
-		Compress:   isCompression,
-	}
-
-	syncer := zapcore.AddSync(lumberJackLogger)
-	return zapcore.NewCore(encoder, syncer, level), nil
 }

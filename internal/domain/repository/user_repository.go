@@ -14,16 +14,13 @@ import (
 // - errors.ErrPhoneTaken：手机号已被占用
 // - errors.ErrInvalidUserInput：无效的用户输入
 type UserRepository interface {
-	// WithExecutor 设置特定的执行器，返回一个新的存储库实例
-	WithExecutor(executor Executor) UserRepository
-
 	// 基本的CRUD操作
 	Create(ctx context.Context, user *entity.User) error
 	Update(ctx context.Context, user *entity.User) error
-	Delete(ctx context.Context, userId int64) error
+	Delete(ctx context.Context, userId uint64) error
 
 	// 查询操作
-	FindById(ctx context.Context, userId int64) (*entity.User, error)
+	FindById(ctx context.Context, userId uint64) (*entity.User, error)
 	FindByUsername(ctx context.Context, username string) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindByPhone(ctx context.Context, phone string) (*entity.User, error)
@@ -33,4 +30,6 @@ type UserRepository interface {
 	UpdatePwdSecret(ctx context.Context, user *entity.User) error
 	UpdateEmail(ctx context.Context, user *entity.User) error
 	UpdatePhone(ctx context.Context, user *entity.User) error
+
+	CheckUserFieldsExist(ctx context.Context, username, email, phone string) (bool, error)
 }

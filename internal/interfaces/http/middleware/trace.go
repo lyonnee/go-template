@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/google/uuid"
+	"github.com/lyonnee/go-template/pkg/idgen"
 )
 
 func AddTrace() app.HandlerFunc {
@@ -25,5 +25,5 @@ func AddTrace() app.HandlerFunc {
 }
 
 func GenerateTraceID() string {
-	return uuid.New().String()
+	return idgen.GenerateStringId()
 }

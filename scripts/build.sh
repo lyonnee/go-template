@@ -31,7 +31,6 @@ go test ./... -v
 # 构建应用
 echo "🔨 Building application..."
 go build -ldflags="-w -s" -o ./bin/server ./cmd/server/main.go
-go build -ldflags="-w -s" -o ./bin/migrate ./cmd/migrate/main.go
 
 # 检查构建结果
 if [ -f "./bin/server" ]; then

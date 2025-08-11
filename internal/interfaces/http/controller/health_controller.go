@@ -7,14 +7,24 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
+	"github.com/lyonnee/go-template/pkg/di"
+	"github.com/lyonnee/go-template/pkg/log"
 )
 
+func init() {
+	di.AddSingleton[*HealthController](NewHealthController)
+}
+
 // HealthController 健康检查控制器
-type HealthController struct{}
+type HealthController struct {
+	logger *log.Logger
+}
 
 // NewHealthController 创建健康检查控制器
-func NewHealthController() *HealthController {
-	return &HealthController{}
+func NewHealthController() (*HealthController, error) {
+	return &HealthController{
+		logger: di.Get[*log.Logger](),
+	}, nil
 }
 
 // HealthCheckResponse 健康检查响应

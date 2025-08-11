@@ -3,22 +3,26 @@ module github.com/lyonnee/go-template
 go 1.23.7
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.2
+	github.com/bwmarrin/snowflake v0.3.0
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/hertz-contrib/cors v0.1.0
 	github.com/lib/pq v1.10.9
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/qustavo/sqlhooks/v2 v2.1.0
+	github.com/robfig/cron/v3 v3.0.1
+	github.com/samber/do/v2 v2.0.0-beta.7
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.38.0
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/samber/go-type-to-string v1.4.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
@@ -44,7 +48,6 @@ require (
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
-	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
@@ -57,6 +60,5 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

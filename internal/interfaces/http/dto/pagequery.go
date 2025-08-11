@@ -1,24 +1,28 @@
 package dto
 
 type PagequeryReq struct {
-	Page  int64 `json:"page" query:"page"`
-	Limit int64 `json:"limit" query:"limit"`
+	Page     int64  `json:"page" query:"page"`
+	PageSize int64  `json:"page_size" query:"page_size"`
+	OrderBy  string `json:"order_by" query:"order_by"` // 排序字段
+	Order    string `json:"order" query:"order"`       // 是否降序
+	Filter   string `json:"filter" query:"filter"`     // 过滤条件
 }
 
-type PagequeryData[T any] struct {
+// PagequeryRespData 分页查询响应数据
+type PagequeryRespData[T any] struct {
 	Page      int64 `json:"page"`
-	Limit     int64 `json:"limit"`
+	PageSize  int64 `json:"page_size"`
 	Total     int64 `json:"total"`
-	TotalPage int64 `json:"total_page"` // (Total + Limit - 1) / Limit
-	List      T     `json:"list,omitempty"`
+	TotalPage int64 `json:"total_page"` // (Total + PageSize - 1) / PageSize
+	Items     T     `json:"items,omitempty"`
 }
 
-func NewPagequeryData[T any](page, limit, total int64, list T) PagequeryData[T] {
-	return PagequeryData[T]{
+func NewPagequeryRespData[T any](page, pageSize, total int64, items T) PagequeryRespData[T] {
+	return PagequeryRespData[T]{
 		Page:      page,
-		Limit:     limit,
+		PageSize:  pageSize,
 		Total:     total,
-		TotalPage: (total + limit - 1) / limit,
-		List:      list,
+		TotalPage: (total + pageSize - 1) / pageSize,
+		Items:     items,
 	}
 }

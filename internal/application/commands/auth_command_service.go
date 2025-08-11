@@ -61,26 +61,26 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 
 		user = userInfo
 
+		if err := user.Login(cmd.Password); err != nil {
+			s.logger.Warn("Login failed - invalid password", zap.String("username", cmd.Username), zap.Uint64("userId", user.ID))
+			return nil, errors.New("invalid username or password")
+		}
+
+		jwtGenerator := di.Get[*auth.JWTGenerator]()
+
+		accessToken, err := jwtGenerator.GenerateAccessToken(user.ID, user.Username)
+		if err != nil {
+			return nil, err
+		}
+
+		refreshToken, err := jwtGenerator.GenerateRefreshToken(user.ID, user.Username)
+		if err != nil {
+			return nil, err
+		}
+
 		return nil
 	}); err != nil {
 		s.logger.Error("Database connection failed", zap.Error(err))
-		return nil, err
-	}
-
-	if err := user.Login(cmd.Password); err != nil {
-		s.logger.Warn("Login failed - invalid password", zap.String("username", cmd.Username), zap.Uint64("userId", user.ID))
-		return nil, errors.New("invalid username or password")
-	}
-
-	jwtGenerator := di.Get[*auth.JWTGenerator]()
-
-	accessToken, err := jwtGenerator.GenerateAccessToken(user.ID, user.Username)
-	if err != nil {
-		return nil, err
-	}
-
-	refreshToken, err := jwtGenerator.GenerateRefreshToken(user.ID, user.Username)
-	if err != nil {
 		return nil, err
 	}
 

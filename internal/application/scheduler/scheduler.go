@@ -1,12 +1,14 @@
 package scheduler
 
 import (
+	"github.com/lyonnee/go-template/internal/application/scheduler/jobs"
 	"github.com/lyonnee/go-template/pkg/log"
 	"github.com/robfig/cron/v3"
 )
 
-func RegisterJobs(s *cron.Cron) {
+func RegisterScheduledJobs(s *cron.Cron) {
 	s.AddFunc("0 * * * *", func() {
+		jobs.TestJob()
 		// Example task: Log every hour
 		log.Info("Hourly task executed")
 	})

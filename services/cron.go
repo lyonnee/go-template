@@ -12,7 +12,7 @@ var c *cron.Cron
 func StartCronScheduler() {
 	c = cron.New(cron.WithSeconds(), cron.WithLocation(time.UTC))
 
-	scheduler.RegisterJobs(c)
+	scheduler.RegisterScheduledJobs(c)
 
 	c.Start()
 }

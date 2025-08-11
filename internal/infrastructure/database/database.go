@@ -14,6 +14,14 @@ type Database struct {
 	db *sqlx.DB
 }
 
+// func (dbc *Database) Conn(ctx context.Context) (DBExecutor, error) {
+// 	return dbc.db.Connx(ctx)
+// }
+
+// func (dbc *Database) Transaction(ctx context.Context, opts *sql.TxOptions) (DBExecutor, error) {
+// 	return dbc.db.BeginTxx(ctx, opts)
+// }
+
 func (dbc *Database) Conn(ctx context.Context, fn func(context.Context) error) error {
 	conn, err := dbc.db.Connx(ctx)
 	if err != nil {

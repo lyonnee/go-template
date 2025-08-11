@@ -6,7 +6,6 @@ import (
 
 	"github.com/lyonnee/go-template/pkg/log"
 
-	"github.com/lyonnee/go-template/internal/domain/entity"
 	"github.com/lyonnee/go-template/internal/domain/repository"
 	"github.com/lyonnee/go-template/internal/infrastructure/auth"
 	"github.com/lyonnee/go-template/internal/infrastructure/database"
@@ -51,40 +50,37 @@ type LoginResult struct {
 func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginResult, error) {
 	s.logger.Debug("Login attempt", zap.String("username", cmd.Username))
 
-	var user *entity.User
+	var accessToken, refreshToken string
 	if err := s.dbContext.Conn(ctx, func(ctx context.Context) error {
 		// 查找用户
-		userInfo, err := s.userRepo.FindByUsername(ctx, cmd.Username)
+		user, err := s.userRepo.FindByUsername(ctx, cmd.Username)
 		if err != nil {
 			return err
 		}
 
-		user = userInfo
-
 		if err := user.Login(cmd.Password); err != nil {
 			s.logger.Warn("Login failed - invalid password", zap.String("username", cmd.Username), zap.Uint64("userId", user.ID))
-			return nil, errors.New("invalid username or password")
+			return errors.New("invalid username or password")
 		}
 
 		jwtGenerator := di.Get[*auth.JWTGenerator]()
 
-		accessToken, err := jwtGenerator.GenerateAccessToken(user.ID, user.Username)
+		accessToken, err = jwtGenerator.GenerateAccessToken(user.ID, user.Username)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		refreshToken, err := jwtGenerator.GenerateRefreshToken(user.ID, user.Username)
+		refreshToken, err = jwtGenerator.GenerateRefreshToken(user.ID, user.Username)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
+		s.logger.Info("User logged in successfully", zap.String("username", cmd.Username), zap.Uint64("userId", user.ID))
 		return nil
 	}); err != nil {
 		s.logger.Error("Database connection failed", zap.Error(err))
 		return nil, err
 	}
-
-	s.logger.Info("User logged in successfully", zap.String("username", cmd.Username), zap.Uint64("userId", user.ID))
 
 	return &LoginResult{
 		AccessToken:  accessToken,

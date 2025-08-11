@@ -47,12 +47,12 @@ func (s *UserQueryService) GetUserById(ctx context.Context, userId uint64) (*ent
 
 		user = userInfo
 
+		s.logger.Info("User found successfully", zap.Uint64("userId", userId), zap.String("username", user.Username))
 		return nil
 	}); err != nil {
 		s.logger.Error("Database connection failed", zap.Error(err), zap.Uint64("userId", userId))
 		return nil, err
 	}
 
-	s.logger.Info("User found successfully", zap.Uint64("userId", userId), zap.String("username", user.Username))
 	return user, nil
 }

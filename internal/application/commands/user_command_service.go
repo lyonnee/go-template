@@ -60,6 +60,7 @@ func (s *UserCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 		zap.String("email", cmd.Email))
 
 	var user *entity.User
+	var accessToken, refreshToken string
 	if err := s.dbContext.Conn(ctx, func(ctx context.Context) error {
 		newUser, err := s.userDomainService.CreateUser(ctx, cmd.Username, cmd.Password, cmd.Email, cmd.Phone)
 		if err != nil {
@@ -70,29 +71,30 @@ func (s *UserCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 			return err
 		}
 
+		jwtManager := di.Get[*auth.JWTGenerator]()
+		// 生成token
+		accessToken, err = jwtManager.GenerateAccessToken(newUser.ID, newUser.Username)
+		if err != nil {
+			s.logger.Error("Failed to generate access token for new user", zap.Error(err), zap.Uint64("userId", user.ID))
+			return err
+		}
+
+		refreshToken, err = jwtManager.GenerateRefreshToken(newUser.ID, newUser.Username)
+		if err != nil {
+			s.logger.Error("Failed to generate refresh token for new user", zap.Error(err), zap.Uint64("userId", user.ID))
+			return err
+		}
+
+		user = newUser
+
+		s.logger.Info("User registration completed successfully",
+			zap.String("username", cmd.Username),
+			zap.Uint64("userId", newUser.ID))
 		return nil
 	}); err != nil {
 		s.logger.Error("User registration failed", zap.Error(err), zap.String("username", cmd.Username))
 		return nil, err
 	}
-
-	jwtManager := di.Get[*auth.JWTGenerator]()
-	// 生成token
-	accessToken, err := jwtManager.GenerateAccessToken(user.ID, user.Username)
-	if err != nil {
-		s.logger.Error("Failed to generate access token for new user", zap.Error(err), zap.Uint64("userId", user.ID))
-		return nil, err
-	}
-
-	refreshToken, err := jwtManager.GenerateRefreshToken(user.ID, user.Username)
-	if err != nil {
-		s.logger.Error("Failed to generate refresh token for new user", zap.Error(err), zap.Uint64("userId", user.ID))
-		return nil, err
-	}
-
-	s.logger.Info("User registration completed successfully",
-		zap.String("username", cmd.Username),
-		zap.Uint64("userId", user.ID))
 
 	return &SignUpResult{
 		AccessToken:  accessToken,

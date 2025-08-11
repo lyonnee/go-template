@@ -26,7 +26,7 @@ cd your-project
 
 4. 启动开发服务器
 ```bash
-go run cmd/server/main.go -e dev
+go run . -env dev
 ```
 
 ## 模板特性
@@ -64,57 +64,128 @@ go run cmd/server/main.go -e dev
 
 ```
 go-template/
-├── cmd/                             # 应用程序入口点
-│   ├── scheduler/                   # 后台任务调度器
-│   └── server/                      # 主 HTTP/gRPC 服务器
+├── Dockerfile                        # 容器定义
+├── LICENSE                           # 许可证
+├── go.mod                            # Go 模块定义
+├── go.sum                            # 依赖校验和
+├── main.go                           # 程序入口
+├── README.md                         # 英文说明
+├── README_zh.md                      # 中文说明
+├── _logs/                            # 本地日志输出
+│   └── dev.log
 │
-├── application/                     # 应用层（用例）
-│   ├── cron/                        # 定时任务定义
-│   └── service/                     # 应用服务
-│       ├── auth_command_service.go  # 认证操作
-│       ├── user_command_service.go  # 用户写操作
-│       └── user_query_service.go    # 用户读操作
+├── application/
+│   └── cron/                         # 外层调度器入口/封装
+│       └── scheduler.go
 │
-├── domain/                          # 领域层（业务逻辑）
-│   ├── entity/                      # 业务实体
-│   ├── errors/                      # 领域特定错误
-│   ├── repository/                  # 仓储接口
-│   └── service/                     # 领域服务
+├── configs/                          # 多环境配置文件
+│   ├── config.dev.yaml
+│   ├── config.prod.yaml
+│   └── config.test.yaml
 │
-├── infrastructure/                  # 基础设施层（技术细节）
-│   ├── auth/                        # 认证实现
-│   ├── blockchain/                  # 区块链集成
-│   ├── cache/                       # 缓存实现
-│   ├── config/                      # 配置管理
-│   ├── database/                    # 数据库连接
-│   ├── di/                          # 依赖注入容器
-│   ├── log/                         # 日志实现
-│   ├── mq/                          # 消息队列实现
-│   └── repository_impl/             # 仓储实现
-│       └── model/                   # 数据库模型
+├── infrastructure/
+│   └── di/                           # 根级依赖注入装配
+│       └── injector.go
 │
-├── interfaces/                      # 接口层（外部接口）
-│   ├── event_handler/               # 事件处理器
-│   ├── grpc/                        # gRPC 服务定义
-│   └── http/                        # HTTP 接口
-│       ├── controller/              # HTTP 请求处理器
-│       ├── dto/                     # 数据传输对象
-│       ├── middleware/              # HTTP 中间件
-│       ├── router.go                # 路由定义
-│       └── server.go                # HTTP 服务器设置
+├── internal/                         # 业务实现（遵循 Go internal 隔离）
+│   ├── application/                  # 应用层（用例编排）
+│   │   ├── commands/                 # 写模型（命令）
+│   │   │   ├── auth_command_service.go
+│   │   │   └── user_command_service.go
+│   │   ├── queries/                  # 读模型（查询）
+│   │   │   └── user_query_service.go
+│   │   └── scheduler/                # 定时任务编排
+│   │       ├── scheduler.go
+│   │       └── jobs/
+│   │           └── test_job.go
+│   │
+│   ├── domain/                       # 领域层
+│   │   ├── entity/                   # 领域实体
+│   │   │   └── user.go
+│   │   ├── errors/                   # 领域错误
+│   │   │   └── user_errors.go
+│   │   ├── repository/               # 仓储接口
+│   │   │   ├── eth_repository.go
+│   │   │   └── user_repository.go
+│   │   └── service/                  # 领域服务
+│   │       ├── infra_service.go
+│   │       └── user_service.go
+│   │
+│   ├── infrastructure/               # 基础设施实现
+│   │   ├── auth/                     # 认证/JWT/OAuth
+│   │   │   ├── auth.go
+│   │   │   ├── jwt.go
+│   │   │   └── oauth.go
+│   │   ├── blockchain/               # 区块链相关
+│   │   │   └── blockchain.go
+│   │   ├── cache/                    # 缓存与 Redis
+│   │   │   ├── cache.go
+│   │   │   ├── keys.go
+│   │   │   └── redis.go
+│   │   ├── config/                   # 配置装载
+│   │   │   ├── config.go
+│   │   │   └── types.go
+│   │   ├── database/                 # 数据库访问
+│   │   │   ├── database.go
+│   │   │   ├── executor.go
+│   │   │   ├── logger.go
+│   │   │   └── postgres.go
+│   │   ├── mq/                       # 消息队列
+│   │   │   └── mq.go
+│   │   └── repository_impl/              # 持久化实现
+│   │       ├── user_repository.go
+│   │       └── model/
+│   │           ├── base_model.go
+│   │           └── user.go
+│   │
+│   └── interfaces/                   # 适配层（对外接口）
+│       ├── event_handler/            # 事件处理
+│       │   └── event_handler.go
+│       ├── grpc/                     # gRPC 定义
+│       │   └── user.proto
+│       └── http/                     # HTTP 接口
+│           ├── controller/           # 控制器
+│           │   ├── auth_controller.go
+│           │   ├── health_controller.go
+│           │   └── user_controller.go
+│           ├── dto/                  # DTO 定义
+│           │   ├── auth.go
+│           │   ├── base_response.go
+│           │   ├── pagequery.go
+│           │   └── user.go
+│           ├── middleware/           # 中间件
+│           │   ├── cors.go
+│           │   ├── jwt.go
+│           │   ├── logger.go
+│           │   ├── recovery.go
+│           │   └── trace.go
+│           └── router.go             # 路由
 │
-├── pkg/                             # 共享工具
-│   └── idgen/                       # ID 生成工具
+├── pkg/                              # 通用库
+│   ├── di/                           # DI 帮助
+│   │   └── injector.go
+│   ├── idgen/                        # ID 生成
+│   │   └── id_generator.go
+│   ├── log/                          # 日志封装
+│   │   ├── log.go
+│   │   └── zap_logger.go
+│   └── util/                         # 工具方法
+│       └── bcrypt.go
 │
-├── scripts/                         # 构建和部署脚本
-├── sqls/                            # 数据库架构文件
-├── test/                            # 测试文件和工具
+├── scripts/                          # 构建与启动脚本
+│   ├── build.sh
+│   └── start.sh
 │
-├── config.dev.yaml                  # 开发环境配置
-├── config.test.yaml                 # 测试环境配置
-├── config.prod.yaml                 # 生产环境配置
-├── Dockerfile                       # 容器定义
-└── docker-compose.yml               # 多服务设置
+├── services/                         # 服务启动入口（HTTP/gRPC/Cron）
+│   ├── cron.go
+│   ├── grpc.go
+│   ├── http.go
+│   └── service.go
+│
+├── sqls/                             # 数据库初始化/迁移 SQL
+│   └── user.sql
+│
+└── test/                             # 测试目录
 ```
 
 ## 架构说明
@@ -151,7 +222,7 @@ go-template/
 ### 添加新的业务功能
 
 #### 1. 定义领域实体
-在 `domain/entity/` 中创建新的业务实体：
+在 `internal/domain/entity/` 中创建新的业务实体：
 
 ```go
 // domain/entity/product.go
@@ -165,7 +236,7 @@ type Product struct {
 ```
 
 #### 2. 创建仓储接口
-在 `domain/repository/` 中定义数据访问接口：
+在 `internal/domain/repository/` 中定义数据访问接口：
 
 ```go
 // domain/repository/product_repository.go
@@ -178,10 +249,10 @@ type ProductRepository interface {
 ```
 
 #### 3. 实现仓储
-在 `infrastructure/repository_impl/` 中创建具体实现：
+在 `internal/infrastructure/repository_impl/` 中创建具体实现：
 
 ```go
-// infrastructure/repository_impl/product_repo_impl.go
+// internal/infrastructure/repository_impl/product_repository.go
 type ProductRepoImpl struct {
     db *sqlx.DB
 }
@@ -195,7 +266,7 @@ func (r *ProductRepoImpl) Save(ctx context.Context, product *entity.Product) err
 在同一个文件中使用 `init()` 函数注册仓储：
 
 ```go
-// infrastructure/repository_impl/product_repo_impl.go
+// internal/infrastructure/repository_impl/product_repository.go
 type ProductRepoImpl struct {
     db *sqlx.DB
 }
@@ -215,10 +286,10 @@ func (r *ProductRepoImpl) Save(ctx context.Context, product *entity.Product) err
 ```
 
 #### 4. 创建应用服务
-在 `application/service/` 中实现业务逻辑：
+在 `internal/application/commands/` 中实现写模型业务逻辑（示例）：
 
 ```go
-// application/service/product_service.go
+// internal/application/commands/product_command_service.go
 type ProductService struct {
     productRepo repository.ProductRepository
 }
@@ -232,7 +303,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, req CreateProductReq
 在同一个文件中注册应用服务：
 
 ```go
-// application/service/product_service.go
+// internal/application/commands/product_command_service.go
 type ProductService struct {
     productRepo repository.ProductRepository
 }
@@ -252,10 +323,10 @@ func (s *ProductService) CreateProduct(ctx context.Context, req CreateProductReq
 ```
 
 #### 5. 添加 HTTP 控制器
-在 `interfaces/http/controller/` 中处理 HTTP 请求：
+在 `internal/interfaces/http/controller/` 中处理 HTTP 请求：
 
 ```go
-// interfaces/http/controller/product_controller.go
+// internal/interfaces/http/controller/product_controller.go
 type ProductController struct {
     productService *service.ProductService
 }
@@ -269,7 +340,7 @@ func (c *ProductController) CreateProduct(ctx context.Context, req *app.RequestC
 在同一个文件中注册控制器：
 
 ```go
-// interfaces/http/controller/product_controller.go
+// internal/interfaces/http/controller/product_controller.go
 type ProductController struct {
     productService *service.ProductService
 }
@@ -289,7 +360,7 @@ func (c *ProductController) CreateProduct(ctx context.Context, req *app.RequestC
 ```
 
 #### 6. 注册路由
-在 `interfaces/http/router.go` 中更新路由：
+在 `internal/interfaces/http/router.go` 中更新路由：
 
 ```go
 // 添加到 router.go
@@ -303,7 +374,7 @@ v1.DELETE("/products/:id", productController.DeleteProduct)
 ### 添加新的配置项
 
 #### 1. 更新配置结构
-在 `infrastructure/config/types.go` 中添加新的配置部分：
+在 `internal/infrastructure/config/types.go` 中添加新的配置部分：
 
 ```go
 type Config struct {
@@ -324,7 +395,7 @@ type EmailConfig struct {
 在环境配置文件中添加配置：
 
 ```yaml
-# config.dev.yaml
+# configs/config.dev.yaml
 email:
   provider: smtp
   smtp_host: smtp.gmail.com
@@ -337,7 +408,7 @@ email:
 使用统一的依赖注入接口注册：
 
 ```go
-// 在适当的初始化位置注册
+// 在适当的初始化位置注册（例如 internal/infrastructure/email/email_service.go）
 di.AddSingleton(func() (EmailService, error) {
     config := di.Get[*config.Config]()
     return &emailServiceImpl{
@@ -387,7 +458,7 @@ func (s *UserService) CreateUser(ctx context.Context, user *entity.User) error {
 #### 仓储注册
 
 ```go
-// infrastructure/repository_impl/user_repo_impl.go
+// internal/infrastructure/repository_impl/user_repository.go
 type UserRepoImpl struct {
     db *sqlx.DB
 }
@@ -405,7 +476,7 @@ func NewUserRepository() (repository.UserRepository, error) {
 #### 应用服务注册
 
 ```go
-// application/service/user_command_service.go
+// internal/application/commands/user_command_service.go
 type UserCommandService struct {
     userRepo      repository.UserRepository
     userDomainSvc *domain.UserService
@@ -426,7 +497,7 @@ func NewUserCommandService() (*UserCommandService, error) {
 #### 控制器注册
 
 ```go
-// interfaces/http/controller/user_controller.go
+// internal/interfaces/http/controller/user_controller.go
 type UserController struct {
     userCommandService *service.UserCommandService
     userQueryService   *service.UserQueryService
@@ -449,7 +520,7 @@ func NewUserController() (*UserController, error) {
 对于需要每次都创建新实例的服务：
 
 ```go
-// infrastructure/email/email_service.go
+// internal/infrastructure/email/email_service.go
 type EmailService struct {
     config *config.EmailConfig
 }
@@ -492,10 +563,10 @@ func (s *SomeService) ProcessUser() {
 ### 添加新的中间件
 
 #### 1. 创建中间件
-在 `interfaces/http/middleware/` 中添加新中间件：
+在 `internal/interfaces/http/middleware/` 中添加新中间件：
 
 ```go
-// interfaces/http/middleware/rate_limit.go
+// internal/interfaces/http/middleware/rate_limit.go
 func RateLimit() app.HandlerFunc {
     return func(ctx context.Context, c *app.RequestContext) {
         // 限流逻辑
@@ -508,14 +579,14 @@ func RateLimit() app.HandlerFunc {
 更新路由器以使用中间件：
 
 ```go
-// interfaces/http/router.go
+// internal/interfaces/http/router.go
 h.Use(middleware.RateLimit())
 ```
 
 ### 添加新的服务
 
 #### 1. 创建服务接口
-在 `domain/service/` 中定义服务契约：
+在 `internal/domain/service/` 中定义服务契约：
 
 ```go
 // domain/service/notification_service.go
@@ -526,10 +597,10 @@ type NotificationService interface {
 ```
 
 #### 2. 实现领域服务
-在 `domain/service/` 中创建实现：
+在 `internal/domain/service/` 中创建实现：
 
 ```go
-// domain/service/notification_service_impl.go
+// internal/domain/service/notification_service_impl.go
 type NotificationServiceImpl struct {
     config EmailConfig
 }
@@ -570,10 +641,10 @@ func (s *NotificationServiceImpl) SendEmail(ctx context.Context, to, subject, bo
 ### 添加数据库模型
 
 #### 1. 创建数据库模型
-在 `infrastructure/repository_impl/model/` 中添加模型：
+在 `internal/infrastructure/repository_impl/model/` 中添加模型：
 
 ```go
-// infrastructure/repository_impl/model/product.go
+// internal/infrastructure/repository_impl/model/product.go
 type Product struct {
     BaseModel
     Name  string  `db:"name"`
@@ -603,8 +674,8 @@ CREATE TABLE IF NOT EXISTS products (
 go test ./...
 
 # 运行特定包测试
-go test ./domain/...
-go test ./application/...
+go test ./internal/domain/...
+go test ./internal/application/...
 
 # 运行覆盖率测试
 go test -cover ./...
@@ -617,7 +688,7 @@ go test -cover ./...
 ./scripts/build.sh
 
 # 运行开发服务器
-go run cmd/server/main.go -e dev
+go run . -env dev
 
 # 使用 Docker 运行
 docker build -t your-app .

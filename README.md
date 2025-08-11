@@ -33,7 +33,7 @@ cd your-project
 
 4. Start development server
 ```bash
-go run cmd/server/main.go -e dev
+go run . -env dev
 ```
 
 ## Template Features
@@ -63,57 +63,128 @@ This template follows Clean Architecture and DDD principles with the following s
 
 ```
 go-template/
-├── cmd/                             # Application entry points
-│   ├── scheduler/                   # Background task scheduler
-│   └── server/                      # Main HTTP/gRPC server
+├── Dockerfile                        # Container definition
+├── LICENSE                           # License
+├── go.mod                            # Go module definition
+├── go.sum                            # Dependency checksums
+├── main.go                           # Program entrypoint
+├── README.md                         # English docs
+├── README_zh.md                      # Chinese docs
+├── _logs/                            # Local logs
+│   └── dev.log
 │
-├── application/                     # Application Layer (Use Cases)
-│   ├── cron/                        # Scheduled job definitions
-│   └── service/                     # Application services
-│       ├── auth_command_service.go  # Authentication operations
-│       ├── user_command_service.go  # User write operations
-│       └── user_query_service.go    # User read operations
+├── application/
+│   └── cron/                         # Outer scheduler wrapper/entry
+│       └── scheduler.go
 │
-├── domain/                          # Domain Layer (Business Logic)
-│   ├── entity/                      # Business entities
-│   ├── errors/                      # Domain-specific errors
-│   ├── repository/                  # Repository interfaces
-│   └── service/                     # Domain services
+├── configs/                          # Environment configs
+│   ├── config.dev.yaml
+│   ├── config.prod.yaml
+│   └── config.test.yaml
 │
-├── infrastructure/                  # Infrastructure Layer (Technical Details)
-│   ├── auth/                        # Authentication implementations
-│   ├── blockchain/                  # Blockchain integrations
-│   ├── cache/                       # Cache implementations
-│   ├── config/                      # Configuration management
-│   ├── database/                    # Database connections
-│   ├── di/                          # Dependency injection container
-│   ├── log/                         # Logging implementations
-│   ├── mq/                          # Message queue implementations
-│   └── repository_impl/             # Repository implementations
-│       └── model/                   # Database models
+├── infrastructure/
+│   └── di/                           # Root-level DI wiring
+│       └── injector.go
 │
-├── interfaces/                      # Interface Layer (External Interface)
-│   ├── event_handler/               # Event handlers
-│   ├── grpc/                        # gRPC service definitions
-│   └── http/                        # HTTP interface
-│       ├── controller/              # HTTP request handlers
-│       ├── dto/                     # Data transfer objects
-│       ├── middleware/              # HTTP middlewares
-│       ├── router.go                # Route definitions
-│       └── server.go                # HTTP server setup
+├── internal/                         # Internal business implementation
+│   ├── application/                  # Application layer (use-cases)
+│   │   ├── commands/                 # Write side (commands)
+│   │   │   ├── auth_command_service.go
+│   │   │   └── user_command_service.go
+│   │   ├── queries/                  # Read side (queries)
+│   │   │   └── user_query_service.go
+│   │   └── scheduler/                # Job orchestration
+│   │       ├── scheduler.go
+│   │       └── jobs/
+│   │           └── test_job.go
+│   │
+│   ├── domain/                       # Domain layer
+│   │   ├── entity/                   # Entities
+│   │   │   └── user.go
+│   │   ├── errors/                   # Domain errors
+│   │   │   └── user_errors.go
+│   │   ├── repository/               # Repository interfaces
+│   │   │   ├── eth_repository.go
+│   │   │   └── user_repository.go
+│   │   └── service/                  # Domain services
+│   │       ├── infra_service.go
+│   │       └── user_service.go
+│   │
+│   ├── infrastructure/               # Infrastructure implementations
+│   │   ├── auth/                     # Auth/JWT/OAuth
+│   │   │   ├── auth.go
+│   │   │   ├── jwt.go
+│   │   │   └── oauth.go
+│   │   ├── blockchain/               # Blockchain utilities
+│   │   │   └── blockchain.go
+│   │   ├── cache/                    # Cache and Redis
+│   │   │   ├── cache.go
+│   │   │   ├── keys.go
+│   │   │   └── redis.go
+│   │   ├── config/                   # Config loading
+│   │   │   ├── config.go
+│   │   │   └── types.go
+│   │   ├── database/                 # Database access
+│   │   │   ├── database.go
+│   │   │   ├── executor.go
+│   │   │   ├── logger.go
+│   │   │   └── postgres.go
+│   │   ├── mq/                       # Message queue
+│   │   │   └── mq.go
+│   │   └── repository_impl/              # Repository impls
+│   │       ├── user_repository.go
+│   │       └── model/
+│   │           ├── base_model.go
+│   │           └── user.go
+│   │
+│   └── interfaces/                   # Adapters / external interfaces
+│       ├── event_handler/            # Event handlers
+│       │   └── event_handler.go
+│       ├── grpc/                     # gRPC definitions
+│       │   └── user.proto
+│       └── http/                     # HTTP interface
+│           ├── controller/
+│           │   ├── auth_controller.go
+│           │   ├── health_controller.go
+│           │   └── user_controller.go
+│           ├── dto/
+│           │   ├── auth.go
+│           │   ├── base_response.go
+│           │   ├── pagequery.go
+│           │   └── user.go
+│           ├── middleware/
+│           │   ├── cors.go
+│           │   ├── jwt.go
+│           │   ├── logger.go
+│           │   ├── recovery.go
+│           │   └── trace.go
+│           └── router.go
 │
-├── pkg/                             # Shared utilities
-│   └── idgen/                       # ID generation utilities
+├── pkg/                              # Shared libs
+│   ├── di/
+│   │   └── injector.go
+│   ├── idgen/
+│   │   └── id_generator.go
+│   ├── log/
+│   │   ├── log.go
+│   │   └── zap_logger.go
+│   └── util/
+│       └── bcrypt.go
 │
-├── scripts/                         # Build and deployment scripts
-├── sqls/                            # Database schema files
-├── test/                            # Test files and utilities
+├── scripts/                          # Build and start scripts
+│   ├── build.sh
+│   └── start.sh
 │
-├── config.dev.yaml                  # Development environment config
-├── config.test.yaml                 # Test environment config
-├── config.prod.yaml                 # Production environment config
-├── Dockerfile                       # Container definition
-└── docker-compose.yml               # Multi-service setup
+├── services/                         # Service entrypoints (HTTP/gRPC/Cron)
+│   ├── cron.go
+│   ├── grpc.go
+│   ├── http.go
+│   └── service.go
+│
+├── sqls/                             # Database init/migration SQL
+│   └── user.sql
+│
+└── test/                             # Tests
 ```
 
 ## Architecture Overview
@@ -138,7 +209,7 @@ This project implements **Clean Architecture** with **Domain-Driven Design (DDD)
 - **Domain Events**: Business event definitions
 
 ### 4. **Infrastructure Layer** (Technical Details)
-- **Repository Implementations**: Data persistence implementations
+- **Repository Implementations**: Data Repository implementations
 - **Cache Implementations**: Caching strategies
 - **Message Queue**: Async communication
 - **Configuration**: Environment-specific settings
@@ -148,7 +219,7 @@ This project implements **Clean Architecture** with **Domain-Driven Design (DDD)
 ### Adding New Business Features
 
 #### 1. Define Domain Entity
-Create new business entities in `domain/entity/`:
+Create new business entities in `internal/domain/entity/`:
 
 ```go
 // domain/entity/product.go
@@ -162,7 +233,7 @@ type Product struct {
 ```
 
 #### 2. Create Repository Interface
-Define data access interface in `domain/repository/`:
+Define data access interface in `internal/domain/repository/`:
 
 ```go
 // domain/repository/product_repository.go
@@ -175,10 +246,10 @@ type ProductRepository interface {
 ```
 
 #### 3. Implement Repository
-Create concrete implementation in `infrastructure/repository_impl/`:
+Create concrete implementation in `internal/infrastructure/repository_impl/`:
 
 ```go
-// infrastructure/repository_impl/product_repo_impl.go
+// internal/infrastructure/repository_impl/product_repository.go
 type ProductRepoImpl struct {
     db *sqlx.DB
 }
@@ -192,7 +263,7 @@ func (r *ProductRepoImpl) Save(ctx context.Context, product *entity.Product) err
 Register the repository in the same file using `init()` function:
 
 ```go
-// infrastructure/repository_impl/product_repo_impl.go
+// internal/infrastructure/repository_impl/product_repository.go
 type ProductRepoImpl struct {
     db *sqlx.DB
 }
@@ -212,10 +283,10 @@ func (r *ProductRepoImpl) Save(ctx context.Context, product *entity.Product) err
 ```
 
 #### 4. Create Application Service
-Implement business logic in `application/service/`:
+Implement write-side business logic in `internal/application/commands/` (example):
 
 ```go
-// application/service/product_service.go
+// internal/application/commands/product_command_service.go
 type ProductService struct {
     productRepo repository.ProductRepository
 }
@@ -229,7 +300,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, req CreateProductReq
 Register the application service in the same file:
 
 ```go
-// application/service/product_service.go
+// internal/application/commands/product_command_service.go
 type ProductService struct {
     productRepo repository.ProductRepository
 }
@@ -249,10 +320,10 @@ func (s *ProductService) CreateProduct(ctx context.Context, req CreateProductReq
 ```
 
 #### 5. Add HTTP Controller
-Handle HTTP requests in `interfaces/http/controller/`:
+Handle HTTP requests in `internal/interfaces/http/controller/`:
 
 ```go
-// interfaces/http/controller/product_controller.go
+// internal/interfaces/http/controller/product_controller.go
 type ProductController struct {
     productService *service.ProductService
 }
@@ -266,7 +337,7 @@ func (c *ProductController) CreateProduct(ctx context.Context, req *app.RequestC
 Register the controller in the same file:
 
 ```go
-// interfaces/http/controller/product_controller.go
+// internal/interfaces/http/controller/product_controller.go
 type ProductController struct {
     productService *service.ProductService
 }
@@ -286,7 +357,7 @@ func (c *ProductController) CreateProduct(ctx context.Context, req *app.RequestC
 ```
 
 #### 6. Register Routes
-Update routes in `interfaces/http/router.go`:
+Update routes in `internal/interfaces/http/router.go`:
 
 ```go
 // Add to router.go
@@ -300,7 +371,7 @@ v1.DELETE("/products/:id", productController.DeleteProduct)
 ### Adding New Configuration
 
 #### 1. Update Configuration Structure
-Add new config section in `infrastructure/config/types.go`:
+Add new config section in `internal/infrastructure/config/types.go`:
 
 ```go
 type Config struct {
@@ -321,7 +392,7 @@ type EmailConfig struct {
 Add configuration to environment files:
 
 ```yaml
-# config.dev.yaml
+# configs/config.dev.yaml
 email:
   provider: smtp
   smtp_host: smtp.gmail.com
@@ -334,7 +405,7 @@ email:
 Use unified dependency injection interface:
 
 ```go
-// Register during initialization
+// Register during initialization (e.g., internal/infrastructure/email/email_service.go)
 di.AddSingleton(func() (EmailService, error) {
     config := di.Get[*config.Config]()
     return &emailServiceImpl{
@@ -384,7 +455,7 @@ func (s *UserService) CreateUser(ctx context.Context, user *entity.User) error {
 #### Repository Registration
 
 ```go
-// infrastructure/repository_impl/user_repo_impl.go
+// internal/infrastructure/repository_impl/user_repository.go
 type UserRepoImpl struct {
     db *sqlx.DB
 }
@@ -402,7 +473,7 @@ func NewUserRepository() (repository.UserRepository, error) {
 #### Application Service Registration
 
 ```go
-// application/service/user_command_service.go
+// internal/application/commands/user_command_service.go
 type UserCommandService struct {
     userRepo      repository.UserRepository
     userDomainSvc *domain.UserService
@@ -423,7 +494,7 @@ func NewUserCommandService() (*UserCommandService, error) {
 #### Controller Registration
 
 ```go
-// interfaces/http/controller/user_controller.go
+// internal/interfaces/http/controller/user_controller.go
 type UserController struct {
     userCommandService *service.UserCommandService
     userQueryService   *service.UserQueryService
@@ -446,7 +517,7 @@ func NewUserController() (*UserController, error) {
 For services that need new instances each time:
 
 ```go
-// infrastructure/email/email_service.go
+// internal/infrastructure/email/email_service.go
 type EmailService struct {
     config *config.EmailConfig
 }
@@ -489,10 +560,10 @@ func (s *SomeService) ProcessUser() {
 ### Adding New Middleware
 
 #### 1. Create Middleware
-Add new middleware in `interfaces/http/middleware/`:
+Add new middleware in `internal/interfaces/http/middleware/`:
 
 ```go
-// interfaces/http/middleware/rate_limit.go
+// internal/interfaces/http/middleware/rate_limit.go
 func RateLimit() app.HandlerFunc {
     return func(ctx context.Context, c *app.RequestContext) {
         // Rate limiting logic
@@ -505,14 +576,14 @@ func RateLimit() app.HandlerFunc {
 Update router to use middleware:
 
 ```go
-// interfaces/http/router.go
+// internal/interfaces/http/router.go
 h.Use(middleware.RateLimit())
 ```
 
 ### Adding New Services
 
 #### 1. Create Service Interface
-Define service contract in `domain/service/`:
+Define service contract in `internal/domain/service/`:
 
 ```go
 // domain/service/notification_service.go
@@ -523,10 +594,10 @@ type NotificationService interface {
 ```
 
 #### 2. Implement Domain Service
-Create implementation in `domain/service/`:
+Create implementation in `internal/domain/service/`:
 
 ```go
-// domain/service/notification_service_impl.go
+// internal/domain/service/notification_service_impl.go
 type NotificationServiceImpl struct {
     config EmailConfig
 }
@@ -567,10 +638,10 @@ func (s *NotificationServiceImpl) SendEmail(ctx context.Context, to, subject, bo
 ### Adding Database Models
 
 #### 1. Create Database Model
-Add model in `infrastructure/repository_impl/model/`:
+Add model in `internal/infrastructure/repository_impl/model/`:
 
 ```go
-// infrastructure/repository_impl/model/product.go
+// internal/infrastructure/repository_impl/model/product.go
 type Product struct {
     BaseModel
     Name  string  `db:"name"`
@@ -600,8 +671,8 @@ CREATE TABLE IF NOT EXISTS products (
 go test ./...
 
 # Run specific package tests
-go test ./domain/...
-go test ./application/...
+go test ./internal/domain/...
+go test ./internal/application/...
 
 # Run with coverage
 go test -cover ./...
@@ -614,7 +685,7 @@ go test -cover ./...
 ./scripts/build.sh
 
 # Run development server
-go run cmd/server/main.go -e dev
+go run . -env dev
 
 # Run with Docker
 docker build -t your-app .

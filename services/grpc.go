@@ -1,7 +1,21 @@
 package services
 
-func StartGRPCServer() {
+func init() {
+	s := NewGRPCService()
+	RegisterService(s)
 }
 
-func StopGRPCServer() {
+type GRPCService struct {
+}
+
+func NewGRPCService() *GRPCService {
+	return &GRPCService{}
+}
+
+func (s *GRPCService) Start() {
+	// 启动 gRPC 服务
+}
+
+func (s *GRPCService) Stop() {
+	// 停止 gRPC 服务
 }

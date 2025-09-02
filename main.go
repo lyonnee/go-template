@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	services.StartAllServices()
+	services.StartAll()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
@@ -23,7 +23,7 @@ func main() {
 	_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	services.StopAllServices()
+	services.StopAll()
 	database.Close()
 	log.Sync()
 }

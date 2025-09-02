@@ -28,7 +28,7 @@ func NewUserService() (*UserService, error) {
 	}, nil
 }
 
-func (s *UserService) CreateUser(ctx context.Context, username, pwd, email, phone string) (*entity.User, error) {
+func (s *UserService) NewUser(ctx context.Context, username, pwd, email, phone string) (*entity.User, error) {
 	// 检查用户名是否已存在
 	existingUser, err := s.userRepo.CheckUserFieldsExist(ctx, username, email, phone)
 	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {

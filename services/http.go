@@ -7,22 +7,31 @@ import (
 	"github.com/lyonnee/go-template/pkg/di"
 )
 
-var s *server.Hertz
-
-func StartHTTPServer() {
-	conf := di.Get[config.Config]()
-
-	s = server.New(
-		server.WithHostPorts(conf.Http.Port),
-	)
-
-	http.RegisterRoutes(s)
-
-	s.Spin()
+func init() {
+	s := NewHTTPService()
+	RegisterService(s)
 }
 
-func StopHTTPServer() {
-	if s != nil {
-		s.Close()
+type HTTPService struct {
+	h *server.Hertz
+}
+
+func NewHTTPService() *HTTPService {
+	conf := di.Get[config.Config]()
+
+	s := server.New(
+		server.WithHostPorts(conf.Http.Port),
+	)
+	return &HTTPService{
+		h: s,
 	}
+}
+
+func (s *HTTPService) Start() {
+	http.RegisterRoutes(s.h)
+	s.h.Spin()
+}
+
+func (s *HTTPService) Stop() {
+	s.h.Close()
 }

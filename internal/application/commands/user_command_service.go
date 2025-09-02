@@ -62,7 +62,7 @@ func (s *UserCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 	var user *entity.User
 	var accessToken, refreshToken string
 	if err := s.dbContext.Conn(ctx, func(ctx context.Context) error {
-		newUser, err := s.userDomainService.CreateUser(ctx, cmd.Username, cmd.Password, cmd.Email, cmd.Phone)
+		newUser, err := s.userDomainService.NewUser(ctx, cmd.Username, cmd.Password, cmd.Email, cmd.Phone)
 		if err != nil {
 			return err
 		}

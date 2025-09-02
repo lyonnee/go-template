@@ -18,13 +18,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// 保证对接口实现
+var _ repository.UserRepository = (*UserRepositoryImpl)(nil)
+
 // UserRepositoryImpl 用户存储库实现
 type UserRepositoryImpl struct {
 	logger *log.Logger
 }
 
 func init() {
-	di.AddSingletonImpl[repository.UserRepository, *UserRepositoryImpl](NewUserRepository)
+	err := di.AddSingletonImpl[repository.UserRepository, *UserRepositoryImpl](NewUserRepository)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // NewUserRepository 创建一个新的用户存储库实例
@@ -172,7 +178,7 @@ func (r *UserRepositoryImpl) Update(ctx context.Context, user *entity.User) erro
 }
 
 // Delete 删除用户（软删除）
-func (r *UserRepositoryImpl) Delete(ctx context.Context, userId int64) error {
+func (r *UserRepositoryImpl) Delete(ctx context.Context, userId uint64) error {
 	dbExecutor, err := database.GetDBExecutor(ctx)
 	if err != nil {
 		r.logger.Error("Failed to get DBExecutor", zap.Error(err))

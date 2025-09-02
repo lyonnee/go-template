@@ -7,18 +7,26 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-var c *cron.Cron
-
-func StartCronScheduler() {
-	c = cron.New(cron.WithSeconds(), cron.WithLocation(time.UTC))
-
-	scheduler.RegisterScheduledJobs(c)
-
-	c.Start()
+func init() {
+	s := NewCronService()
+	RegisterService(s)
 }
 
-func StopCronScheduler() {
-	if c != nil {
-		c.Stop()
+type CronService struct {
+	c *cron.Cron
+}
+
+func NewCronService() *CronService {
+	return &CronService{
+		c: cron.New(cron.WithSeconds(), cron.WithLocation(time.UTC)),
 	}
+}
+
+func (s *CronService) Start() {
+	scheduler.RegisterScheduledJobs(s.c)
+	s.c.Start()
+}
+
+func (s *CronService) Stop() {
+	s.c.Stop()
 }

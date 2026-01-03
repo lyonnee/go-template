@@ -47,7 +47,7 @@ go run . -env dev
 - 🏗️ **依赖注入** - 基于 samber/do/v2 的 IoC 容器
 
 ### 🚀 技术栈
-- ⚡ **高性能 HTTP** - CloudWeGo Hertz 框架
+- ⚡ **高性能 HTTP** - Gin Web 框架
 - 🗄️ **数据库支持** - PostgreSQL + SQLx，支持事务管理
 - 💾 **缓存层** - Redis 集成，支持缓存上下文
 - 🔐 **认证系统** - JWT + OAuth 完整实现
@@ -328,7 +328,7 @@ type ProductController struct {
     productService *service.ProductService
 }
 
-func (c *ProductController) CreateProduct(ctx context.Context, req *app.RequestContext) {
+func (c *ProductController) CreateProduct(ctx *gin.Context) {
     // HTTP 请求处理
 }
 ```
@@ -351,7 +351,7 @@ func NewProductController() (*ProductController, error) {
     return &ProductController{productService: service}, nil
 }
 
-func (c *ProductController) CreateProduct(ctx context.Context, req *app.RequestContext) {
+func (c *ProductController) CreateProduct(ctx *gin.Context) {
     // HTTP 请求处理
 }
 ```
@@ -564,10 +564,10 @@ func (s *SomeService) ProcessUser() {
 
 ```go
 // internal/interfaces/http/middleware/rate_limit.go
-func RateLimit() app.HandlerFunc {
-    return func(ctx context.Context, c *app.RequestContext) {
+func RateLimit() gin.HandlerFunc {
+    return func(c *gin.Context) {
         // 限流逻辑
-        c.Next(ctx)
+        c.Next()
     }
 }
 ```
@@ -577,7 +577,7 @@ func RateLimit() app.HandlerFunc {
 
 ```go
 // internal/interfaces/http/router.go
-h.Use(middleware.RateLimit())
+engine.Use(middleware.RateLimit())
 ```
 
 ### 添加新的服务

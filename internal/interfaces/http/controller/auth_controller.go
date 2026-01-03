@@ -1,9 +1,7 @@
 package controller
 
 import (
-	"context"
-
-	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/gin-gonic/gin"
 	"github.com/lyonnee/go-template/internal/application/commands"
 	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
 	"github.com/lyonnee/go-template/pkg/di"
@@ -28,15 +26,15 @@ func NewAuthController() (*AuthController, error) {
 }
 
 // Login 用户登录
-func (c *AuthController) Login(ctx context.Context, reqCtx *app.RequestContext) {
+func (c *AuthController) Login(ctx *gin.Context) {
 	c.logger.Debug("Login request received")
 
 	var req dto.LoginReq
 
 	// 绑定参数
-	if err := reqCtx.Bind(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		c.logger.Error("Login bind params failed", zap.Error(err))
-		dto.Fail(reqCtx, dto.CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
+		dto.Fail(ctx, dto.CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
 		return
 	}
 
@@ -49,10 +47,10 @@ func (c *AuthController) Login(ctx context.Context, reqCtx *app.RequestContext) 
 	}
 
 	// 执行登录
-	result, err := c.authCmdService.Login(ctx, cmd)
+	result, err := c.authCmdService.Login(ctx.Request.Context(), cmd)
 	if err != nil {
 		c.logger.Error("Login failed", zap.Error(err), zap.String("username", req.Username))
-		dto.Fail(reqCtx, dto.CODE_INVALID_BODY_ARGUMENT, "用户名或密码错误")
+		dto.Fail(ctx, dto.CODE_INVALID_BODY_ARGUMENT, "用户名或密码错误")
 		return
 	}
 
@@ -64,19 +62,19 @@ func (c *AuthController) Login(ctx context.Context, reqCtx *app.RequestContext) 
 		RefreshToken: result.RefreshToken,
 	}
 
-	dto.Ok(reqCtx, "登录成功", resp)
+	dto.Ok(ctx, "登录成功", resp)
 }
 
 // RefreshToken 刷新token
-func (c *AuthController) RefreshToken(ctx context.Context, reqCtx *app.RequestContext) {
+func (c *AuthController) RefreshToken(ctx *gin.Context) {
 	c.logger.Debug("RefreshToken request received")
 
 	var req dto.RefreshTokenReq
 
 	// 绑定参数
-	if err := reqCtx.Bind(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		c.logger.Error("RefreshToken bind params failed", zap.Error(err))
-		dto.Fail(reqCtx, dto.CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
+		dto.Fail(ctx, dto.CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
 		return
 	}
 
@@ -88,10 +86,10 @@ func (c *AuthController) RefreshToken(ctx context.Context, reqCtx *app.RequestCo
 	}
 
 	// 执行刷新
-	result, err := c.authCmdService.RefreshToken(ctx, cmd)
+	result, err := c.authCmdService.RefreshToken(ctx.Request.Context(), cmd)
 	if err != nil {
 		c.logger.Error("RefreshToken failed", zap.Error(err))
-		dto.Fail(reqCtx, dto.CODE_TOKEN_INVALID, "刷新token无效")
+		dto.Fail(ctx, dto.CODE_TOKEN_INVALID, "刷新token无效")
 		return
 	}
 
@@ -102,5 +100,5 @@ func (c *AuthController) RefreshToken(ctx context.Context, reqCtx *app.RequestCo
 		AccessToken: result.AccessToken,
 	}
 
-	dto.Ok(reqCtx, "刷新成功", resp)
+	dto.Ok(ctx, "刷新成功", resp)
 }

@@ -1,25 +1,24 @@
 package http
 
 import (
-	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
-	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/gin-gonic/gin"
 	"github.com/lyonnee/go-template/internal/interfaces/http/controller"
 	"github.com/lyonnee/go-template/internal/interfaces/http/middleware"
 	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/lyonnee/go-template/pkg/log"
 )
 
-func RegisterRoutes(hz *server.Hertz) {
+func RegisterRoutes(engine *gin.Engine) {
 	logger := di.Get[*log.Logger]()
 
 	// register middleware
-	hz.Use(middleware.Logger(logger))
-	hz.Use(recovery.Recovery(recovery.WithRecoveryHandler(middleware.Recovery)))
-	hz.Use(middleware.CORS())
-	hz.Use(middleware.AddTrace())
+	engine.Use(middleware.Logger(logger))
+	engine.Use(middleware.Recovery())
+	engine.Use(middleware.CORS())
+	engine.Use(middleware.AddTrace())
 
 	// register handler
-	apiRouter := hz.Group("/api")
+	apiRouter := engine.Group("/api")
 
 	// 健康检查
 	{

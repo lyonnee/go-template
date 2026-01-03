@@ -1,11 +1,10 @@
 package middleware
 
 import (
-	"context"
+	"net/http"
 	"sync"
 
-	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/gin-gonic/gin"
 	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/lyonnee/go-template/pkg/log"
 	"go.uber.org/zap"
@@ -23,7 +22,9 @@ func getRecoveryLogger() *zap.SugaredLogger {
 	return recoveryLogger
 }
 
-func Recovery(ctx context.Context, c *app.RequestContext, err interface{}, stack []byte) {
-	getRecoveryLogger().Errorf("[Recovery] err=%v\nstack=%s", err, stack)
-	c.AbortWithStatusJSON(consts.StatusInternalServerError, map[string]string{"error": "Internal Server Error"})
+func Recovery() gin.HandlerFunc {
+	return gin.CustomRecovery(func(c *gin.Context, err interface{}) {
+		getRecoveryLogger().Errorf("[Recovery] err=%v", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"error": "Internal Server Error"})
+	})
 }

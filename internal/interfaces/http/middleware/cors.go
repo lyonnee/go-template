@@ -3,11 +3,11 @@ package middleware
 import (
 	"time"
 
-	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/hertz-contrib/cors"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
-func CORS() app.HandlerFunc {
+func CORS() gin.HandlerFunc {
 	return cors.New(cors.Config{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{"POST", "DELETE", "PUT", "GET", "OPTIONS", "PATCH", "UPDATE", "HEAD"},

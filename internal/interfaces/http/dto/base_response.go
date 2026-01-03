@@ -3,7 +3,7 @@ package dto
 import (
 	"net/http"
 
-	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -38,7 +38,7 @@ func NewResponse[T any | PagequeryRespData[any]](code uint16, msg string, data T
 	}
 }
 
-func Ok[T any | PagequeryRespData[any]](c *app.RequestContext, msg string, data T) {
+func Ok[T any | PagequeryRespData[any]](c *gin.Context, msg string, data T) {
 	resp := NewResponse(SUCCESS_CODE, msg, data)
 	c.JSON(
 		http.StatusOK,
@@ -46,7 +46,7 @@ func Ok[T any | PagequeryRespData[any]](c *app.RequestContext, msg string, data 
 	)
 }
 
-func Fail(c *app.RequestContext, code uint16, msg string) {
+func Fail(c *gin.Context, code uint16, msg string) {
 	resp := NewResponse(code, msg, "")
 	c.JSON(
 		http.StatusOK,

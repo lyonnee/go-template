@@ -46,8 +46,8 @@ This template provides a production-ready Go web service with:
 - 🔌 **CQRS Pattern** - Command Query Responsibility Segregation for read/write model separation
 - 🏗️ **Dependency Injection** - IoC container based on samber/do/v2
 
-### 🚀 Technology Stack  
-- ⚡ **High-Performance HTTP** - CloudWeGo Hertz framework
+### 🚀 Technology Stack
+- ⚡ **High-Performance HTTP** - Gin web framework
 - 🗄️ **Database Support** - PostgreSQL + SQLx with transaction management
 - 💾 **Caching Layer** - Redis integration with context management
 - 🔐 **Authentication System** - Complete JWT + OAuth implementation
@@ -283,6 +283,10 @@ type ProductController struct {
 
 func init() {
     di.AddSingleton[*ProductController](NewProductController)
+}
+
+func (c *ProductController) CreateProduct(ctx *gin.Context) {
+    // HTTP request handling
 }
 ```
 

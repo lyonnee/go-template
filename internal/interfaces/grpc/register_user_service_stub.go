@@ -1,3 +1,5 @@
+//go:build !userpb
+
 package grpcif
 
 import grpc "google.golang.org/grpc"

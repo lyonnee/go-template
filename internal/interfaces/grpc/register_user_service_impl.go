@@ -19,6 +19,7 @@ func RegisterGRPCServices(s *grpc.Server) {
 }
 
 type userServiceImpl struct {
+	userpb.UnimplementedUserServiceServer
 	qs *queries.UserQueryService
 }
 

@@ -1,9 +1,11 @@
 package services
 
 import (
+	"context"
 	"time"
 
 	"github.com/lyonnee/go-template/internal/application/scheduler"
+	"github.com/lyonnee/go-template/pkg/log"
 	"github.com/robfig/cron/v3"
 )
 
@@ -27,6 +29,20 @@ func (s *CronService) Start() {
 	s.c.Start()
 }
 
-func (s *CronService) Stop() {
-	s.c.Stop()
+func (s *CronService) Stop(ctx context.Context) {
+	// Stop() returns a context that is closed when jobs complete
+	doneCtx := s.c.Stop()
+	timeout := 3 * time.Second
+	if deadline, ok := ctx.Deadline(); ok {
+		if left := time.Until(deadline); left < timeout {
+			timeout = left
+		}
+	}
+	select {
+	case <-doneCtx.Done():
+		// graceful stop completed
+	case <-time.After(timeout):
+		// timeout waiting for jobs; proceed
+		log.Warn("cron shutdown timed out")
+	}
 }

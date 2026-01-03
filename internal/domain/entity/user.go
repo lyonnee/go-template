@@ -68,8 +68,10 @@ func (u *User) Login(pwd string) error {
 		return errors.ErrInvalidPassword
 	}
 
+	now := time.Now().Unix()
 	// update last login time
-	u.LastLoginAt = time.Now().Unix()
+	u.LastLoginAt = now
+	u.UpdatedAt = now
 
 	return nil
 }
@@ -85,6 +87,17 @@ func (u *User) UpdatePassword(pwd string) error {
 	}
 
 	u.PwdSecret = pwdSecret
+	u.UpdatedAt = time.Now().Unix()
+
+	return nil
+}
+
+func (u *User) UpdateUsername(newUsername string) error {
+	if err := validateUsername(newUsername); err != nil {
+		return err
+	}
+
+	u.Username = newUsername
 	u.UpdatedAt = time.Now().Unix()
 
 	return nil

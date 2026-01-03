@@ -53,13 +53,14 @@ type CacheConfig struct {
 }
 
 type RedisConfig struct {
-	Host      string `mapstructure:"host"`
-	Port      int    `mapstructure:"port"`
-	Username  string `mapstructure:"username"`
-	Password  string `mapstructure:"password"`
-	Database  int    `mapstructure:"database"`
-	Framework string `mapstructure:"framework"`
-	Prefix    string `mapstructure:"prefix"`
+	Host      string        `mapstructure:"host"`
+	Port      int           `mapstructure:"port"`
+	Username  string        `mapstructure:"username"`
+	Password  string        `mapstructure:"password"`
+	Database  int           `mapstructure:"database"`
+	Framework string        `mapstructure:"framework"`
+	Prefix    string        `mapstructure:"prefix"`
+	TTL       time.Duration `mapstructure:"ttl"`
 }
 
 func (conf RedisConfig) IsCluster() bool {
@@ -71,6 +72,35 @@ func (conf RedisConfig) IsCluster() bool {
 
 type HttpConfig struct {
 	Port string `mapstructure:"port"`
+}
+
+// ================== GRPCConfig ==================
+// GRPCConfig 包含 gRPC 服务的配置
+type GRPCConfig struct {
+	Port string `mapstructure:"port"`
+	// Max concurrent HTTP/2 streams per connection (per RPCs over a single connection)
+	MaxConcurrentStreams uint32 `mapstructure:"max_concurrent_streams"`
+
+	// Keepalive server parameters
+	Keepalive struct {
+		Time                  time.Duration `mapstructure:"time"`    // ping interval between pings
+		Timeout               time.Duration `mapstructure:"timeout"` // ping ack timeout
+		MaxConnectionIdle     time.Duration `mapstructure:"max_connection_idle"`
+		MaxConnectionAge      time.Duration `mapstructure:"max_connection_age"`
+		MaxConnectionAgeGrace time.Duration `mapstructure:"max_connection_age_grace"`
+	} `mapstructure:"keepalive"`
+
+	// Keepalive enforcement policy
+	Enforcement struct {
+		MinTime             time.Duration `mapstructure:"min_time"`
+		PermitWithoutStream bool          `mapstructure:"permit_without_stream"`
+	} `mapstructure:"enforcement"`
+
+	// Interceptors toggles
+	Interceptors struct {
+		EnableLogging  bool `mapstructure:"enable_logging"`
+		EnableRecovery bool `mapstructure:"enable_recovery"`
+	} `mapstructure:"interceptors"`
 }
 
 // ==================  LogConfig ==================

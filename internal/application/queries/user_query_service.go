@@ -14,10 +14,8 @@ import (
 
 // UserApplicationService 用户应用服务
 type UserQueryService struct {
-	logger    *log.Logger
-	dbContext *database.Database
-
-	userRepo repository.UserRepository
+	logger *log.Logger
+	db     *database.Database
 }
 
 func init() {
@@ -27,10 +25,8 @@ func init() {
 // NewUserApplicationService 创建用户应用服务
 func NewUserQueryService() (*UserQueryService, error) {
 	return &UserQueryService{
-		logger:    di.Get[*log.Logger](),
-		dbContext: di.Get[*database.Database](),
-
-		userRepo: di.Get[repository.UserRepository](),
+		logger: di.Get[*log.Logger](),
+		db:     di.Get[*database.Database](),
 	}, nil
 }
 
@@ -39,20 +35,25 @@ func (s *UserQueryService) GetUserById(ctx context.Context, userId uint64) (*ent
 	s.logger.Debug("GetUserById called", zap.Uint64("userId", userId))
 
 	var user *entity.User
-	if err := s.dbContext.Conn(ctx, func(ctx context.Context) error {
-		userInfo, err := s.userRepo.FindById(ctx, userId)
+	if err := s.db.WithConnection(ctx, func(ctx context.Context) error {
+		userRepo := di.Get[repository.UserRepository]()
+		userRepo.SetContext(ctx)
+
+		// 查找用户
+		userInfo, err := userRepo.FindById(ctx, userId)
 		if err != nil {
 			return err
 		}
 
 		user = userInfo
 
-		s.logger.Info("User found successfully", zap.Uint64("userId", userId), zap.String("username", user.Username))
 		return nil
 	}); err != nil {
 		s.logger.Error("Database connection failed", zap.Error(err), zap.Uint64("userId", userId))
 		return nil, err
 	}
+
+	s.logger.Info("User found successfully", zap.Uint64("userId", userId), zap.String("username", user.Username))
 
 	return user, nil
 }

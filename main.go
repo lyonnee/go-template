@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/lyonnee/go-template/internal/infrastructure/database"
@@ -16,14 +17,33 @@ import (
 func main() {
 	services.StartAll()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
+	// Wait for termination signal (SIGINT/SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	<-ctx.Done()
+	log.Info("received shutdown signal, start graceful shutdown")
+
+	// Begin graceful shutdown with timeout
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	services.StopAll()
-	database.Close()
+	done := make(chan struct{})
+	go func() {
+		// Stop services and close resources
+		services.StopAll(shutdownCtx)
+		_ = database.CloseWithContext(shutdownCtx)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// graceful shutdown completed
+		log.Info("graceful shutdown completed")
+	case <-shutdownCtx.Done():
+		// timeout reached; proceed with forced exit
+		log.Warn("graceful shutdown timed out")
+	}
+
 	log.Sync()
 }

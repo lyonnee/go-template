@@ -10,6 +10,22 @@ http:
   read_timeout: 5s
   write_timeout: 10s
 
+grpc:
+  port: :9090
+  max_concurrent_streams: 2048
+  keepalive:
+    time: 2m
+    timeout: 20s
+    max_connection_idle: 0s
+    max_connection_age: 0s
+    max_connection_age_grace: 0s
+  enforcement:
+    min_time: 5m
+    permit_without_stream: false
+  interceptors:
+    enable_logging: true
+    enable_recovery: true
+
 log: 
   console_writer_config:
     enable: true

@@ -36,3 +36,5 @@ _logs
 
 # pprof files
 pprof/
+
+.claude

@@ -14,6 +14,7 @@ import (
 // - errors.ErrPhoneTaken：手机号已被占用
 // - errors.ErrInvalidUserInput：无效的用户输入
 type UserRepository interface {
+	BaseRepository
 	// 基本的CRUD操作
 	Create(ctx context.Context, user *entity.User) error
 	Update(ctx context.Context, user *entity.User) error

@@ -14,10 +14,8 @@ import (
 )
 
 type AuthCommandService struct {
-	logger    *log.Logger
-	dbContext *database.Database
-
-	userRepo repository.UserRepository
+	logger *log.Logger
+	db     *database.Database
 }
 
 func init() {
@@ -27,10 +25,8 @@ func init() {
 // NewAuthService 创建认证服务
 func NewAuthCommandService() (*AuthCommandService, error) {
 	return &AuthCommandService{
-		logger:    di.Get[*log.Logger](),
-		dbContext: di.Get[*database.Database](),
-
-		userRepo: di.Get[repository.UserRepository](),
+		logger: di.Get[*log.Logger](),
+		db:     di.Get[*database.Database](),
 	}, nil
 }
 
@@ -51,16 +47,20 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 	s.logger.Debug("Login attempt", zap.String("username", cmd.Username))
 
 	var accessToken, refreshToken string
-	if err := s.dbContext.Conn(ctx, func(ctx context.Context) error {
+	if err := s.db.WithConnection(ctx, func(ctx context.Context) error {
+		userRepo := di.GetRepository[repository.UserRepository](ctx)
+
 		// 查找用户
-		user, err := s.userRepo.FindByUsername(ctx, cmd.Username)
+		user, err := userRepo.FindByUsername(ctx, cmd.Username)
 		if err != nil {
 			return err
 		}
 
 		if err := user.Login(cmd.Password); err != nil {
-			s.logger.Warn("Login failed - invalid password", zap.String("username", cmd.Username), zap.Uint64("userId", user.ID))
 			return errors.New("invalid username or password")
+		}
+		if err := userRepo.Update(ctx, user); err != nil {
+			return err
 		}
 
 		jwtGenerator := di.Get[*auth.JWTGenerator]()
@@ -74,13 +74,13 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 		if err != nil {
 			return err
 		}
-
-		s.logger.Info("User logged in successfully", zap.String("username", cmd.Username), zap.Uint64("userId", user.ID))
 		return nil
 	}); err != nil {
 		s.logger.Error("Database connection failed", zap.Error(err))
 		return nil, err
 	}
+
+	s.logger.Info("User logged in successfully", zap.String("username", cmd.Username))
 
 	return &LoginResult{
 		AccessToken:  accessToken,

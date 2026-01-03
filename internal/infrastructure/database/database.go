@@ -14,25 +14,17 @@ type Database struct {
 	db *sqlx.DB
 }
 
-// func (dbc *Database) Conn(ctx context.Context) (DBExecutor, error) {
-// 	return dbc.db.Connx(ctx)
-// }
-
-// func (dbc *Database) Transaction(ctx context.Context, opts *sql.TxOptions) (DBExecutor, error) {
-// 	return dbc.db.BeginTxx(ctx, opts)
-// }
-
-func (dbc *Database) Conn(ctx context.Context, fn func(context.Context) error) error {
+func (dbc *Database) WithConnection(ctx context.Context, fn func(context.Context) error) error {
 	conn, err := dbc.db.Connx(ctx)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	return fn(SetDBExecutor(ctx, conn))
+	return fn(SetDBContext(ctx, conn))
 }
 
-func (dbc *Database) Transaction(ctx context.Context, opts *sql.TxOptions, fn func(context.Context) error) error {
+func (dbc *Database) WithTransaction(ctx context.Context, opts *sql.TxOptions, fn func(context.Context) error) error {
 	tx, err := dbc.db.BeginTxx(ctx, opts)
 	if err != nil {
 		return err
@@ -41,6 +33,7 @@ func (dbc *Database) Transaction(ctx context.Context, opts *sql.TxOptions, fn fu
 	defer func() {
 		if p := recover(); p != nil {
 			_ = tx.Rollback()
+			panic(p)
 		} else if err != nil {
 			_ = tx.Rollback()
 		} else {
@@ -48,7 +41,7 @@ func (dbc *Database) Transaction(ctx context.Context, opts *sql.TxOptions, fn fu
 		}
 	}()
 
-	err = fn(SetDBExecutor(ctx, tx))
+	err = fn(SetDBContext(ctx, tx))
 
 	return err
 }
@@ -58,6 +51,25 @@ func (dbc *Database) Close() error {
 		return dbc.db.Close()
 	}
 	return nil
+}
+
+// CloseWithContext attempts to close the underlying DB while respecting the given context's deadline.
+// Since sqlx.DB.Close() itself doesn't accept a context and usually returns quickly,
+// we guard it with a goroutine and select on context timeout to avoid blocking shutdown.
+func (dbc *Database) CloseWithContext(ctx context.Context) error {
+	if dbc.db == nil {
+		return nil
+	}
+	done := make(chan error, 1)
+	go func() {
+		done <- dbc.db.Close()
+	}()
+	select {
+	case err := <-done:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 var db *Database
@@ -81,6 +93,14 @@ func init() {
 func Close() error {
 	if db != nil {
 		return db.Close()
+	}
+	return nil
+}
+
+// CloseWithContext closes the global DB instance with context awareness.
+func CloseWithContext(ctx context.Context) error {
+	if db != nil {
+		return db.CloseWithContext(ctx)
 	}
 	return nil
 }

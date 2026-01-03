@@ -11,7 +11,6 @@ import (
 	"github.com/lyonnee/go-template/internal/domain/entity"
 	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
 	"github.com/lyonnee/go-template/internal/domain/repository"
-	"github.com/lyonnee/go-template/internal/infrastructure/database"
 	"github.com/lyonnee/go-template/internal/infrastructure/repository_impl/model"
 	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/lyonnee/go-template/pkg/log"
@@ -23,11 +22,12 @@ var _ repository.UserRepository = (*UserRepositoryImpl)(nil)
 
 // UserRepositoryImpl 用户存储库实现
 type UserRepositoryImpl struct {
+	BaseRepository
 	logger *log.Logger
 }
 
 func init() {
-	err := di.AddSingletonImpl[repository.UserRepository, *UserRepositoryImpl](NewUserRepository)
+	err := di.AddTransientImpl[repository.UserRepository, *UserRepositoryImpl](NewUserRepository)
 	if err != nil {
 		panic(err)
 	}
@@ -46,12 +46,6 @@ func NewUserRepository() (*UserRepositoryImpl, error) {
 func (r *UserRepositoryImpl) FindById(ctx context.Context, userId uint64) (*entity.User, error) {
 	r.logger.Debug("Finding user by ID", zap.Uint64("userId", userId))
 
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return nil, err
-	}
-
 	query := `
 		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
 		FROM users 
@@ -59,7 +53,7 @@ func (r *UserRepositoryImpl) FindById(ctx context.Context, userId uint64) (*enti
 	`
 
 	var userModel model.UserModel
-	err = dbExecutor.QueryRowxContext(ctx, query, userId).Scan(
+	if err := r.DB().QueryRowxContext(ctx, query, userId).Scan(
 		&userModel.ID,
 		&userModel.CreatedAt,
 		&userModel.UpdatedAt,
@@ -68,9 +62,7 @@ func (r *UserRepositoryImpl) FindById(ctx context.Context, userId uint64) (*enti
 		&userModel.Email,
 		&userModel.Phone,
 		&userModel.DeletedAt,
-	)
-
-	if err != nil {
+	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			r.logger.Debug("User not found", zap.Uint64("userId", userId))
 			return nil, domainErrors.ErrUserNotFound
@@ -92,13 +84,6 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return err
-	}
-
-	now := time.Now().Unix()
 	query := `
 		INSERT INTO users (created_at, updated_at, username, pwd_secret, email, phone) 
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -106,16 +91,14 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 	`
 
 	var id uint64
-	err = dbExecutor.QueryRowxContext(ctx, query,
-		now,
-		now,
+	if err := r.DB().QueryRowxContext(ctx, query,
+		user.CreatedAt,
+		user.UpdatedAt,
 		user.Username,
 		user.PwdSecret,
 		user.Email,
 		user.Phone,
-	).Scan(&id)
-
-	if err != nil {
+	).Scan(&id); err != nil {
 		r.logger.Error("Failed to create user",
 			zap.String("username", user.Username),
 			zap.String("email", user.Email),
@@ -124,9 +107,6 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 	}
 
 	user.ID = id
-	user.CreatedAt = now
-	user.UpdatedAt = now
-	user.DeletedAt = 0
 
 	r.logger.Info("User created successfully",
 		zap.Uint64("userId", id),
@@ -137,54 +117,38 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 
 // Update 更新用户信息
 func (r *UserRepositoryImpl) Update(ctx context.Context, user *entity.User) error {
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return err
-	}
-
 	if user == nil || user.ID == 0 {
 		return domainErrors.ErrInvalidUserInput
 	}
 
 	// 检查用户是否存在
-	_, err = r.FindById(ctx, user.ID)
+	_, err := r.FindById(ctx, user.ID)
 	if err != nil {
 		return err
 	}
 
-	now := time.Now().Unix()
 	query := `
 		UPDATE users 
 		SET updated_at = $1, username = $2, pwd_secret = $3, email = $4, phone = $5 
 		WHERE id = $6
 	`
 
-	_, err = dbExecutor.ExecContext(ctx, query,
-		now,
+	if _, err := r.DB().ExecContext(ctx, query,
+		user.UpdatedAt,
 		user.Username,
 		user.PwdSecret,
 		user.Email,
 		user.Phone,
 		user.ID,
-	)
-
-	if err != nil {
+	); err != nil {
 		return err
 	}
 
-	user.UpdatedAt = now
 	return nil
 }
 
 // Delete 删除用户（软删除）
 func (r *UserRepositoryImpl) Delete(ctx context.Context, userId uint64) error {
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return err
-	}
-
 	now := time.Now().Unix()
 	query := `
 		UPDATE users 
@@ -192,7 +156,7 @@ func (r *UserRepositoryImpl) Delete(ctx context.Context, userId uint64) error {
 		WHERE id = $2
 	`
 
-	result, err := dbExecutor.ExecContext(ctx, query, now, userId)
+	result, err := r.DB().ExecContext(ctx, query, now, userId)
 	if err != nil {
 		return err
 	}
@@ -211,12 +175,6 @@ func (r *UserRepositoryImpl) Delete(ctx context.Context, userId uint64) error {
 
 // FindByUsername 根据用户名查找用户
 func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string) (*entity.User, error) {
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return nil, err
-	}
-
 	query := `
 		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
 		FROM users 
@@ -225,7 +183,7 @@ func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string
 
 	var userModel model.UserModel
 
-	err = dbExecutor.QueryRowxContext(ctx, query, username).StructScan(&userModel)
+	err := r.DB().QueryRowxContext(ctx, query, username).StructScan(&userModel)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domainErrors.ErrUserNotFound
@@ -238,12 +196,6 @@ func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string
 
 // FindByEmail 根据邮箱查找用户
 func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return nil, err
-	}
-
 	query := `
 		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
 		FROM users 
@@ -251,7 +203,7 @@ func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*en
 	`
 
 	var userModel model.UserModel
-	err = dbExecutor.QueryRowxContext(ctx, query, email).Scan(
+	if err := r.DB().QueryRowxContext(ctx, query, email).Scan(
 		&userModel.ID,
 		&userModel.CreatedAt,
 		&userModel.UpdatedAt,
@@ -260,9 +212,7 @@ func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*en
 		&userModel.Email,
 		&userModel.Phone,
 		&userModel.DeletedAt,
-	)
-
-	if err != nil {
+	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domainErrors.ErrUserNotFound
 		}
@@ -274,12 +224,6 @@ func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*en
 
 // FindByPhone 根据手机号查找用户
 func (r *UserRepositoryImpl) FindByPhone(ctx context.Context, phone string) (*entity.User, error) {
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return nil, err
-	}
-
 	query := `
 		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
 		FROM users 
@@ -287,7 +231,7 @@ func (r *UserRepositoryImpl) FindByPhone(ctx context.Context, phone string) (*en
 	`
 
 	var userModel model.UserModel
-	if err = dbExecutor.QueryRowxContext(ctx, query, phone).Scan(
+	if err := r.DB().QueryRowxContext(ctx, query, phone).Scan(
 		&userModel.ID,
 		&userModel.CreatedAt,
 		&userModel.UpdatedAt,
@@ -312,12 +256,6 @@ func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.Us
 		zap.Uint64("userId", user.ID),
 		zap.String("newUsername", user.Username))
 
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return err
-	}
-
 	if user == nil || user.ID == 0 || user.Username == "" {
 		r.logger.Error("Invalid user input for username update",
 			zap.Uint64("userId", user.ID),
@@ -325,29 +263,13 @@ func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.Us
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	// 检查用户名是否已被使用
-	existingUser, err := r.FindByUsername(ctx, user.Username)
-	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-		r.logger.Error("Failed to check username availability",
-			zap.String("username", user.Username),
-			zap.Error(err))
-		return err
-	}
-	if existingUser != nil && existingUser.ID != user.ID {
-		r.logger.Warn("Username already taken",
-			zap.String("username", user.Username),
-			zap.Uint64("existingUserId", existingUser.ID))
-		return domainErrors.ErrUsernameTaken
-	}
-
-	now := time.Now().Unix()
 	query := `
 		UPDATE users 
 		SET updated_at = $1, username = $2 
 		WHERE id = $3
 	`
 
-	result, err := dbExecutor.ExecContext(ctx, query, now, user.Username, user.ID)
+	result, err := r.DB().ExecContext(ctx, query, user.UpdatedAt, user.Username, user.ID)
 	if err != nil {
 		r.logger.Error("Failed to update username",
 			zap.Uint64("userId", user.ID),
@@ -368,7 +290,6 @@ func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.Us
 		return domainErrors.ErrUserNotFound
 	}
 
-	user.UpdatedAt = now
 	r.logger.Info("Username updated successfully",
 		zap.Uint64("userId", user.ID),
 		zap.String("newUsername", user.Username))
@@ -378,24 +299,17 @@ func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.Us
 
 // UpdatePwdSecret 更新密码
 func (r *UserRepositoryImpl) UpdatePwdSecret(ctx context.Context, user *entity.User) error {
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return err
-	}
-
 	if user == nil || user.ID == 0 || user.PwdSecret == "" {
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	now := time.Now().Unix()
 	query := `
 		UPDATE users 
 		SET updated_at = $1, pwd_secret = $2 
 		WHERE id = $3
 	`
 
-	result, err := dbExecutor.ExecContext(ctx, query, now, user.PwdSecret, user.ID)
+	result, err := r.DB().ExecContext(ctx, query, user.UpdatedAt, user.PwdSecret, user.ID)
 	if err != nil {
 		return err
 	}
@@ -409,39 +323,22 @@ func (r *UserRepositoryImpl) UpdatePwdSecret(ctx context.Context, user *entity.U
 		return domainErrors.ErrUserNotFound
 	}
 
-	user.UpdatedAt = now
 	return nil
 }
 
 // UpdateEmail 更新邮箱
 func (r *UserRepositoryImpl) UpdateEmail(ctx context.Context, user *entity.User) error {
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return err
-	}
-
 	if user == nil || user.ID == 0 || user.Email == "" {
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	// 检查邮箱是否已被使用
-	existingUser, err := r.FindByEmail(ctx, user.Email)
-	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-		return err
-	}
-	if existingUser != nil && existingUser.ID != user.ID {
-		return domainErrors.ErrEmailTaken
-	}
-
-	now := time.Now().Unix()
 	query := `
 		UPDATE users 
 		SET updated_at = $1, email = $2 
 		WHERE id = $3
 	`
 
-	result, err := dbExecutor.ExecContext(ctx, query, now, user.Email, user.ID)
+	result, err := r.DB().ExecContext(ctx, query, user.UpdatedAt, user.Email, user.ID)
 	if err != nil {
 		return err
 	}
@@ -455,39 +352,22 @@ func (r *UserRepositoryImpl) UpdateEmail(ctx context.Context, user *entity.User)
 		return domainErrors.ErrUserNotFound
 	}
 
-	user.UpdatedAt = now
 	return nil
 }
 
 // UpdatePhone 更新手机号
 func (r *UserRepositoryImpl) UpdatePhone(ctx context.Context, user *entity.User) error {
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return err
-	}
-
 	if user == nil || user.ID == 0 || user.Phone == "" {
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	// 检查手机号是否已被使用
-	existingUser, err := r.FindByPhone(ctx, user.Phone)
-	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-		return err
-	}
-	if existingUser != nil && existingUser.ID != user.ID {
-		return domainErrors.ErrPhoneTaken
-	}
-
-	now := time.Now().Unix()
 	query := `
 		UPDATE users 
 		SET updated_at = $1, phone = $2 
 		WHERE id = $3
 	`
 
-	result, err := dbExecutor.ExecContext(ctx, query, now, user.Phone, user.ID)
+	result, err := r.DB().ExecContext(ctx, query, user.UpdatedAt, user.Phone, user.ID)
 	if err != nil {
 		return err
 	}
@@ -501,18 +381,11 @@ func (r *UserRepositoryImpl) UpdatePhone(ctx context.Context, user *entity.User)
 		return domainErrors.ErrUserNotFound
 	}
 
-	user.UpdatedAt = now
 	return nil
 }
 
 // 检查用户字段是否存在
 func (r *UserRepositoryImpl) CheckUserFieldsExist(ctx context.Context, username, email, phone string) (bool, error) {
-	dbExecutor, err := database.GetDBExecutor(ctx)
-	if err != nil {
-		r.logger.Error("Failed to get DBExecutor", zap.Error(err))
-		return false, err
-	}
-
 	// 构建动态查询条件
 	var conditions []string
 	var args []interface{}
@@ -549,9 +422,7 @@ func (r *UserRepositoryImpl) CheckUserFieldsExist(ctx context.Context, username,
 		LIMIT 1
 	`, strings.Join(conditions, " OR "))
 
-	err = dbExecutor.QueryRowxContext(ctx, query, args...).Scan(&username, &email, &phone)
-
-	if err != nil {
+	if err := r.DB().QueryRowxContext(ctx, query, args...).Scan(&username, &email, &phone); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// 没有找到重复记录，表示字段可用
 			return false, nil

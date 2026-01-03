@@ -2,8 +2,10 @@ package commands
 
 import (
 	"context"
+	"errors"
 
 	"github.com/lyonnee/go-template/internal/domain/entity"
+	domainErrors "github.com/lyonnee/go-template/internal/domain/errors"
 	"github.com/lyonnee/go-template/internal/domain/repository"
 	"github.com/lyonnee/go-template/internal/domain/service"
 	"github.com/lyonnee/go-template/internal/infrastructure/auth"
@@ -14,10 +16,8 @@ import (
 )
 
 type UserCommandService struct {
-	logger    *log.Logger
-	dbContext *database.Database
-
-	userRepo repository.UserRepository
+	logger *log.Logger
+	db     *database.Database
 
 	userDomainService *service.UserService
 }
@@ -29,10 +29,8 @@ func init() {
 // NewUserApplicationService 创建用户应用服务
 func NewUserCommandService() (*UserCommandService, error) {
 	return &UserCommandService{
-		logger:    di.Get[*log.Logger](),
-		dbContext: di.Get[*database.Database](),
-
-		userRepo: di.Get[repository.UserRepository](),
+		logger: di.Get[*log.Logger](),
+		db:     di.Get[*database.Database](),
 
 		userDomainService: di.Get[*service.UserService](),
 	}, nil
@@ -53,46 +51,49 @@ type SignUpResult struct {
 	User         *entity.User
 }
 
-// SignUp 用户注册
+// Application Service - 负责编排和唯一性检查
 func (s *UserCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignUpResult, error) {
-	s.logger.Info("Starting user registration",
-		zap.String("username", cmd.Username),
-		zap.String("email", cmd.Email))
-
 	var user *entity.User
 	var accessToken, refreshToken string
-	if err := s.dbContext.Conn(ctx, func(ctx context.Context) error {
-		newUser, err := s.userDomainService.NewUser(ctx, cmd.Username, cmd.Password, cmd.Email, cmd.Phone)
+
+	if err := s.db.WithConnection(ctx, func(ctx context.Context) error {
+		userRepo := di.GetRepository[repository.UserRepository](ctx)
+
+		// 1. 先检查唯一性（应用层职责）
+		existingUser, err := userRepo.CheckUserFieldsExist(ctx, cmd.Username, cmd.Email, cmd.Phone)
+		if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
+			return err
+		}
+		if existingUser {
+			return errors.New("user with these details already exists")
+		}
+
+		// 2. 调用 domain service 创建用户实体（领域层职责）
+		newUser, err := entity.NewUser(cmd.Username, cmd.Password, cmd.Email, cmd.Phone)
 		if err != nil {
 			return err
 		}
 
-		if err := s.userRepo.Create(ctx, newUser); err != nil {
+		// 3. 持久化（应用层职责）
+		if err := userRepo.Create(ctx, newUser); err != nil {
 			return err
 		}
 
+		// 4. 生成 token
 		jwtManager := di.Get[*auth.JWTGenerator]()
-		// 生成token
 		accessToken, err = jwtManager.GenerateAccessToken(newUser.ID, newUser.Username)
 		if err != nil {
-			s.logger.Error("Failed to generate access token for new user", zap.Error(err), zap.Uint64("userId", user.ID))
 			return err
 		}
 
 		refreshToken, err = jwtManager.GenerateRefreshToken(newUser.ID, newUser.Username)
 		if err != nil {
-			s.logger.Error("Failed to generate refresh token for new user", zap.Error(err), zap.Uint64("userId", user.ID))
 			return err
 		}
 
 		user = newUser
-
-		s.logger.Info("User registration completed successfully",
-			zap.String("username", cmd.Username),
-			zap.Uint64("userId", newUser.ID))
 		return nil
 	}); err != nil {
-		s.logger.Error("User registration failed", zap.Error(err), zap.String("username", cmd.Username))
 		return nil, err
 	}
 
@@ -120,18 +121,33 @@ func (s *UserCommandService) UpdateUsername(ctx context.Context, cmd *UpdateUser
 		zap.String("newUsername", cmd.Username))
 
 	var user *entity.User
-	if err := s.dbContext.Transaction(ctx, nil, func(ctx context.Context) error {
+	if err := s.db.WithTransaction(ctx, nil, func(ctx context.Context) error {
+		userRepo := di.GetRepository[repository.UserRepository](ctx)
 		// 检查用户是否存在
-		user, err := s.userRepo.FindById(ctx, cmd.UserID)
+		user, err := userRepo.FindById(ctx, cmd.UserID)
 		if err != nil {
 			return err
 		}
 
-		if err := s.userDomainService.UpdateUsername(ctx, user, cmd.Username); err != nil {
+		// 检查新用户名是否已被其他用户使用
+		existingUser, err := userRepo.FindByUsername(ctx, cmd.Username)
+		if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
+			s.logger.Error("Failed to check username availability", zap.Error(err), zap.String("username", cmd.Username))
+			return err
+		}
+		if existingUser != nil && existingUser.ID != user.ID {
+			s.logger.Warn("Username already taken",
+				zap.String("username", cmd.Username),
+				zap.Uint64("existingUserId", existingUser.ID),
+				zap.Uint64("requestingUserId", user.ID))
+			return domainErrors.ErrUsernameTaken
+		}
+
+		if err := user.UpdateUsername(cmd.Username); err != nil {
 			return err
 		}
 
-		if err := s.userRepo.UpdateUsername(ctx, user); err != nil {
+		if err := userRepo.UpdateUsername(ctx, user); err != nil {
 			return err
 		}
 

@@ -1,9 +1,16 @@
-# Go 项目模板
+<div align="center">
 
-一个基于 Go 语言的现代化 Web 服务项目模板，采用领域驱动设计(DDD)和整洁架构(Clean Architecture)思想构建。
+# Go 项目模板
 
 | [English](README.md) | 中文 |
 | --- | --- |
+
+一个基于 Go 语言的现代化 Web 服务项目模板，采用领域驱动设计(DDD)和整洁架构(Clean Architecture)原则构建。
+</div>
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/lyonnee/go-template)](https://goreportcard.com/report/github.com/lyonnee/go-template)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/lyonnee/go-template)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## 快速开始
 
@@ -33,156 +40,144 @@ go run . -env dev
 
 本模板提供了生产就绪的 Go Web 服务，包含：
 
-- 📦 **整洁架构** - 清晰的分层架构设计，关注点分离
-- 🎯 **领域驱动设计** - 丰富的领域模型和业务逻辑封装
-- 🔐 **认证系统** - JWT 和 OAuth 集成就绪
-- 📝 **日志基础设施** - 结构化日志，支持多种输出
-- 🗄️ **数据库支持** - 多数据库兼容性
-- 💾 **缓存层** - Redis 集成
-- 🔄 **优雅关机** - 合适的资源清理
-- 🐳 **Docker 就绪** - 包含多阶段构建
+### 🏗️ 架构设计
+- 📦 **整洁架构** - 严格遵循 Clean Architecture 原则，清晰的分层设计
+- 🎯 **领域驱动设计** - DDD 实践，丰富的领域模型和业务逻辑封装
+- 🔌 **CQRS 模式** - 命令查询职责分离，读写模型分离
+- 🏗️ **依赖注入** - 基于 samber/do/v2 的 IoC 容器
+
+### 🚀 技术栈
 - ⚡ **高性能 HTTP** - CloudWeGo Hertz 框架
-- 🔌 **gRPC 支持** - Protocol Buffer 集成
-- 📨 **消息队列** - 异步处理基础设施
-- ⏰ **任务调度** - 定时任务支持
-- 🔧 **多环境配置** - 开发、测试、生产配置
-- 🏗️ **依赖注入** - IoC 容器包含
-- 🆔 **ID 生成** - 分布式 ID 生成
-- 🧪 **测试结构** - 测试组织和工具
-- 📨 **消息队列集成** - 异步消息处理
-- ⏰ **定时任务调度** - 支持 Cron 表达式
-- 🔧 **多环境配置** - 基于 YAML 的配置管理
-- 🏗️ **依赖注入** - Samber/do IoC 容器
-- 🆔 **ID 生成** - 基于 Snowflake 的唯一 ID 生成
-- � **密码哈希** - bcrypt 安全密码存储
-- 🔗 **区块链集成** - 内置区块链工具
-- 🧪 **测试支持** - 完整的测试工具和结构
+- 🗄️ **数据库支持** - PostgreSQL + SQLx，支持事务管理
+- 💾 **缓存层** - Redis 集成，支持缓存上下文
+- 🔐 **认证系统** - JWT + OAuth 完整实现
+- 📝 **结构化日志** - Zap + Lumberjack 日志系统
+- ⏰ **任务调度** - Cron 定时任务支持
+- 🆔 **ID 生成** - Snowflake 分布式 ID 生成
+
+### 🔧 开发支持
+- 🔧 **多环境配置** - dev/test/prod 环境配置管理
+- 🐳 **Docker 就绪** - 多阶段构建 Dockerfile
+- 🔄 **优雅关机** - 完整的资源清理机制
+- 📊 **健康检查** - 完整的健康检查端点
+- 🛡️ **中间件系统** - CORS、Recovery、JWT 等中间件
+- 🔒 **密码安全** - bcrypt 密码哈希存储
 
 ## 项目结构
 
-本模板遵循整洁架构和 DDD 原则，具有以下结构：
+本模板严格遵循整洁架构 (Clean Architecture) 和领域驱动设计 (DDD) 原则：
 
 ```
 go-template/
-├── Dockerfile                        # 容器定义
-├── LICENSE                           # 许可证
+├── main.go                           # 程序入口点
 ├── go.mod                            # Go 模块定义
 ├── go.sum                            # 依赖校验和
-├── main.go                           # 程序入口
-├── README.md                         # 英文说明
-├── README_zh.md                      # 中文说明
-├── _logs/                            # 本地日志输出
+├── Dockerfile                        # 容器化部署
+├── _logs/                            # 本地日志目录
 │   └── dev.log
 │
-├── application/
-│   └── cron/                         # 外层调度器入口/封装
-│       └── scheduler.go
+├── configs/                          # 多环境配置
+│   ├── config.dev.yaml              # 开发环境配置
+│   ├── config.test.yaml              # 测试环境配置
+│   └── config.prod.yaml              # 生产环境配置
 │
-├── configs/                          # 多环境配置文件
-│   ├── config.dev.yaml
-│   ├── config.prod.yaml
-│   └── config.test.yaml
-│
-├── infrastructure/
-│   └── di/                           # 根级依赖注入装配
-│       └── injector.go
-│
-├── internal/                         # 业务实现（遵循 Go internal 隔离）
-│   ├── application/                  # 应用层（用例编排）
-│   │   ├── commands/                 # 写模型（命令）
+├── internal/                         # 核心业务代码 (Go internal 包)
+│   ├── application/                  # 应用层 - 用例编排
+│   │   ├── commands/                 # CQRS 写侧 (命令)
 │   │   │   ├── auth_command_service.go
 │   │   │   └── user_command_service.go
-│   │   ├── queries/                  # 读模型（查询）
+│   │   ├── queries/                  # CQRS 读侧 (查询)
 │   │   │   └── user_query_service.go
-│   │   └── scheduler/                # 定时任务编排
+│   │   └── scheduler/                # 任务调度
 │   │       ├── scheduler.go
 │   │       └── jobs/
 │   │           └── test_job.go
 │   │
-│   ├── domain/                       # 领域层
+│   ├── domain/                       # 领域层 - 业务逻辑核心
 │   │   ├── entity/                   # 领域实体
 │   │   │   └── user.go
-│   │   ├── errors/                   # 领域错误
+│   │   ├── errors/                   # 领域错误定义
 │   │   │   └── user_errors.go
-│   │   ├── repository/               # 仓储接口
-│   │   │   ├── eth_repository.go
-│   │   │   └── user_repository.go
+│   │   ├── repository/               # 仓储接口 (端口)
+│   │   │   ├── repository.go
+│   │   │   ├── user_repository.go
+│   │   │   └── eth_repository.go
 │   │   └── service/                  # 领域服务
-│   │       ├── infra_service.go
-│   │       └── user_service.go
+│   │       ├── user_service.go
+│   │       └── infra_service.go
 │   │
-│   ├── infrastructure/               # 基础设施实现
-│   │   ├── auth/                     # 认证/JWT/OAuth
+│   ├── infrastructure/               # 基础设施层 - 技术实现
+│   │   ├── config/                   # 配置管理
+│   │   │   ├── config.go
+│   │   │   └── types.go
+│   │   ├── database/                 # 数据库基础设施
+│   │   │   ├── database.go
+│   │   │   ├── dbcontext.go
+│   │   │   ├── logger.go
+│   │   │   └── postgres.go
+│   │   ├── cache/                    # 缓存基础设施
+│   │   │   ├── cache.go
+│   │   │   ├── cachecontext.go
+│   │   │   ├── keys.go
+│   │   │   └── redis.go
+│   │   ├── auth/                     # 认证基础设施
 │   │   │   ├── auth.go
 │   │   │   ├── jwt.go
 │   │   │   └── oauth.go
-│   │   ├── blockchain/               # 区块链相关
+│   │   ├── repository_impl/          # 仓储实现 (适配器)
+│   │   │   ├── user_repository.go
+│   │   │   └── model/                # 数据库模型
+│   │   │       ├── base_model.go
+│   │   │       └── user.go
+│   │   ├── blockchain/               # 区块链工具
 │   │   │   └── blockchain.go
-│   │   ├── cache/                    # 缓存与 Redis
-│   │   │   ├── cache.go
-│   │   │   ├── keys.go
-│   │   │   └── redis.go
-│   │   ├── config/                   # 配置装载
-│   │   │   ├── config.go
-│   │   │   └── types.go
-│   │   ├── database/                 # 数据库访问
-│   │   │   ├── database.go
-│   │   │   ├── executor.go
-│   │   │   ├── logger.go
-│   │   │   └── postgres.go
-│   │   ├── mq/                       # 消息队列
-│   │   │   └── mq.go
-│   │   └── repository_impl/              # 持久化实现
-│   │       ├── user_repository.go
-│   │       └── model/
-│   │           ├── base_model.go
-│   │           └── user.go
+│   │   └── mq/                       # 消息队列
+│   │       └── mq.go
 │   │
-│   └── interfaces/                   # 适配层（对外接口）
-│       ├── event_handler/            # 事件处理
-│       │   └── event_handler.go
-│       ├── grpc/                     # gRPC 定义
-│       │   └── user.proto
-│       └── http/                     # HTTP 接口
-│           ├── controller/           # 控制器
-│           │   ├── auth_controller.go
-│           │   ├── health_controller.go
-│           │   └── user_controller.go
-│           ├── dto/                  # DTO 定义
-│           │   ├── auth.go
-│           │   ├── base_response.go
-│           │   ├── pagequery.go
-│           │   └── user.go
-│           ├── middleware/           # 中间件
-│           │   ├── cors.go
-│           │   ├── jwt.go
-│           │   ├── logger.go
-│           │   ├── recovery.go
-│           │   └── trace.go
-│           └── router.go             # 路由
+│   └── interfaces/                   # 接口适配层 - 外部接口
+│       ├── http/                     # HTTP 接口
+│       │   ├── router.go             # 路由配置
+│       │   ├── controller/           # HTTP 控制器
+│       │   │   ├── auth_controller.go
+│       │   │   ├── user_controller.go
+│       │   │   └── health_controller.go
+│       │   ├── dto/                  # 数据传输对象
+│       │   │   ├── base_response.go
+│       │   │   ├── auth.go
+│       │   │   ├── user.go
+│       │   │   └── pagequery.go
+│       │   └── middleware/           # HTTP 中间件
+│       │       ├── cors.go
+│       │       ├── jwt.go
+│       │       ├── logger.go
+│       │       ├── recovery.go
+│       │       └── trace.go
+│       ├── grpc/                     # gRPC 接口
+│       └── event_handler/            # 事件处理器
+│           └── event_handler.go
 │
-├── pkg/                              # 通用库
-│   ├── di/                           # DI 帮助
+├── pkg/                              # 共享工具库
+│   ├── di/                           # 依赖注入容器
 │   │   └── injector.go
-│   ├── idgen/                        # ID 生成
-│   │   └── id_generator.go
-│   ├── log/                          # 日志封装
+│   ├── log/                          # 日志工具
 │   │   ├── log.go
 │   │   └── zap_logger.go
-│   └── util/                         # 工具方法
+│   ├── idgen/                        # ID 生成器
+│   │   └── id_generator.go
+│   └── util/                         # 通用工具
 │       └── bcrypt.go
 │
-├── scripts/                          # 构建与启动脚本
+├── services/                         # 服务启动管理
+│   ├── services.go                   # 服务注册器
+│   ├── http.go                       # HTTP 服务
+│   ├── grpc.go                       # gRPC 服务
+│   └── cron.go                       # 定时任务服务
+│
+├── scripts/                          # 构建脚本
 │   ├── build.sh
 │   └── start.sh
 │
-├── services/                         # 服务启动入口（HTTP/gRPC/Cron）
-│   ├── cron.go
-│   ├── grpc.go
-│   ├── http.go
-│   └── service.go
-│
-├── sqls/                             # 数据库初始化/迁移 SQL
+├── sqls/                             # 数据库迁移
 │   └── user.sql
 │
 └── test/                             # 测试目录
@@ -192,30 +187,32 @@ go-template/
 
 项目采用整洁架构（Clean Architecture）和领域驱动设计（DDD）思想构建，分为以下几层：
 
-### 1. 接口层 (Interfaces Layer)
-- **HTTP 控制器**: 处理 HTTP 请求和响应
-- **gRPC 服务**: 处理 RPC 调用
-- **中间件**: 请求拦截和处理（认证、日志、CORS 等）
-- **DTO**: 数据传输对象，用于接口层数据交换
+### 架构分层说明
 
-### 2. 应用层 (Application Layer)
-- **命令执行器**: 处理写操作（CQRS 模式）
-- **查询执行器**: 处理读操作（CQRS 模式）
-- **应用服务**: 编排领域对象，处理业务流程
-- **事务管理**: 确保数据一致性
+#### 1. 接口适配层 (Interfaces Layer)
+- **HTTP 控制器**: 处理 RESTful API 请求响应，负责参数绑定和响应格式化
+- **中间件系统**: 横切关注点实现 (认证、日志、CORS、恢复等)
+- **DTO 对象**: 数据传输对象，用于接口层与应用层的数据交换
+- **路由管理**: 统一的路由注册和管理
 
-### 3. 领域层 (Domain Layer)
-- **实体**: 具有唯一标识的业务对象
-- **值对象**: 不可变的业务概念
-- **领域服务**: 跨实体的业务逻辑
-- **仓储接口**: 数据访问抽象
-- **领域事件**: 业务事件定义
+#### 2. 应用层 (Application Layer)
+- **命令服务**: CQRS 写侧，处理业务操作和状态变更
+- **查询服务**: CQRS 读侧，处理数据查询和展示逻辑
+- **任务调度**: 定时任务和后台作业的编排管理
+- **事务协调**: 跨领域对象的事务管理和数据一致性
 
-### 4. **基础设施层**（技术细节）
-- **仓储实现**: 数据持久化实现
-- **缓存实现**: 缓存策略
-- **消息队列**: 异步通信
-- **配置**: 环境特定设置
+#### 3. 领域层 (Domain Layer)
+- **领域实体**: 具有唯一标识的核心业务对象，包含业务逻辑
+- **领域服务**: 不适合放在单个实体中的业务逻辑
+- **仓储接口**: 数据访问的抽象定义 (端口)
+- **领域错误**: 业务相关的错误定义和处理
+
+#### 4. 基础设施层 (Infrastructure Layer)
+- **仓储实现**: 具体的数据持久化实现 (适配器)
+- **数据库访问**: PostgreSQL 连接、事务管理、查询日志
+- **缓存实现**: Redis 缓存策略和上下文管理
+- **认证系统**: JWT Token 生成验证、OAuth 集成
+- **配置管理**: 多环境配置加载和类型安全访问
 
 ## 开发指南
 
@@ -419,7 +416,7 @@ di.AddSingleton(func() (EmailService, error) {
 
 ### 依赖注入使用指南
 
-本模板使用统一的依赖注入接口，基于 samber/do/v2 实现。**所有服务（仓储、领域服务、应用服务、控制器）都必须通过 `injector.go` 提供的接口进行注册。**
+本项目采用自研的依赖注入系统，基于 samber/do/v2 封装。**所有服务 (仓储、领域服务、应用服务、控制器) 都必须通过统一的 DI 接口进行注册。**
 
 #### 核心原则
 
@@ -695,15 +692,71 @@ docker build -t your-app .
 docker run -p 8080:8080 your-app
 ```
 
+## API 接口说明
+
+### 健康检查接口
+```
+GET /api/health      # 健康状态检查
+GET /api/ready       # 就绪状态检查  
+GET /api/live        # 存活状态检查
+```
+
+### 认证接口
+```
+POST /api/auth/login    # 用户登录
+POST /api/auth/refresh  # 刷新令牌
+```
+
+### 用户接口
+```
+POST /api/users             # 用户注册
+GET  /api/users/:id         # 获取用户信息 (需认证)
+PUT  /api/users/:id/username # 更新用户名 (需认证)
+```
+
+## 环境要求
+
+- **Go**: 1.23.7 或更高版本
+- **PostgreSQL**: 12 或更高版本  
+- **Redis**: 6.0 或更高版本
+- **Docker**: 20.10 或更高版本 (可选)
+
+## 配置说明
+
+项目支持多环境配置，通过 `-env` 参数指定：
+
+```bash
+# 开发环境 (默认)
+go run . -env dev
+
+# 测试环境
+go run . -env test  
+
+# 生产环境
+go run . -env prod
+```
+
+配置文件位于 `configs/` 目录：
+- `config.dev.yaml` - 开发环境配置
+- `config.test.yaml` - 测试环境配置
+- `config.prod.yaml` - 生产环境配置
+
 ## 贡献指南
 
-1. Fork 项目
+1. Fork 本项目
 2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
-3. 遵循模板结构和架构原则
-4. 为你的更改编写测试
-5. 提交改动 (`git commit -m 'Add amazing feature'`)
-6. 推送分支 (`git push origin feature/amazing-feature`)
-7. 创建 Pull Request
+3. 遵循项目的架构原则和代码规范
+4. 为新功能编写测试用例
+5. 确保所有测试通过
+6. 提交更改 (`git commit -m 'Add amazing feature'`)
+7. 推送分支 (`git push origin feature/amazing-feature`)
+8. 创建 Pull Request
+
+### 代码规范
+- 遵循 Go 官方代码风格
+- 使用有意义的变量和函数名
+- 为公共接口提供文档注释
+- 保持函数简洁，单一职责
 
 ## 许可证
 

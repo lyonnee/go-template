@@ -15,6 +15,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.38.0
+	google.golang.org/grpc v1.68.1
 )
 
 require (
@@ -23,6 +24,8 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/samber/go-type-to-string v1.4.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	golang.org/x/net v0.33.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241223144023-3abc09e42ca8 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
@@ -33,7 +36,7 @@ require (
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/cloudwego/hertz v0.9.7
 	github.com/cloudwego/netpoll v0.6.4 // indirect
-	github.com/golang/protobuf v1.5.0 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/nyaruka/phonenumbers v1.0.55 // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect

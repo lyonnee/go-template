@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "github.com/lyonnee/go-template/internal/interfaces/grpc/userpb";
+
+// 用户基础信息
+message UserBasic {
+  uint64 id = 1;
+  string username = 2;
+  string email = 3;
+  string phone = 4;
+  int64  created_at = 5;
+  int64  updated_at = 6;
+}
+
+message GetUserRequest {
+  uint64 id = 1;
+}
+
+message GetUserResponse {
+  UserBasic user = 1;
+}
+
+service UserService {
+  rpc GetUser (GetUserRequest) returns (GetUserResponse);
+}

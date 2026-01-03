@@ -1,6 +1,10 @@
 package di
 
-import "github.com/samber/do/v2"
+import (
+	"context"
+
+	"github.com/samber/do/v2"
+)
 
 type Provider[T any] func() (T, error)
 
@@ -43,4 +47,14 @@ func AddTransientImpl[I, T any](provider Provider[T]) error {
 
 func Get[T any]() T {
 	return do.MustInvoke[T](nil)
+}
+
+type Repository interface {
+	SetContext(ctx context.Context)
+}
+
+func GetRepository[T Repository](ctx context.Context) T {
+	instance := do.MustInvoke[T](nil)
+	instance.SetContext(ctx)
+	return instance
 }

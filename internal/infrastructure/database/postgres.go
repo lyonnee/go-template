@@ -1,29 +1,31 @@
 package database
 
 import (
-	"database/sql"
-
-	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
-	_ "github.com/lib/pq" // PostgreSQL驱动
 	"github.com/lyonnee/go-template/internal/infrastructure/config"
 	"github.com/lyonnee/go-template/pkg/log"
-	"github.com/qustavo/sqlhooks/v2"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func newPostgresDB(config config.PostgresConfig, logger *log.Logger) (*Database, error) {
-	sql.Register(SQL_LOGGER_DRIVER, sqlhooks.Wrap(pq.Driver{}, &LoggerHooks{Logger: logger}))
+func newPostgresDB(cfg config.PostgresConfig, logger *log.Logger) (*Database, error) {
+	gormConfig := &gorm.Config{
+		Logger: NewGormLogger(logger),
+	}
 
-	pgDb, err := sqlx.Connect(SQL_LOGGER_DRIVER, config.DSN)
+	db, err := gorm.Open(postgres.Open(cfg.DSN), gormConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	db := pgDb
-	db.SetMaxOpenConns(config.MaxOpenConns)
-	db.SetMaxIdleConns(config.MaxIdleConns)
-	db.SetConnMaxLifetime(config.ConnMaxLifetime)
-	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
+	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+	sqlDB.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 
 	return &Database{db: db}, nil
 }

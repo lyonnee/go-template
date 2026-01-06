@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/lyonnee/go-template/internal/infrastructure/config"
-	"github.com/natefinch/lumberjack"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

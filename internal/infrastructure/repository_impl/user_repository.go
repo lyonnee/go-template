@@ -2,10 +2,7 @@ package repository_impl
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/lyonnee/go-template/internal/domain/entity"
@@ -13,8 +10,7 @@ import (
 	"github.com/lyonnee/go-template/internal/domain/repository"
 	"github.com/lyonnee/go-template/internal/infrastructure/repository_impl/model"
 	"github.com/lyonnee/go-template/pkg/di"
-	"github.com/lyonnee/go-template/pkg/log"
-	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 // 保证对接口实现
@@ -23,7 +19,6 @@ var _ repository.UserRepository = (*UserRepositoryImpl)(nil)
 // UserRepositoryImpl 用户存储库实现
 type UserRepositoryImpl struct {
 	BaseRepository
-	logger *log.Logger
 }
 
 func init() {
@@ -35,82 +30,36 @@ func init() {
 
 // NewUserRepository 创建一个新的用户存储库实例
 func NewUserRepository() (*UserRepositoryImpl, error) {
-	repo := &UserRepositoryImpl{
-		logger: di.Get[*log.Logger](),
-	}
+	repo := &UserRepositoryImpl{}
 
 	return repo, nil
 }
 
 // FindById 根据ID查找用户
 func (r *UserRepositoryImpl) FindById(ctx context.Context, userId uint64) (*entity.User, error) {
-	r.logger.Debug("Finding user by ID", zap.Uint64("userId", userId))
-
-	query := `
-		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
-		FROM users 
-		WHERE id = $1 AND deleted_at = 0
-	`
-
 	var userModel model.UserModel
-	if err := r.DB().QueryRowxContext(ctx, query, userId).Scan(
-		&userModel.ID,
-		&userModel.CreatedAt,
-		&userModel.UpdatedAt,
-		&userModel.Username,
-		&userModel.PwdSecret,
-		&userModel.Email,
-		&userModel.Phone,
-		&userModel.DeletedAt,
-	); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			r.logger.Debug("User not found", zap.Uint64("userId", userId))
+	if err := r.DB().WithContext(ctx).Where("id = ? AND deleted_at = 0", userId).First(&userModel).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainErrors.ErrUserNotFound
 		}
-		r.logger.Error("Failed to find user by ID", zap.Uint64("userId", userId), zap.Error(err))
 		return nil, err
 	}
 
-	r.logger.Debug("User found successfully", zap.Uint64("userId", userId), zap.String("username", userModel.Username))
 	return r.modelToEntity(&userModel), nil
 }
 
 // Create 创建新用户
 func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) error {
-	r.logger.Debug("Creating new user", zap.String("username", user.Username), zap.String("email", user.Email))
-
 	if user == nil {
-		r.logger.Error("Invalid user input: user is nil")
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	query := `
-		INSERT INTO users (created_at, updated_at, username, pwd_secret, email, phone) 
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id
-	`
-
-	var id uint64
-	if err := r.DB().QueryRowxContext(ctx, query,
-		user.CreatedAt,
-		user.UpdatedAt,
-		user.Username,
-		user.PwdSecret,
-		user.Email,
-		user.Phone,
-	).Scan(&id); err != nil {
-		r.logger.Error("Failed to create user",
-			zap.String("username", user.Username),
-			zap.String("email", user.Email),
-			zap.Error(err))
+	userModel := r.entityToModel(user)
+	if err := r.DB().WithContext(ctx).Create(userModel).Error; err != nil {
 		return err
 	}
 
-	user.ID = id
-
-	r.logger.Info("User created successfully",
-		zap.Uint64("userId", id),
-		zap.String("username", user.Username))
+	user.ID = userModel.ID
 
 	return nil
 }
@@ -121,27 +70,14 @@ func (r *UserRepositoryImpl) Update(ctx context.Context, user *entity.User) erro
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	// 检查用户是否存在
-	_, err := r.FindById(ctx, user.ID)
-	if err != nil {
-		return err
+	userModel := r.entityToModel(user)
+	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ? AND deleted_at = 0", user.ID).Updates(userModel)
+	if result.Error != nil {
+		return result.Error
 	}
 
-	query := `
-		UPDATE users 
-		SET updated_at = $1, username = $2, pwd_secret = $3, email = $4, phone = $5 
-		WHERE id = $6
-	`
-
-	if _, err := r.DB().ExecContext(ctx, query,
-		user.UpdatedAt,
-		user.Username,
-		user.PwdSecret,
-		user.Email,
-		user.Phone,
-		user.ID,
-	); err != nil {
-		return err
+	if result.RowsAffected == 0 {
+		return domainErrors.ErrUserNotFound
 	}
 
 	return nil
@@ -150,23 +86,12 @@ func (r *UserRepositoryImpl) Update(ctx context.Context, user *entity.User) erro
 // Delete 删除用户（软删除）
 func (r *UserRepositoryImpl) Delete(ctx context.Context, userId uint64) error {
 	now := time.Now().Unix()
-	query := `
-		UPDATE users 
-		SET deleted_at = $1 
-		WHERE id = $2
-	`
-
-	result, err := r.DB().ExecContext(ctx, query, now, userId)
-	if err != nil {
-		return err
+	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", userId).Update("deleted_at", now)
+	if result.Error != nil {
+		return result.Error
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
+	if result.RowsAffected == 0 {
 		return domainErrors.ErrUserNotFound
 	}
 
@@ -175,17 +100,9 @@ func (r *UserRepositoryImpl) Delete(ctx context.Context, userId uint64) error {
 
 // FindByUsername 根据用户名查找用户
 func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string) (*entity.User, error) {
-	query := `
-		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
-		FROM users 
-		WHERE username = $1 AND deleted_at = 0
-	`
-
 	var userModel model.UserModel
-
-	err := r.DB().QueryRowxContext(ctx, query, username).StructScan(&userModel)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	if err := r.DB().WithContext(ctx).Where("username = ? AND deleted_at = 0", username).First(&userModel).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainErrors.ErrUserNotFound
 		}
 		return nil, err
@@ -196,24 +113,9 @@ func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string
 
 // FindByEmail 根据邮箱查找用户
 func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
-	query := `
-		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
-		FROM users 
-		WHERE email = $1 AND deleted_at = 0
-	`
-
 	var userModel model.UserModel
-	if err := r.DB().QueryRowxContext(ctx, query, email).Scan(
-		&userModel.ID,
-		&userModel.CreatedAt,
-		&userModel.UpdatedAt,
-		&userModel.Username,
-		&userModel.PwdSecret,
-		&userModel.Email,
-		&userModel.Phone,
-		&userModel.DeletedAt,
-	); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	if err := r.DB().WithContext(ctx).Where("email = ? AND deleted_at = 0", email).First(&userModel).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainErrors.ErrUserNotFound
 		}
 		return nil, err
@@ -224,24 +126,9 @@ func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*en
 
 // FindByPhone 根据手机号查找用户
 func (r *UserRepositoryImpl) FindByPhone(ctx context.Context, phone string) (*entity.User, error) {
-	query := `
-		SELECT id, created_at, updated_at, username, pwd_secret, email, phone, deleted_at 
-		FROM users 
-		WHERE phone = $1 AND deleted_at = 0
-	`
-
 	var userModel model.UserModel
-	if err := r.DB().QueryRowxContext(ctx, query, phone).Scan(
-		&userModel.ID,
-		&userModel.CreatedAt,
-		&userModel.UpdatedAt,
-		&userModel.Username,
-		&userModel.PwdSecret,
-		&userModel.Email,
-		&userModel.Phone,
-		&userModel.DeletedAt,
-	); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	if err := r.DB().WithContext(ctx).Where("phone = ? AND deleted_at = 0", phone).First(&userModel).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainErrors.ErrUserNotFound
 		}
 		return nil, err
@@ -252,47 +139,21 @@ func (r *UserRepositoryImpl) FindByPhone(ctx context.Context, phone string) (*en
 
 // UpdateUsername 更新用户名
 func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.User) error {
-	r.logger.Debug("Updating username",
-		zap.Uint64("userId", user.ID),
-		zap.String("newUsername", user.Username))
-
 	if user == nil || user.ID == 0 || user.Username == "" {
-		r.logger.Error("Invalid user input for username update",
-			zap.Uint64("userId", user.ID),
-			zap.String("username", user.Username))
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	query := `
-		UPDATE users 
-		SET updated_at = $1, username = $2 
-		WHERE id = $3
-	`
-
-	result, err := r.DB().ExecContext(ctx, query, user.UpdatedAt, user.Username, user.ID)
-	if err != nil {
-		r.logger.Error("Failed to update username",
-			zap.Uint64("userId", user.ID),
-			zap.String("username", user.Username),
-			zap.Error(err))
-		return err
+	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
+		"updated_at": user.UpdatedAt,
+		"username":   user.Username,
+	})
+	if result.Error != nil {
+		return result.Error
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		r.logger.Error("Failed to get affected rows", zap.Error(err))
-		return err
-	}
-
-	if rowsAffected == 0 {
-		r.logger.Warn("No rows affected during username update",
-			zap.Uint64("userId", user.ID))
+	if result.RowsAffected == 0 {
 		return domainErrors.ErrUserNotFound
 	}
-
-	r.logger.Info("Username updated successfully",
-		zap.Uint64("userId", user.ID),
-		zap.String("newUsername", user.Username))
 
 	return nil
 }
@@ -303,23 +164,15 @@ func (r *UserRepositoryImpl) UpdatePwdSecret(ctx context.Context, user *entity.U
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	query := `
-		UPDATE users 
-		SET updated_at = $1, pwd_secret = $2 
-		WHERE id = $3
-	`
-
-	result, err := r.DB().ExecContext(ctx, query, user.UpdatedAt, user.PwdSecret, user.ID)
-	if err != nil {
-		return err
+	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
+		"updated_at": user.UpdatedAt,
+		"pwd_secret": user.PwdSecret,
+	})
+	if result.Error != nil {
+		return result.Error
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
+	if result.RowsAffected == 0 {
 		return domainErrors.ErrUserNotFound
 	}
 
@@ -332,23 +185,15 @@ func (r *UserRepositoryImpl) UpdateEmail(ctx context.Context, user *entity.User)
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	query := `
-		UPDATE users 
-		SET updated_at = $1, email = $2 
-		WHERE id = $3
-	`
-
-	result, err := r.DB().ExecContext(ctx, query, user.UpdatedAt, user.Email, user.ID)
-	if err != nil {
-		return err
+	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
+		"updated_at": user.UpdatedAt,
+		"email":      user.Email,
+	})
+	if result.Error != nil {
+		return result.Error
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
+	if result.RowsAffected == 0 {
 		return domainErrors.ErrUserNotFound
 	}
 
@@ -361,23 +206,15 @@ func (r *UserRepositoryImpl) UpdatePhone(ctx context.Context, user *entity.User)
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	query := `
-		UPDATE users 
-		SET updated_at = $1, phone = $2 
-		WHERE id = $3
-	`
-
-	result, err := r.DB().ExecContext(ctx, query, user.UpdatedAt, user.Phone, user.ID)
-	if err != nil {
-		return err
+	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
+		"updated_at": user.UpdatedAt,
+		"phone":      user.Phone,
+	})
+	if result.Error != nil {
+		return result.Error
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
+	if result.RowsAffected == 0 {
 		return domainErrors.ErrUserNotFound
 	}
 
@@ -386,52 +223,24 @@ func (r *UserRepositoryImpl) UpdatePhone(ctx context.Context, user *entity.User)
 
 // 检查用户字段是否存在
 func (r *UserRepositoryImpl) CheckUserFieldsExist(ctx context.Context, username, email, phone string) (bool, error) {
-	// 构建动态查询条件
-	var conditions []string
-	var args []interface{}
-	argIndex := 1
+	db := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("deleted_at = 0")
 
 	if username != "" {
-		conditions = append(conditions, "username = $"+fmt.Sprintf("%d", argIndex))
-		args = append(args, username)
-		argIndex++
+		db = db.Or("username = ?", username)
 	}
-
 	if email != "" {
-		conditions = append(conditions, "email = $"+fmt.Sprintf("%d", argIndex))
-		args = append(args, email)
-		argIndex++
+		db = db.Or("email = ?", email)
 	}
-
 	if phone != "" {
-		conditions = append(conditions, "phone = $"+fmt.Sprintf("%d", argIndex))
-		args = append(args, phone)
-		argIndex++
+		db = db.Or("phone = ?", phone)
 	}
 
-	// 如果没有需要检查的字段，直接返回
-	if len(conditions) == 0 {
-		return false, nil
-	}
-
-	// 一次查询检查所有字段
-	query := fmt.Sprintf(`
-		SELECT username, email, phone 
-		FROM users 
-		WHERE (%s) AND deleted_at = 0
-		LIMIT 1
-	`, strings.Join(conditions, " OR "))
-
-	if err := r.DB().QueryRowxContext(ctx, query, args...).Scan(&username, &email, &phone); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// 没有找到重复记录，表示字段可用
-			return false, nil
-		}
-		r.logger.Error("Failed to check user fields existence", zap.Error(err))
+	var count int64
+	if err := db.Count(&count).Error; err != nil {
 		return false, err
 	}
 
-	return false, nil
+	return count > 0, nil
 }
 
 func (r *UserRepositoryImpl) entityToModel(user *entity.User) *model.UserModel {

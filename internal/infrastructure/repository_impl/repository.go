@@ -5,10 +5,11 @@ import (
 
 	"github.com/lyonnee/go-template/internal/infrastructure/cache"
 	"github.com/lyonnee/go-template/internal/infrastructure/database"
+	"gorm.io/gorm"
 )
 
 type BaseRepository struct {
-	db    database.DBContext
+	db    *gorm.DB
 	cache cache.CacheContext
 }
 
@@ -17,7 +18,7 @@ func (r *BaseRepository) SetContext(ctx context.Context) {
 	r.db, _ = database.GetDBContext(ctx)
 }
 
-func (r *BaseRepository) DB() database.DBContext {
+func (r *BaseRepository) DB() *gorm.DB {
 	return r.db
 }
 

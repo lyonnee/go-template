@@ -56,7 +56,7 @@ func (s *UserCommandService) SignUp(ctx context.Context, cmd *SignUpCmd) (*SignU
 	var user *entity.User
 	var accessToken, refreshToken string
 
-	if err := s.db.WithConnection(ctx, func(ctx context.Context) error {
+	if err := s.db.WithContext(ctx, func(ctx context.Context) error {
 		userRepo := di.GetRepository[repository.UserRepository](ctx)
 
 		// 1. 先检查唯一性（应用层职责）
@@ -121,7 +121,7 @@ func (s *UserCommandService) UpdateUsername(ctx context.Context, cmd *UpdateUser
 		zap.String("newUsername", cmd.Username))
 
 	var user *entity.User
-	if err := s.db.WithTransaction(ctx, nil, func(ctx context.Context) error {
+	if err := s.db.WithTransaction(ctx, func(ctx context.Context) error {
 		userRepo := di.GetRepository[repository.UserRepository](ctx)
 		// 检查用户是否存在
 		user, err := userRepo.FindById(ctx, cmd.UserID)

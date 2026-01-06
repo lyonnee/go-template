@@ -4,13 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jmoiron/sqlx"
+	"gorm.io/gorm"
 )
-
-type DBContext interface {
-	sqlx.ExecerContext
-	sqlx.QueryerContext
-}
 
 type dbContextKeyType struct{}
 
@@ -18,17 +13,17 @@ var dbContextKey = dbContextKeyType{}
 
 var ErrDBContextNotSet = errors.New("dbContext not set, use SetDBContext() to set a dbContext")
 
-func SetDBContext(ctx context.Context, dbContext DBContext) context.Context {
-	if dbContext == nil {
+func SetDBContext(ctx context.Context, db *gorm.DB) context.Context {
+	if db == nil {
 		return ctx
 	}
-	return context.WithValue(ctx, dbContextKey, dbContext)
+	return context.WithValue(ctx, dbContextKey, db)
 }
 
-func GetDBContext(ctx context.Context) (DBContext, error) {
-	dbContext, ok := ctx.Value(dbContextKey).(DBContext)
-	if !ok || dbContext == nil {
+func GetDBContext(ctx context.Context) (*gorm.DB, error) {
+	db, ok := ctx.Value(dbContextKey).(*gorm.DB)
+	if !ok || db == nil {
 		return nil, ErrDBContextNotSet
 	}
-	return dbContext, nil
+	return db, nil
 }

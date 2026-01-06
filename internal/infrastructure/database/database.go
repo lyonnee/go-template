@@ -2,67 +2,49 @@ package database
 
 import (
 	"context"
-	"database/sql"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/lyonnee/go-template/internal/infrastructure/config"
 	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/lyonnee/go-template/pkg/log"
+	"gorm.io/gorm"
 )
 
 type Database struct {
-	db *sqlx.DB
+	db *gorm.DB
 }
 
-func (dbc *Database) WithConnection(ctx context.Context, fn func(context.Context) error) error {
-	conn, err := dbc.db.Connx(ctx)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	return fn(SetDBContext(ctx, conn))
+func (dbc *Database) DB() *gorm.DB {
+	return dbc.db
 }
 
-func (dbc *Database) WithTransaction(ctx context.Context, opts *sql.TxOptions, fn func(context.Context) error) error {
-	tx, err := dbc.db.BeginTxx(ctx, opts)
-	if err != nil {
-		return err
-	}
+func (dbc *Database) WithContext(ctx context.Context, fn func(context.Context) error) error {
+	return fn(SetDBContext(ctx, dbc.db.WithContext(ctx)))
+}
 
-	defer func() {
-		if p := recover(); p != nil {
-			_ = tx.Rollback()
-			panic(p)
-		} else if err != nil {
-			_ = tx.Rollback()
-		} else {
-			err = tx.Commit()
-		}
-	}()
-
-	err = fn(SetDBContext(ctx, tx))
-
-	return err
+func (dbc *Database) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
+	return dbc.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		return fn(SetDBContext(ctx, tx))
+	})
 }
 
 func (dbc *Database) Close() error {
 	if dbc.db != nil {
-		return dbc.db.Close()
+		sqlDB, err := dbc.db.DB()
+		if err != nil {
+			return err
+		}
+		return sqlDB.Close()
 	}
 	return nil
 }
 
-// CloseWithContext attempts to close the underlying DB while respecting the given context's deadline.
-// Since sqlx.DB.Close() itself doesn't accept a context and usually returns quickly,
-// we guard it with a goroutine and select on context timeout to avoid blocking shutdown.
 func (dbc *Database) CloseWithContext(ctx context.Context) error {
 	if dbc.db == nil {
 		return nil
 	}
 	done := make(chan error, 1)
 	go func() {
-		done <- dbc.db.Close()
+		done <- dbc.Close()
 	}()
 	select {
 	case err := <-done:

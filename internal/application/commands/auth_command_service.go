@@ -47,7 +47,7 @@ func (s *AuthCommandService) Login(ctx context.Context, cmd *LoginCmd) (*LoginRe
 	s.logger.Debug("Login attempt", zap.String("username", cmd.Username))
 
 	var accessToken, refreshToken string
-	if err := s.db.WithConnection(ctx, func(ctx context.Context) error {
+	if err := s.db.WithContext(ctx, func(ctx context.Context) error {
 		userRepo := di.GetRepository[repository.UserRepository](ctx)
 
 		// 查找用户

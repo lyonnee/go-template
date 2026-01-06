@@ -35,9 +35,8 @@ func (s *UserQueryService) GetUserById(ctx context.Context, userId uint64) (*ent
 	s.logger.Debug("GetUserById called", zap.Uint64("userId", userId))
 
 	var user *entity.User
-	if err := s.db.WithConnection(ctx, func(ctx context.Context) error {
-		userRepo := di.Get[repository.UserRepository]()
-		userRepo.SetContext(ctx)
+	if err := s.db.WithContext(ctx, func(ctx context.Context) error {
+		userRepo := di.GetRepository[repository.UserRepository](ctx)
 
 		// 查找用户
 		userInfo, err := userRepo.FindById(ctx, userId)

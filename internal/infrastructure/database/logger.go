@@ -1,68 +1,72 @@
 package database
 
 import (
-	"bytes"
 	"context"
+	"errors"
 	"time"
 
 	"github.com/lyonnee/go-template/pkg/log"
 	"go.uber.org/zap"
+	gormlogger "gorm.io/gorm/logger"
 )
 
-const (
-	SQL_LOGGER_DRIVER = "sql_logger_driver"
-)
-
-type LoggerHooks struct {
-	Logger *log.Logger
+type GormLogger struct {
+	Logger   *log.Logger
+	LogLevel gormlogger.LogLevel
 }
 
-// Before hook will print the query with it's args and return the context with the timestamp
-func (hooks *LoggerHooks) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
-	if hooks == nil || hooks.Logger == nil {
-		return ctx, nil
+func NewGormLogger(logger *log.Logger) *GormLogger {
+	return &GormLogger{
+		Logger:   logger,
+		LogLevel: gormlogger.Info,
 	}
-
-	return context.WithValue(ctx, "sql_begin", time.Now()), nil
 }
 
-// After hook will get the timestamp registered on the Before hook and print the elapsed time
-func (hooks *LoggerHooks) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
-	if hooks == nil || hooks.Logger == nil {
-		return ctx, nil
-	}
-	begin := ctx.Value("sql_begin").(time.Time)
+func (l *GormLogger) LogMode(level gormlogger.LogLevel) gormlogger.Interface {
+	newLogger := *l
+	newLogger.LogLevel = level
+	return &newLogger
+}
 
-	hooks.Logger.Info("SQL executed",
-		zap.String("sql", removeEscapes(query)),
-		zap.Any("args", args),
-		zap.String("duration", time.Since(begin).String()),
+func (l *GormLogger) Info(ctx context.Context, msg string, data ...interface{}) {
+	if l.LogLevel >= gormlogger.Info {
+		l.Logger.Sugar().Infof(msg, data...)
+	}
+}
+
+func (l *GormLogger) Warn(ctx context.Context, msg string, data ...interface{}) {
+	if l.LogLevel >= gormlogger.Warn {
+		l.Logger.Sugar().Warnf(msg, data...)
+	}
+}
+
+func (l *GormLogger) Error(ctx context.Context, msg string, data ...interface{}) {
+	if l.LogLevel >= gormlogger.Error {
+		l.Logger.Sugar().Errorf(msg, data...)
+	}
+}
+
+func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error) {
+	if l.LogLevel <= gormlogger.Silent {
+		return
+	}
+
+	elapsed := time.Since(begin)
+	sql, rows := fc()
+
+	if err != nil && !errors.Is(err, gormlogger.ErrRecordNotFound) {
+		l.Logger.Error("SQL error",
+			zap.String("sql", sql),
+			zap.Int64("rows", rows),
+			zap.String("duration", elapsed.String()),
+			zap.Error(err),
+		)
+		return
+	}
+
+	l.Logger.Info("SQL executed",
+		zap.String("sql", sql),
+		zap.Int64("rows", rows),
+		zap.String("duration", elapsed.String()),
 	)
-	return ctx, nil
-}
-
-func (hooks *LoggerHooks) OnError(_ context.Context, err error, query string, args ...interface{}) error {
-	if hooks == nil || hooks.Logger == nil {
-		return nil
-	}
-
-	hooks.Logger.Info("SQL error",
-		zap.String("sql", removeEscapes(query)),
-		zap.Any("args", args),
-		zap.Error(err),
-	)
-	return nil
-}
-
-func removeEscapes(s string) string {
-	var buf bytes.Buffer
-	for _, r := range s {
-		switch r {
-		case '\n', '\t', '\\':
-			continue // 跳过转义字符
-		default:
-			buf.WriteRune(r)
-		}
-	}
-	return buf.String()
 }

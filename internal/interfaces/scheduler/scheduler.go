@@ -1,7 +1,7 @@
 package scheduler
 
 import (
-	"github.com/lyonnee/go-template/internal/application/scheduler/jobs"
+	"github.com/lyonnee/go-template/internal/interfaces/scheduler/jobs"
 	"github.com/lyonnee/go-template/pkg/log"
 	"github.com/robfig/cron/v3"
 )

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/lyonnee/go-template/internal/application/scheduler"
+	"github.com/lyonnee/go-template/internal/interfaces/scheduler"
 	"github.com/lyonnee/go-template/pkg/log"
 	"github.com/robfig/cron/v3"
 )

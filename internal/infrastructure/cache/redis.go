@@ -9,46 +9,44 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/lyonnee/go-template/internal/infrastructure/config"
-	"github.com/lyonnee/go-template/pkg/di"
 )
 
-func init() {
-	config := di.Get[config.Config]()
-	redisCache, err := initRedis(config.Cache.Redis)
-	if err != nil {
-		panic("Failed to initialize Redis client: " + err.Error())
+// initRedis creates a new Redis cache instance
+func initRedis(config RedisConfig) (*RedisCache, error) {
+	var redisClient redis.UniversalClient
+
+	if config.IsCluster() {
+		redisClient = redis.NewClusterClient(&redis.ClusterOptions{
+			Addrs:    []string{config.Host + ":" + strconv.FormatInt(int64(config.Port), 10)},
+			Username: config.Username,
+			Password: config.Password,
+		})
+	} else {
+		redisClient = redis.NewClient(&redis.Options{
+			Addr:     config.Host + ":" + strconv.FormatInt(int64(config.Port), 10),
+			Username: config.Username,
+			Password: config.Password,
+			DB:       config.Database,
+		})
 	}
 
-	di.AddSingleton[CacheContext](func() (CacheContext, error) {
-		return redisCache, nil
-	})
-}
-
-// initRedis creates a new Redis cache instance
-func initRedis(config config.RedisConfig) (*RedisCache, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr:     config.Host + ":" + strconv.FormatInt(int64(config.Port), 10),
-		Password: config.Password,
-		DB:       config.Database,
-	})
-
 	// 测试连接
-	_, err := client.Ping(context.Background()).Result()
+	_, err := redisClient.Ping(context.Background()).Result()
 	if err != nil {
 		return nil, err
 	}
 
 	return &RedisCache{
-		redisCli:   client,
+		redisCli:   redisClient,
 		defaultTTL: config.TTL,
+		prefix:     config.Prefix,
 	}, nil
 }
 
 // RedisCache provides caching functionality using Redis
 type RedisCache struct {
 	prefix     string
-	redisCli   *redis.Client
+	redisCli   redis.UniversalClient
 	defaultTTL time.Duration
 }
 
@@ -140,4 +138,65 @@ func (r *RedisCache) SetNX(ctx context.Context, key string, value any, ttl time.
 
 	cacheKey := r.GetKey(key)
 	return r.redisCli.SetNX(ctx, cacheKey, data, ttl).Result()
+}
+
+// ZAdd adds members to a sorted set
+func (r *RedisCache) ZAdd(ctx context.Context, key string, members ...ZMember) error {
+	cacheKey := r.GetKey(key)
+
+	zMembers := make([]*redis.Z, len(members))
+	for i, m := range members {
+		zMembers[i] = &redis.Z{
+			Score:  m.Score,
+			Member: m.Member,
+		}
+	}
+
+	return r.redisCli.ZAdd(ctx, cacheKey, zMembers...).Err()
+}
+
+// ZRangeWithScores returns members in a sorted set by score (ascending)
+func (r *RedisCache) ZRangeWithScores(ctx context.Context, key string, start, stop int64) ([]ZMember, error) {
+	cacheKey := r.GetKey(key)
+
+	result, err := r.redisCli.ZRangeWithScores(ctx, cacheKey, start, stop).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	members := make([]ZMember, len(result))
+	for i, z := range result {
+		members[i] = ZMember{
+			Score:  z.Score,
+			Member: z.Member.(string),
+		}
+	}
+
+	return members, nil
+}
+
+// ZRevRangeWithScores returns members in a sorted set by score (descending)
+func (r *RedisCache) ZRevRangeWithScores(ctx context.Context, key string, start, stop int64) ([]ZMember, error) {
+	cacheKey := r.GetKey(key)
+
+	result, err := r.redisCli.ZRevRangeWithScores(ctx, cacheKey, start, stop).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	members := make([]ZMember, len(result))
+	for i, z := range result {
+		members[i] = ZMember{
+			Score:  z.Score,
+			Member: z.Member.(string),
+		}
+	}
+
+	return members, nil
+}
+
+// ZCard returns the number of members in a sorted set
+func (r *RedisCache) ZCard(ctx context.Context, key string) (int64, error) {
+	cacheKey := r.GetKey(key)
+	return r.redisCli.ZCard(ctx, cacheKey).Result()
 }

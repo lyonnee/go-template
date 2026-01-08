@@ -9,19 +9,17 @@ import (
 )
 
 type BaseRepository struct {
-	db    *gorm.DB
-	cache cache.CacheContext
+	ctx context.Context
 }
 
 func (r *BaseRepository) SetContext(ctx context.Context) {
-	r.cache, _ = cache.GetCacheContext(ctx)
-	r.db, _ = database.GetDBContext(ctx)
+	r.SetContext(ctx)
 }
 
-func (r *BaseRepository) DB() *gorm.DB {
-	return r.db
+func (r *BaseRepository) DB() (*gorm.DB, error) {
+	return database.GetDBContext(r.ctx)
 }
 
-func (r *BaseRepository) Cache() cache.CacheContext {
-	return r.cache
+func (r *BaseRepository) Cache() (cache.CacheContext, error) {
+	return cache.GetCacheContext(r.ctx)
 }

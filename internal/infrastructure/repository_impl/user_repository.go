@@ -15,6 +15,7 @@ import (
 
 // 保证对接口实现
 var _ repository.UserRepository = (*UserRepositoryImpl)(nil)
+var _ di.Repository = (*UserRepositoryImpl)(nil)
 
 // UserRepositoryImpl 用户存储库实现
 type UserRepositoryImpl struct {
@@ -38,7 +39,12 @@ func NewUserRepository() (*UserRepositoryImpl, error) {
 // FindById 根据ID查找用户
 func (r *UserRepositoryImpl) FindById(ctx context.Context, userId uint64) (*entity.User, error) {
 	var userModel model.UserModel
-	if err := r.DB().WithContext(ctx).Where("id = ? AND deleted_at = 0", userId).First(&userModel).Error; err != nil {
+	db, err := r.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.WithContext(ctx).Where("id = ? AND deleted_at = 0", userId).First(&userModel).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainErrors.ErrUserNotFound
 		}
@@ -54,8 +60,13 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 		return domainErrors.ErrInvalidUserInput
 	}
 
+	db, err := r.DB()
+	if err != nil {
+		return err
+	}
+
 	userModel := r.entityToModel(user)
-	if err := r.DB().WithContext(ctx).Create(userModel).Error; err != nil {
+	if err := db.WithContext(ctx).Create(userModel).Error; err != nil {
 		return err
 	}
 
@@ -70,8 +81,13 @@ func (r *UserRepositoryImpl) Update(ctx context.Context, user *entity.User) erro
 		return domainErrors.ErrInvalidUserInput
 	}
 
+	db, err := r.DB()
+	if err != nil {
+		return err
+	}
+
 	userModel := r.entityToModel(user)
-	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ? AND deleted_at = 0", user.ID).Updates(userModel)
+	result := db.WithContext(ctx).Model(&model.UserModel{}).Where("id = ? AND deleted_at = 0", user.ID).Updates(userModel)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -85,8 +101,13 @@ func (r *UserRepositoryImpl) Update(ctx context.Context, user *entity.User) erro
 
 // Delete 删除用户（软删除）
 func (r *UserRepositoryImpl) Delete(ctx context.Context, userId uint64) error {
+	db, err := r.DB()
+	if err != nil {
+		return err
+	}
+
 	now := time.Now().Unix()
-	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", userId).Update("deleted_at", now)
+	result := db.WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", userId).Update("deleted_at", now)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -100,8 +121,13 @@ func (r *UserRepositoryImpl) Delete(ctx context.Context, userId uint64) error {
 
 // FindByUsername 根据用户名查找用户
 func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string) (*entity.User, error) {
+	db, err := r.DB()
+	if err != nil {
+		return nil, err
+	}
+
 	var userModel model.UserModel
-	if err := r.DB().WithContext(ctx).Where("username = ? AND deleted_at = 0", username).First(&userModel).Error; err != nil {
+	if err := db.WithContext(ctx).Where("username = ? AND deleted_at = 0", username).First(&userModel).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainErrors.ErrUserNotFound
 		}
@@ -113,8 +139,12 @@ func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string
 
 // FindByEmail 根据邮箱查找用户
 func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
+	db, err := r.DB()
+	if err != nil {
+		return nil, err
+	}
 	var userModel model.UserModel
-	if err := r.DB().WithContext(ctx).Where("email = ? AND deleted_at = 0", email).First(&userModel).Error; err != nil {
+	if err := db.WithContext(ctx).Where("email = ? AND deleted_at = 0", email).First(&userModel).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainErrors.ErrUserNotFound
 		}
@@ -126,8 +156,13 @@ func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*en
 
 // FindByPhone 根据手机号查找用户
 func (r *UserRepositoryImpl) FindByPhone(ctx context.Context, phone string) (*entity.User, error) {
+	db, err := r.DB()
+	if err != nil {
+		return nil, err
+	}
+
 	var userModel model.UserModel
-	if err := r.DB().WithContext(ctx).Where("phone = ? AND deleted_at = 0", phone).First(&userModel).Error; err != nil {
+	if err := db.WithContext(ctx).Where("phone = ? AND deleted_at = 0", phone).First(&userModel).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainErrors.ErrUserNotFound
 		}
@@ -139,11 +174,16 @@ func (r *UserRepositoryImpl) FindByPhone(ctx context.Context, phone string) (*en
 
 // UpdateUsername 更新用户名
 func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.User) error {
+	db, err := r.DB()
+	if err != nil {
+		return err
+	}
+
 	if user == nil || user.ID == 0 || user.Username == "" {
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
+	result := db.WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
 		"updated_at": user.UpdatedAt,
 		"username":   user.Username,
 	})
@@ -160,11 +200,16 @@ func (r *UserRepositoryImpl) UpdateUsername(ctx context.Context, user *entity.Us
 
 // UpdatePwdSecret 更新密码
 func (r *UserRepositoryImpl) UpdatePwdSecret(ctx context.Context, user *entity.User) error {
+	db, err := r.DB()
+	if err != nil {
+		return err
+	}
+
 	if user == nil || user.ID == 0 || user.PwdSecret == "" {
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
+	result := db.WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
 		"updated_at": user.UpdatedAt,
 		"pwd_secret": user.PwdSecret,
 	})
@@ -181,11 +226,16 @@ func (r *UserRepositoryImpl) UpdatePwdSecret(ctx context.Context, user *entity.U
 
 // UpdateEmail 更新邮箱
 func (r *UserRepositoryImpl) UpdateEmail(ctx context.Context, user *entity.User) error {
+	db, err := r.DB()
+	if err != nil {
+		return err
+	}
+
 	if user == nil || user.ID == 0 || user.Email == "" {
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
+	result := db.WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
 		"updated_at": user.UpdatedAt,
 		"email":      user.Email,
 	})
@@ -202,11 +252,16 @@ func (r *UserRepositoryImpl) UpdateEmail(ctx context.Context, user *entity.User)
 
 // UpdatePhone 更新手机号
 func (r *UserRepositoryImpl) UpdatePhone(ctx context.Context, user *entity.User) error {
+	db, err := r.DB()
+	if err != nil {
+		return err
+	}
+
 	if user == nil || user.ID == 0 || user.Phone == "" {
 		return domainErrors.ErrInvalidUserInput
 	}
 
-	result := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
+	result := db.WithContext(ctx).Model(&model.UserModel{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
 		"updated_at": user.UpdatedAt,
 		"phone":      user.Phone,
 	})
@@ -223,7 +278,12 @@ func (r *UserRepositoryImpl) UpdatePhone(ctx context.Context, user *entity.User)
 
 // 检查用户字段是否存在
 func (r *UserRepositoryImpl) CheckUserFieldsExist(ctx context.Context, username, email, phone string) (bool, error) {
-	db := r.DB().WithContext(ctx).Model(&model.UserModel{}).Where("deleted_at = 0")
+	db, err := r.DB()
+	if err != nil {
+		return false, err
+	}
+
+	db = db.WithContext(ctx).Model(&model.UserModel{}).Where("deleted_at = 0")
 
 	if username != "" {
 		db = db.Or("username = ?", username)

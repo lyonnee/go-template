@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/lyonnee/go-template/internal/infrastructure/config"
 )
 
 // Claims 自定义Claims
@@ -22,7 +21,7 @@ type JWTGenerator struct {
 	issuer             string
 }
 
-func newJWTGenerator(conf config.JWTConfig) *JWTGenerator {
+func newJWTGenerator(conf JWTConfig) *JWTGenerator {
 	jwtManager := &JWTGenerator{
 		secretKey:          []byte(conf.SecretKey),
 		accessTokenExpiry:  conf.AccessTokenExpiry,

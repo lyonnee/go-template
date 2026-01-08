@@ -3,14 +3,13 @@ package log
 import (
 	"os"
 
-	"github.com/lyonnee/go-template/internal/infrastructure/config"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func newZapLogger(
-	logConfig config.LogConfig,
+	logConfig *Config,
 ) (*zap.Logger, error) {
 	var cores = make([]zapcore.Core, 0)
 
@@ -35,7 +34,7 @@ func newZapLogger(
 	return zap.New(core, zap.AddCaller()), nil
 }
 
-func getConsoleWriterCore(conf config.LogConsoleWriterConfig) (zapcore.Core, error) {
+func getConsoleWriterCore(conf LogConsoleWriterConfig) (zapcore.Core, error) {
 	level, err := zapcore.ParseLevel(conf.Level)
 	if err != nil {
 		return nil, err
@@ -46,7 +45,7 @@ func getConsoleWriterCore(conf config.LogConsoleWriterConfig) (zapcore.Core, err
 	return zapcore.NewCore(encode, zapcore.AddSync(os.Stdout), level), nil
 }
 
-func getFileWriterCore(conf config.LogFileWriterConfig) (zapcore.Core, error) {
+func getFileWriterCore(conf LogFileWriterConfig) (zapcore.Core, error) {
 	level, err := zapcore.ParseLevel(conf.Level)
 	if err != nil {
 		return nil, err

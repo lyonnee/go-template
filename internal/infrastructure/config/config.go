@@ -6,18 +6,22 @@ import (
 	"os"
 	"path"
 
+	"github.com/lyonnee/go-template/internal/infrastructure/auth"
+	"github.com/lyonnee/go-template/internal/infrastructure/cache"
+	"github.com/lyonnee/go-template/internal/infrastructure/database"
 	"github.com/lyonnee/go-template/pkg/di"
+	"github.com/lyonnee/go-template/pkg/log"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	App      AppConfig      `mapstructure:"app"`
-	Http     HttpConfig     `mapstructure:"http"`
-	Grpc     GRPCConfig     `mapstructure:"grpc"`
-	Log      LogConfig      `mapstructure:"log"`
-	Auth     AuthConfig     `mapstructure:"auth"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Cache    CacheConfig    `mapstructure:"cache"`
+	App      AppConfig       `mapstructure:"app"`
+	Http     HttpConfig      `mapstructure:"http"`
+	Grpc     GRPCConfig      `mapstructure:"grpc"`
+	Log      log.Config      `mapstructure:"log"`
+	Auth     auth.Config     `mapstructure:"auth"`
+	Database database.Config `mapstructure:"database"`
+	Cache    cache.Config    `mapstructure:"cache"`
 }
 
 var conf = new(Config)
@@ -40,6 +44,21 @@ func init() {
 		return *conf, nil
 	})
 
+	di.AddSingleton[*log.Config](func() (*log.Config, error) {
+		return &conf.Log, nil
+	})
+
+	di.AddSingleton[*auth.Config](func() (*auth.Config, error) {
+		return &conf.Auth, nil
+	})
+
+	di.AddSingleton[*database.Config](func() (*database.Config, error) {
+		return &conf.Database, nil
+	})
+
+	di.AddSingleton[*cache.Config](func() (*cache.Config, error) {
+		return &conf.Cache, nil
+	})
 }
 
 func Load(env string) (*Config, error) {

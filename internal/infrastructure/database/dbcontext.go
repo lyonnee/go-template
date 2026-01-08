@@ -13,6 +13,11 @@ var dbContextKey = dbContextKeyType{}
 
 var ErrDBContextNotSet = errors.New("dbContext not set, use SetDBContext() to set a dbContext")
 
+type DBContext interface {
+	WithContext(ctx context.Context, fn func(context.Context) error) error
+	WithTransaction(ctx context.Context, fn func(context.Context) error) error
+}
+
 func SetDBContext(ctx context.Context, db *gorm.DB) context.Context {
 	if db == nil {
 		return ctx

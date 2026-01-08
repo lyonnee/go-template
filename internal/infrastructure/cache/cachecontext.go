@@ -7,6 +7,8 @@ import (
 )
 
 type CacheContext interface {
+	GetKey(key string) string
+
 	Set(ctx context.Context, key string, value any, ttl time.Duration) error
 	Get(ctx context.Context, key string, dest any) error
 	Delete(ctx context.Context, key string) error
@@ -16,6 +18,18 @@ type CacheContext interface {
 	Increment(ctx context.Context, key string) (int64, error)
 	Decrement(ctx context.Context, key string) (int64, error)
 	SetNX(ctx context.Context, key string, value any, ttl time.Duration) (bool, error)
+
+	// Sorted Set 操作
+	ZAdd(ctx context.Context, key string, members ...ZMember) error
+	ZRangeWithScores(ctx context.Context, key string, start, stop int64) ([]ZMember, error)
+	ZRevRangeWithScores(ctx context.Context, key string, start, stop int64) ([]ZMember, error)
+	ZCard(ctx context.Context, key string) (int64, error)
+}
+
+// ZMember Sorted Set 成员
+type ZMember struct {
+	Score  float64
+	Member string
 }
 
 type cacheContextKeyType struct{}

@@ -2,19 +2,38 @@ package database
 
 import (
 	"context"
+	"time"
 
-	"github.com/lyonnee/go-template/internal/infrastructure/config"
 	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/lyonnee/go-template/pkg/log"
 	"gorm.io/gorm"
 )
 
-type Database struct {
-	db *gorm.DB
+type Config struct {
+	Mysql    MysqlConfig    `mapstructure:"mysql"`
+	Postgres PostgresConfig `mapstructure:"postgres"`
 }
 
-func (dbc *Database) DB() *gorm.DB {
-	return dbc.db
+type PostgresConfig struct {
+	DSN string `mapstructure:"dsn"`
+
+	MaxOpenConns    int           `mapstructure:"max_open_conns"`
+	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
+	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
+	ConnMaxIdleTime time.Duration `mapstructure:"conn_max_idle_time"`
+}
+
+type MysqlConfig struct {
+	DSN string `mapstructure:"dsn"`
+
+	MaxOpenConns    int           `mapstructure:"max_open_conns"`
+	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
+	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
+	ConnMaxIdleTime time.Duration `mapstructure:"conn_max_idle_time"`
+}
+
+type Database struct {
+	db *gorm.DB
 }
 
 func (dbc *Database) WithContext(ctx context.Context, fn func(context.Context) error) error {
@@ -57,17 +76,16 @@ func (dbc *Database) CloseWithContext(ctx context.Context) error {
 var db *Database
 
 func init() {
-	config := di.Get[config.Config]()
+	config := di.Get[*Config]()
 	logger := di.Get[*log.Logger]()
 
-	pgsql, err := newPostgresDB(config.Database.Postgres, logger)
+	gormDB, err := newGormDB(config.Postgres, logger)
 	if err != nil {
 		panic("Failed to initialize PostgreSQL database: " + err.Error())
 	}
 
-	db = pgsql
-
-	di.AddSingleton[*Database](func() (*Database, error) {
+	db = gormDB
+	di.AddSingleton[DBContext](func() (DBContext, error) {
 		return db, nil
 	})
 }

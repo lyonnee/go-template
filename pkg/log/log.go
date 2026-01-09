@@ -2,39 +2,48 @@ package log
 
 import (
 	"github.com/lyonnee/go-template/pkg/di"
-	"go.uber.org/zap"
 )
 
 type Config struct {
 	// 控制台配置
-	ConsoleWriterConfig LogConsoleWriterConfig `mapstructure:"console_writer_config"`
+	ConsoleWriterConfig LogConsoleWriterConfig `yaml:"console_writer_config"`
 	// 日志文件配置
-	FileWriterConfig LogFileWriterConfig `mapstructure:"file_writer_config"`
+	FileWriterConfig LogFileWriterConfig `yaml:"file_writer_config"`
 }
 
 type LogConsoleWriterConfig struct {
-	Enable bool `mapstructure:"enable"`
+	Enable bool `yaml:"enable"`
 
-	Format string `mapstructure:"format"`
-	Level  string `mapstructure:"level"`
-	Caller string `mapstructure:"caller"`
+	Format string `yaml:"format"`
+	Level  string `yaml:"level"`
+	Caller string `yaml:"caller"`
 }
 
 type LogFileWriterConfig struct {
-	Enable bool `mapstructure:"enable"`
+	Enable bool `yaml:"enable"`
 
-	Format   string `mapstructure:"format"`
-	Filename string `mapstructure:"filename"`
-	Level    string `mapstructure:"level"`
-	Caller   string `mapstructure:"caller"`
+	Format   string `yaml:"format"`
+	Filename string `yaml:"filename"`
+	Level    string `yaml:"level"`
+	Caller   string `yaml:"caller"`
 
-	MaxSize       int  `mapstructure:"max_size"`
-	MaxAge        int  `mapstructure:"max_age"`
-	MaxBackups    int  `mapstructure:"max_backups"`
-	IsCompression bool `mapstructure:"is_compression"`
+	MaxSize       int  `yaml:"max_size"`
+	MaxAge        int  `yaml:"max_age"`
+	MaxBackups    int  `yaml:"max_backups"`
+	IsCompression bool `yaml:"is_compression"`
 }
 
-type Logger = zap.Logger
+type Logger interface {
+	Debug(args ...interface{})
+	Info(args ...interface{})
+	Warn(args ...interface{})
+	Error(args ...interface{})
+	Debugf(template string, args ...interface{})
+	Infof(template string, args ...interface{})
+	Warnf(template string, args ...interface{})
+	Errorf(template string, args ...interface{})
+	Close() error
+}
 
 var (
 	logger *Logger
@@ -51,47 +60,4 @@ func init() {
 	di.AddSingleton[Logger](func() (Logger, error) {
 		return *logger, nil
 	})
-}
-
-func Debug(msg string, fields ...zap.Field) {
-	if logger != nil {
-		logger.Debug(msg, fields...)
-	}
-}
-
-func Info(msg string, fields ...zap.Field) {
-	if logger != nil {
-		logger.Info(msg, fields...)
-	}
-}
-
-func Warn(msg string, fields ...zap.Field) {
-	if logger != nil {
-		logger.Warn(msg, fields...)
-	}
-}
-
-func Error(msg string, fields ...zap.Field) {
-	if logger != nil {
-		logger.Error(msg, fields...)
-	}
-}
-
-func Fatal(msg string, fields ...zap.Field) {
-	if logger != nil {
-		logger.Fatal(msg, fields...)
-	}
-}
-
-func Panic(msg string, fields ...zap.Field) {
-	if logger != nil {
-		logger.Panic(msg, fields...)
-	}
-}
-
-func Sync() error {
-	if logger != nil {
-		return logger.Sync()
-	}
-	return nil
 }

@@ -15,13 +15,13 @@ import (
 )
 
 type Config struct {
-	App      AppConfig       `mapstructure:"app"`
-	Http     HttpConfig      `mapstructure:"http"`
-	Grpc     GRPCConfig      `mapstructure:"grpc"`
-	Log      log.Config      `mapstructure:"log"`
-	Auth     auth.Config     `mapstructure:"auth"`
-	Database database.Config `mapstructure:"database"`
-	Cache    cache.Config    `mapstructure:"cache"`
+	App      AppConfig       `yaml:"app"`
+	Http     HttpConfig      `yaml:"http"`
+	Grpc     GRPCConfig      `yaml:"grpc"`
+	Log      log.Config      `yaml:"log"`
+	Auth     auth.Config     `yaml:"auth"`
+	Database database.Config `yaml:"database"`
+	Cache    cache.Config    `yaml:"cache"`
 }
 
 var conf = new(Config)

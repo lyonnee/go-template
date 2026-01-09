@@ -376,15 +376,15 @@ v1.DELETE("/products/:id", productController.DeleteProduct)
 ```go
 type Config struct {
     // ... 现有字段
-    Email EmailConfig `mapstructure:"email"`
+    Email EmailConfig `yaml:"email"`
 }
 
 type EmailConfig struct {
-    Provider  string `mapstructure:"provider"`
-    SMTPHost  string `mapstructure:"smtp_host"`
-    SMTPPort  int    `mapstructure:"smtp_port"`
-    Username  string `mapstructure:"username"`
-    Password  string `mapstructure:"password"`
+    Provider  string `yaml:"provider"`
+    SMTPHost  string `yaml:"smtp_host"`
+    SMTPPort  int    `yaml:"smtp_port"`
+    Username  string `yaml:"username"`
+    Password  string `yaml:"password"`
 }
 ```
 

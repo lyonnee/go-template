@@ -20,6 +20,6 @@ func (r *BaseRepository) DB() (*gorm.DB, error) {
 	return database.GetDBContext(r.ctx)
 }
 
-func (r *BaseRepository) Cache() (cache.CacheContext, error) {
+func (r *BaseRepository) Cache() (cache.Cache, error) {
 	return cache.GetCacheContext(r.ctx)
 }

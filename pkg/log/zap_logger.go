@@ -10,7 +10,7 @@ import (
 
 func newZapLogger(
 	logConfig *Config,
-) (*zap.Logger, error) {
+) (*zap.SugaredLogger, error) {
 	var cores = make([]zapcore.Core, 0)
 
 	consoleCore, err := getConsoleWriterCore(logConfig.ConsoleWriterConfig)
@@ -31,7 +31,7 @@ func newZapLogger(
 
 	core := zapcore.NewTee(cores...)
 
-	return zap.New(core, zap.AddCaller()), nil
+	return zap.New(core, zap.AddCaller()).Sugar(), nil
 }
 
 func getConsoleWriterCore(conf LogConsoleWriterConfig) (zapcore.Core, error) {

@@ -10,26 +10,26 @@ import (
 )
 
 type Config struct {
-	Mysql    MysqlConfig    `mapstructure:"mysql"`
-	Postgres PostgresConfig `mapstructure:"postgres"`
+	Mysql    MysqlConfig    `yaml:"mysql"`
+	Postgres PostgresConfig `yaml:"postgres"`
 }
 
 type PostgresConfig struct {
-	DSN string `mapstructure:"dsn"`
+	DSN string `yaml:"dsn"`
 
-	MaxOpenConns    int           `mapstructure:"max_open_conns"`
-	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
-	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
-	ConnMaxIdleTime time.Duration `mapstructure:"conn_max_idle_time"`
+	MaxOpenConns    int           `yaml:"max_open_conns"`
+	MaxIdleConns    int           `yaml:"max_idle_conns"`
+	ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime"`
+	ConnMaxIdleTime time.Duration `yaml:"conn_max_idle_time"`
 }
 
 type MysqlConfig struct {
-	DSN string `mapstructure:"dsn"`
+	DSN string `yaml:"dsn"`
 
-	MaxOpenConns    int           `mapstructure:"max_open_conns"`
-	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
-	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
-	ConnMaxIdleTime time.Duration `mapstructure:"conn_max_idle_time"`
+	MaxOpenConns    int           `yaml:"max_open_conns"`
+	MaxIdleConns    int           `yaml:"max_idle_conns"`
+	ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime"`
+	ConnMaxIdleTime time.Duration `yaml:"conn_max_idle_time"`
 }
 
 type Database struct {

@@ -10,5 +10,5 @@ import (
 type BaseRepository interface {
 	SetContext(ctx context.Context)
 	DB() (*gorm.DB, error)
-	Cache() (cache.CacheContext, error)
+	Cache() (cache.Cache, error)
 }

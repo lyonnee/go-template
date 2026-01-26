@@ -9,7 +9,7 @@ import (
 )
 
 func RegisterRoutes(engine *gin.Engine) {
-	logger := di.Get[*log.Logger]()
+	logger := di.Get[log.Logger]()
 
 	// register middleware
 	engine.Use(middleware.Logger(logger))

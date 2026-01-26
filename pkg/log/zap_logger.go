@@ -8,9 +8,17 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+type ZapLogger struct {
+	*zap.SugaredLogger
+}
+
+func (logger *ZapLogger) Close() error {
+	return logger.Sync()
+}
+
 func newZapLogger(
 	logConfig *Config,
-) (*zap.SugaredLogger, error) {
+) (*ZapLogger, error) {
 	var cores = make([]zapcore.Core, 0)
 
 	consoleCore, err := getConsoleWriterCore(logConfig.ConsoleWriterConfig)
@@ -31,7 +39,7 @@ func newZapLogger(
 
 	core := zapcore.NewTee(cores...)
 
-	return zap.New(core, zap.AddCaller()).Sugar(), nil
+	return &ZapLogger{zap.New(core, zap.AddCaller()).Sugar()}, nil
 }
 
 func getConsoleWriterCore(conf LogConsoleWriterConfig) (zapcore.Core, error) {

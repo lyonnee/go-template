@@ -6,14 +6,19 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-func RegisterScheduledJobs(s *cron.Cron) {
-	s.AddFunc("0 * * * *", func() {
+type Scheduler struct {
+	logger log.Logger
+}
+
+func (s *Scheduler) RegisterJobs(c *cron.Cron) {
+	c.AddFunc("0 * * * *", func() {
 		jobs.TestJob()
 		// Example task: Log every hour
-		log.Info("Hourly task executed")
+		s.logger.Info("Hourly task executed")
 	})
-	s.AddFunc("0 0 * * *", func() {
+
+	c.AddFunc("0 0 * * *", func() {
 		// Example task: Log every day at midnight
-		log.Info("Daily task executed")
+		s.logger.Info("Daily task executed")
 	})
 }

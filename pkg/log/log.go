@@ -46,10 +46,10 @@ type Logger interface {
 }
 
 var (
-	logger *Logger
+	logger Logger
 )
 
-func init() {
+func Init() {
 	config := di.Get[*Config]()
 	newLogger, err := newZapLogger(config)
 	if err != nil {
@@ -58,6 +58,6 @@ func init() {
 
 	logger = newLogger
 	di.AddSingleton[Logger](func() (Logger, error) {
-		return *logger, nil
+		return logger, nil
 	})
 }

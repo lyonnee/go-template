@@ -11,7 +11,7 @@ import (
 
 type AuthController struct {
 	authCmdService *commands.AuthCommandService
-	logger         *log.Logger
+	logger         log.Logger
 }
 
 func init() {
@@ -21,7 +21,7 @@ func init() {
 func NewAuthController() (*AuthController, error) {
 	return &AuthController{
 		authCmdService: di.Get[*commands.AuthCommandService](),
-		logger:         di.Get[*log.Logger](),
+		logger:         di.Get[log.Logger](),
 	}, nil
 }
 
@@ -34,7 +34,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	// 绑定参数
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		c.logger.Error("Login bind params failed", zap.Error(err))
-		dto.Fail(ctx, dto.CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
+		Fail(ctx, CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
 		return
 	}
 
@@ -50,7 +50,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	result, err := c.authCmdService.Login(ctx.Request.Context(), cmd)
 	if err != nil {
 		c.logger.Error("Login failed", zap.Error(err), zap.String("username", req.Username))
-		dto.Fail(ctx, dto.CODE_INVALID_BODY_ARGUMENT, "用户名或密码错误")
+		Fail(ctx, CODE_INVALID_BODY_ARGUMENT, "用户名或密码错误")
 		return
 	}
 
@@ -62,7 +62,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		RefreshToken: result.RefreshToken,
 	}
 
-	dto.Ok(ctx, "登录成功", resp)
+	Ok(ctx, "登录成功", resp)
 }
 
 // RefreshToken 刷新token
@@ -74,7 +74,7 @@ func (c *AuthController) RefreshToken(ctx *gin.Context) {
 	// 绑定参数
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		c.logger.Error("RefreshToken bind params failed", zap.Error(err))
-		dto.Fail(ctx, dto.CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
+		Fail(ctx, CODE_INVALID_BODY_ARGUMENT, "参数格式错误")
 		return
 	}
 
@@ -89,7 +89,7 @@ func (c *AuthController) RefreshToken(ctx *gin.Context) {
 	result, err := c.authCmdService.RefreshToken(ctx.Request.Context(), cmd)
 	if err != nil {
 		c.logger.Error("RefreshToken failed", zap.Error(err))
-		dto.Fail(ctx, dto.CODE_TOKEN_INVALID, "刷新token无效")
+		Fail(ctx, CODE_TOKEN_INVALID, "刷新token无效")
 		return
 	}
 
@@ -100,5 +100,5 @@ func (c *AuthController) RefreshToken(ctx *gin.Context) {
 		AccessToken: result.AccessToken,
 	}
 
-	dto.Ok(ctx, "刷新成功", resp)
+	Ok(ctx, "刷新成功", resp)
 }

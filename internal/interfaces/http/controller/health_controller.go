@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lyonnee/go-template/internal/interfaces/http/dto"
 	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/lyonnee/go-template/pkg/log"
 )
@@ -46,7 +45,7 @@ func (c *HealthController) HealthCheck(ctx *gin.Context) {
 		Timestamp: time.Now().Unix(),
 	}
 
-	dto.Ok(ctx, "Service is healthy", response)
+	Ok(ctx, "Service is healthy", response)
 }
 
 // ReadinessCheck 就绪检查

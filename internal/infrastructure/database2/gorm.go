@@ -15,7 +15,7 @@ type GormExecutor struct {
 }
 
 type GormDB struct {
-	dbc *gorm.DB
+	*gorm.DB
 }
 
 func (executor *GormExecutor) Executor() Executor {
@@ -28,18 +28,18 @@ func (executor *GormExecutor) Executor() Executor {
 }
 
 func (db *GormDB) WithConnection(ctx context.Context, fn func(Executor) error) error {
-	GormExecutor := &GormExecutor{DB: db.dbc.WithContext(ctx), isTransaction: true}
+	GormExecutor := &GormExecutor{DB: db.WithContext(ctx), isTransaction: true}
 	return fn(GormExecutor)
 }
 
 func (db *GormDB) WithTransaction(ctx context.Context, fn func(Executor) error) error {
-	return db.dbc.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		GormExecutor := &GormExecutor{DB: tx, isTransaction: true}
 		return fn(GormExecutor)
 	})
 }
 
-func newGormDB(cfg PostgresConfig, logger *log.Logger) (*Database, error) {
+func newGormDB(cfg PostgresConfig, logger log.Logger) (*GormDB, error) {
 	gormConfig := &gorm.Config{
 		Logger: NewGormLogger(logger),
 	}
@@ -59,5 +59,5 @@ func newGormDB(cfg PostgresConfig, logger *log.Logger) (*Database, error) {
 	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 	sqlDB.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 
-	return &Database{db: db}, nil
+	return &GormDB{db}, nil
 }

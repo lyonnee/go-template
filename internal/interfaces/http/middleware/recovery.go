@@ -7,16 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lyonnee/go-template/pkg/di"
 	"github.com/lyonnee/go-template/pkg/log"
-	"go.uber.org/zap"
 )
 
 var once sync.Once
-var recoveryLogger *zap.SugaredLogger
+var recoveryLogger log.Logger
 
-func getRecoveryLogger() *zap.SugaredLogger {
+func getRecoveryLogger() log.Logger {
 	if recoveryLogger == nil {
 		once.Do(func() {
-			recoveryLogger = di.Get[*log.Logger]().Sugar()
+			recoveryLogger = di.Get[log.Logger]()
 		})
 	}
 	return recoveryLogger
